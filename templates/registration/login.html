@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block title %}Login | FoodBasket{% endblock %}
+
+{% block content %}
+<div class="auth-page-wrap">
+  <div class="auth-card">
+    <div class="mb-3">
+      <button onclick="history.back()" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 fw-bold border-1 shadow-sm d-inline-flex align-items-center gap-1" style="font-size: .8rem;">
+        <i class="bi bi-arrow-left"></i> Back
+      </button>
+    </div>
+    <div class="auth-logo">🛒</div>
+    <h1 class="auth-title">Welcome back!</h1>
+    <p class="auth-subtitle">Sign in to your FoodBasket account</p>
+
+    <form method="post">
+      {% csrf_token %}
+      {% if next %}
+      <input type="hidden" name="next" value="{{ next }}">
+      {% endif %}
+
+      {% if form.errors and not messages %}
+      <div class="toast-alert toast-error mb-3" style="border-radius:8px;padding:.65rem 1rem;margin-bottom:.75rem">
+        <i class="bi bi-x-circle-fill me-1"></i> Invalid username or password. Try again.
+      </div>
+      {% endif %}
+
+      <div class="mb-3">
+        <label class="auth-label" for="id_username">Username</label>
+        <div class="auth-input-group">
+          <i class="bi bi-person auth-input-icon"></i>
+          <input type="text" name="username" id="id_username" class="auth-input" placeholder="Your username" autofocus required>
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <label class="auth-label" for="id_password">Password</label>
+        <div class="auth-input-group">
+          <i class="bi bi-lock auth-input-icon"></i>
+          <input type="password" name="password" id="id_password" class="auth-input" placeholder="Your password" required>
+        </div>
+      </div>
+
+      <button type="submit" class="auth-submit-btn">
+        <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+      </button>
+    </form>
+
+    <p class="auth-footer-text">
+      Don't have an account? <a href="{% url 'register' %}" class="auth-footer-link">Create one free</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

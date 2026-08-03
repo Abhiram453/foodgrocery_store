@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+{% block title %}{{ product.name }} | FoodBasket{% endblock %}
+
+{% block content %}
+<div class="container py-4 py-md-5">
+
+  <!-- Top Back Nav -->
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <button onclick="history.back()" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 fw-bold shadow-sm d-inline-flex align-items-center gap-1" style="font-size: .82rem;">
+      <i class="bi bi-arrow-left"></i> Back
+    </button>
+    <a href="{% url 'home' %}" class="text-muted small text-decoration-none d-inline-flex align-items-center gap-1">
+      <i class="bi bi-house-door"></i> Dashboard
+    </a>
+  </div>
+
+  <!-- Breadcrumb -->
+  <nav class="mb-4" aria-label="breadcrumb">
+    <ol class="fb-breadcrumb">
+      <li><a href="{% url 'home' %}">Home</a></li>
+      <li><i class="bi bi-chevron-right"></i></li>
+      <li><a href="{% url 'category_products' product.category.slug %}">{{ product.category.name }}</a></li>
+      <li><i class="bi bi-chevron-right"></i></li>
+      <li class="active">{{ product.name }}</li>
+    </ol>
+  </nav>
+
+  <div class="row g-4 g-lg-5">
+
+    <!-- Image -->
+    <div class="col-12 col-md-5">
+      <div class="detail-img-box">
+        {% if product.discount_price %}
+        <div class="pcard-badge large">{{ product.discount_percent }}% OFF</div>
+        {% endif %}
+        {% if product.image %}
+          <img src="{{ product.image.url }}" alt="{{ product.name }}" class="detail-img">
+        {% else %}
+          <div class="detail-emoji">{{ product.category.icon }}</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Info -->
+    <div class="col-12 col-md-7">
+      <span class="detail-cat-tag">{{ product.category.icon }} {{ product.category.name }}</span>
+      <h1 class="detail-name mt-2">{{ product.name }}</h1>
+      <p class="detail-unit-text">Sold {{ product.get_unit_display }}</p>
+
+      <div class="detail-price-row mt-3">
+        <span class="detail-main-price">₹{{ product.effective_price }}</span>
+        {% if product.discount_price %}
+        <span class="detail-original-price">₹{{ product.price }}</span>
+        <span class="detail-savings-pill">Save ₹{% widthratio product.price|add:"0" 1 1 %}</span>
+        {% endif %}
+      </div>
+
+      <p class="detail-description mt-3">{{ product.description }}</p>
+
+      <!-- Stock badge -->
+      <div class="detail-stock mt-2">
+        {% if product.stock > 10 %}
+          <span class="stock-pill green"><i class="bi bi-check-circle-fill me-1"></i>In Stock</span>
+        {% elif product.stock > 0 %}
+          <span class="stock-pill amber"><i class="bi bi-exclamation-circle-fill me-1"></i>Only {{ product.stock }} left</span>
+        {% else %}
+          <span class="stock-pill red"><i class="bi bi-x-circle-fill me-1"></i>Out of Stock</span>
+        {% endif %}
+      </div>
+
+      {% if product.stock > 0 %}
+      {% if user.is_authenticated %}
+      <form action="{% url 'add_to_cart' product.id %}" method="post" class="mt-4">
+        {% csrf_token %}
+        <div class="d-flex align-items-center gap-3 flex-wrap">
+          <div class="qty-stepper">
+            <button type="button" class="qty-btn" onclick="stepQty(-1)">−</button>
+            <input type="number" name="quantity" id="qtyInput" value="1" min="1" max="{{ product.stock }}" class="qty-field" readonly>
+            <button type="button" class="qty-btn" onclick="stepQty(1)">+</button>
+          </div>
+          <button type="submit" class="btn-primary-pill flex-grow-1 flex-lg-grow-0">
+            <i class="bi bi-cart-plus-fill me-2"></i>Add to Cart
+          </button>
+        </div>
+      </form>
+      {% else %}
+      <div class="mt-4">
+        <a href="{% url 'login' %}?next={{ request.path }}" class="btn-primary-pill w-100 text-center justify-content-center" style="display: inline-flex;">
+          <i class="bi bi-cart-plus-fill me-2"></i>Login to Add to Cart
+        </a>
+      </div>
+      {% endif %}
+      {% else %}
+      <div class="alert-out-of-stock mt-4">This product is currently out of stock. Check back soon!</div>
+      {% endif %}
+
+      <!-- Recipe tags -->
+      {% if product.recipe_tags %}
+      <div class="detail-tags mt-4">
+        <span class="tags-label">Good for:</span>
+        {% for tag in product.get_tags %}
+        <span class="tag-pill">{{ tag }}</span>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <!-- Delivery notice -->
+      <div class="delivery-notice mt-4">
+        <i class="bi bi-truck me-2"></i>
+        Free delivery on orders over ₹500. Choose from 3 time slots.
+      </div>
+    </div>
+  </div>
+
+  <!-- Related products -->
+  {% if related %}
+  <div class="related-section mt-5 pt-3">
+    <h2 class="related-title">More from {{ product.category.name }}</h2>
+    <div class="row g-3 mt-1">
+      {% for rp in related %}
+      <div class="col-6 col-sm-4 col-md-3">
+        <div class="pcard">
+          {% if rp.discount_price %}<div class="pcard-badge">{{ rp.discount_percent }}% OFF</div>{% endif %}
+          <a href="{% url 'product_detail' rp.slug %}" class="pcard-img-link">
+            <div class="pcard-img">
+              {% if rp.image %}<img src="{{ rp.image.url }}" alt="{{ rp.name }}" loading="lazy">
+              {% else %}<div class="pcard-emoji">{{ rp.category.icon }}</div>{% endif %}
+            </div>
+          </a>
+          <div class="pcard-body">
+            <h3 class="pcard-name"><a href="{% url 'product_detail' rp.slug %}">{{ rp.name }}</a></h3>
+            <span class="pcard-unit">{{ rp.get_unit_display }}</span>
+            <div class="pcard-footer">
+              <div class="pcard-price-row">
+                <span class="pcard-price">₹{{ rp.effective_price }}</span>
+                {% if rp.discount_price %}<span class="pcard-old">₹{{ rp.price }}</span>{% endif %}
+              </div>
+              {% if user.is_authenticated %}
+              <form action="{% url 'add_to_cart' rp.id %}" method="post">
+                {% csrf_token %}
+                <input type="hidden" name="quantity" value="1">
+                <button type="submit" class="pcard-add-btn"><i class="bi bi-cart-plus-fill"></i></button>
+              </form>
+              {% else %}
+              <a href="{% url 'login' %}?next={{ request.path }}" class="pcard-add-btn" title="Login to add to cart">
+                <i class="bi bi-cart-plus-fill"></i>
+              </a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+
+{% block extra_js %}
+<script>
+function stepQty(d) {
+  const el = document.getElementById('qtyInput');
+  const val = Math.max(1, Math.min({{ product.stock }}, +el.value + d));
+  el.value = val;
+}
+</script>
+{% endblock %}
+{% endblock %}

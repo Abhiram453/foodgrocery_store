@@ -1,0 +1,363 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}FoodBasket – Fresh Groceries Delivered{% endblock %}</title>
+  <meta name="description" content="{% block meta_description %}Shop fresh fruits, vegetables, dairy, bakery and more. Get groceries delivered to your doorstep with same-day delivery slots.{% endblock %}" />
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link href="{% static 'css/style.css' %}?v=1.2" rel="stylesheet" />
+</head>
+<body>
+
+<!-- ── TOP PROMO BAR ── -->
+<div class="promo-bar d-none d-md-block">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-center py-1">
+      <span><i class="bi bi-lightning-fill me-1"></i>Same-day delivery available! Use code <strong>FRESH10</strong> for 10% off</span>
+      <span class="d-flex gap-3 align-items-center">
+        {% if user.is_authenticated %}
+        <span class="text-white-50"><i class="bi bi-person-circle me-1"></i>Hi, <strong>{{ user.username }}</strong></span>
+        <form action="{% url 'logout' %}" method="post" class="d-inline m-0 p-0">
+          {% csrf_token %}
+          <button type="submit" class="promo-link bg-transparent border-0 p-0" style="font-size:inherit; cursor:pointer;"><i class="bi bi-box-arrow-right me-1"></i>Logout</button>
+        </form>
+        {% else %}
+        <a href="{% url 'login' %}" class="promo-link"><i class="bi bi-person me-1"></i>Sign In</a>
+        <a href="{% url 'register' %}" class="promo-link"><i class="bi bi-person-plus me-1"></i>Register</a>
+        {% endif %}
+      </span>
+    </div>
+  </div>
+</div>
+
+<!-- ── NAVBAR ── -->
+<nav class="navbar navbar-expand-lg sticky-top" id="mainNav">
+  <div class="container-fluid px-3 px-md-5">
+
+    <a class="navbar-brand" href="{% url 'home' %}">
+      <span class="brand-emoji">🛒</span>
+      <span>Food<strong>Basket</strong></span>
+    </a>
+
+    <!-- Mobile cart + toggler -->
+    <div class="d-flex align-items-center gap-2 d-lg-none">
+      {% if user.is_authenticated %}
+      <a href="{% url 'cart' %}" class="mobile-cart-btn position-relative">
+        <i class="bi bi-cart3"></i>
+        {% if cart_count > 0 %}
+        <span class="cart-badge">{{ cart_count }}</span>
+        {% endif %}
+      </a>
+      {% endif %}
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain" aria-label="Toggle navigation">
+        <i class="bi bi-list nav-toggler-icon"></i>
+      </button>
+    </div>
+
+    <div class="collapse navbar-collapse" id="navbarMain">
+      <!-- Search -->
+      <form class="nav-search-form ms-lg-4 me-auto" action="{% url 'product_list' %}" method="get">
+        <div class="nav-search-wrap">
+          <i class="bi bi-search nav-search-icon"></i>
+          <input type="search" name="q" class="nav-search-input" placeholder="Search for fruits, vegetables, dairy…" value="{{ request.GET.q }}">
+          <button type="submit" class="nav-search-btn">Search</button>
+        </div>
+      </form>
+
+      <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-1">
+
+        {% if user.is_authenticated %}
+        <!-- Categories dropdown -->
+        <li class="nav-item dropdown">
+          <a class="nav-link nav-link-custom" href="#" data-bs-toggle="dropdown">
+            <i class="bi bi-grid-3x3-gap-fill me-1"></i>
+            <span>Categories</span>
+            <i class="bi bi-chevron-down ms-1 small"></i>
+          </a>
+          <ul class="dropdown-menu cat-dropdown shadow-lg">
+            {% for cat in all_categories %}
+            <li>
+              <a class="dropdown-item cat-item" href="{% url 'category_products' cat.slug %}">
+                <span class="cat-item-icon">{{ cat.icon }}</span>
+                <span>{{ cat.name }}</span>
+              </a>
+            </li>
+            {% endfor %}
+            <li><hr class="dropdown-divider my-1"></li>
+            <li>
+              <a class="dropdown-item cat-item fw-semibold" href="{% url 'product_list' %}">
+                <span class="cat-item-icon">🛍️</span>
+                <span>All Products</span>
+              </a>
+            </li>
+          </ul>
+        </li>
+
+        {% endif %}
+
+        {% if user.is_authenticated %}
+        <li class="nav-item">
+          <a class="nav-link nav-link-custom" href="{% url 'recipes' %}">
+            <i class="bi bi-journal-richtext me-1"></i>Recipes
+          </a>
+        </li>
+        {% endif %}
+
+        {% if user.is_authenticated %}
+        <li class="nav-item">
+          <a class="nav-link nav-link-custom" href="{% url 'order_history' %}">
+            <i class="bi bi-bag me-1"></i>My Orders
+          </a>
+        </li>
+        <li class="nav-item dropdown">
+          <a class="nav-link nav-link-custom" href="#" data-bs-toggle="dropdown">
+            <i class="bi bi-person-circle me-1"></i>
+            <span>{{ user.username }}</span>
+            <i class="bi bi-chevron-down ms-1 small"></i>
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end cat-dropdown shadow-lg">
+            <li><a class="dropdown-item cat-item" href="{% url 'account' %}"><span class="cat-item-icon">👤</span> My Account</a></li>
+            <li><a class="dropdown-item cat-item" href="{% url 'order_history' %}"><span class="cat-item-icon">📦</span> My Orders</a></li>
+            <li><hr class="dropdown-divider my-1"></li>
+            <li>
+              <form action="{% url 'logout' %}" method="post" id="logoutFormNav">
+                {% csrf_token %}
+                <button class="dropdown-item cat-item text-danger" type="button" onclick="confirmLogout(document.getElementById('logoutFormNav'))">
+                  <span class="cat-item-icon">🚪</span> Logout
+                </button>
+              </form>
+            </li>
+          </ul>
+        </li>
+        {% else %}
+        <li class="nav-item">
+          <a class="nav-link nav-link-custom" href="{% url 'login' %}">
+            <i class="bi bi-person me-1"></i>Login
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="btn-nav-signup" href="{% url 'register' %}">Sign Up</a>
+        </li>
+        {% endif %}
+
+        <!-- Cart (desktop) -->
+        {% if user.is_authenticated %}
+        <li class="nav-item d-none d-lg-block">
+          <a href="{% url 'cart' %}" class="cart-btn-desktop position-relative">
+            <i class="bi bi-cart3"></i>
+            <span class="cart-btn-label">Cart</span>
+            {% if cart_count > 0 %}
+            <span class="cart-badge" id="cartBadge">{{ cart_count }}</span>
+            {% endif %}
+          </a>
+        </li>
+        {% endif %}
+
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- ── MOBILE SEARCH ── -->
+<div class="mobile-search-bar d-lg-none">
+  <div class="container py-2">
+    <form action="{% url 'product_list' %}" method="get">
+      <div class="mobile-search-wrap">
+        <i class="bi bi-search mobile-search-icon"></i>
+        <input type="search" name="q" class="mobile-search-input" placeholder="Search groceries…" value="{{ request.GET.q }}">
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ── MESSAGES ── -->
+{% if messages %}
+<div class="messages-container container-fluid px-0">
+  {% for message in messages %}
+  <div class="toast-alert toast-{{ message.tags }}">
+    <div class="container">
+      <div class="d-flex align-items-center justify-content-between">
+        <span>
+          {% if message.tags == 'success' %}<i class="bi bi-check-circle-fill me-2"></i>
+          {% elif message.tags == 'error' or message.tags == 'danger' %}<i class="bi bi-x-circle-fill me-2"></i>
+          {% elif message.tags == 'warning' %}<i class="bi bi-exclamation-triangle-fill me-2"></i>
+          {% else %}<i class="bi bi-info-circle-fill me-2"></i>{% endif %}
+          {{ message }}
+        </span>
+        <button class="toast-close" onclick="this.closest('.toast-alert').remove()">×</button>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<main>{% block content %}{% endblock %}</main>
+
+<!-- ── FOOTER ── -->
+<footer class="site-footer">
+  <div class="container">
+    <div class="row g-4 py-5">
+      <div class="col-12 col-sm-6 col-lg-4">
+        <div class="footer-brand-row">
+          <span class="footer-brand-emoji">🛒</span>
+          <span class="footer-brand-name">Food<strong>Basket</strong></span>
+        </div>
+        <p class="footer-desc">Fresh groceries delivered to your doorstep. Same-day delivery available across the city. Always fresh, always affordable.</p>
+        <div class="footer-socials">
+          <a href="#" class="footer-social-btn"><i class="bi bi-facebook"></i></a>
+          <a href="#" class="footer-social-btn"><i class="bi bi-instagram"></i></a>
+          <a href="#" class="footer-social-btn"><i class="bi bi-twitter-x"></i></a>
+          <a href="#" class="footer-social-btn"><i class="bi bi-whatsapp"></i></a>
+        </div>
+      </div>
+
+      <div class="col-6 col-sm-3 col-lg-2">
+        <h6 class="footer-col-title">Shop</h6>
+        <ul class="footer-nav-list">
+          <li><a href="{% url 'category_products' 'fruits' %}">🍎 Fruits</a></li>
+          <li><a href="{% url 'category_products' 'vegetables' %}">🥦 Vegetables</a></li>
+          <li><a href="{% url 'category_products' 'dairy' %}">🥛 Dairy</a></li>
+          <li><a href="{% url 'category_products' 'bakery' %}">🍞 Bakery</a></li>
+          <li><a href="{% url 'category_products' 'snacks' %}">🍿 Snacks</a></li>
+        </ul>
+      </div>
+
+      <div class="col-6 col-sm-3 col-lg-2">
+        <h6 class="footer-col-title">Account</h6>
+        <ul class="footer-nav-list">
+          <li><a href="{% url 'register' %}">Register</a></li>
+          <li><a href="{% url 'login' %}">Login</a></li>
+          <li><a href="{% url 'order_history' %}">My Orders</a></li>
+          <li><a href="{% url 'cart' %}">My Cart</a></li>
+          <li><a href="{% url 'recipes' %}">Recipes</a></li>
+        </ul>
+      </div>
+
+      <div class="col-12 col-sm-6 col-lg-4">
+        <h6 class="footer-col-title">Delivery Hours</h6>
+        <div class="footer-slots">
+          <div class="footer-slot-row"><span class="slot-emoji">🌅</span><span>Morning — 8:00 AM to 12:00 PM</span></div>
+          <div class="footer-slot-row"><span class="slot-emoji">☀️</span><span>Afternoon — 12:00 PM to 5:00 PM</span></div>
+          <div class="footer-slot-row"><span class="slot-emoji">🌆</span><span>Evening — 5:00 PM to 9:00 PM</span></div>
+        </div>
+        <div class="footer-trust-badges mt-3">
+          <span class="footer-badge-pill"><i class="bi bi-truck me-1"></i>Free over ₹500</span>
+          <span class="footer-badge-pill"><i class="bi bi-shield-check me-1"></i>Safe Checkout</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <span>© 2025 FoodBasket. Made with ❤️ for fresh food lovers.</span>
+      <div class="footer-bottom-right">
+        <span>🔒 Secure</span>
+        <span>↩️ Easy Returns</span>
+        <span>📞 24/7 Support</span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- Mobile Bottom Nav -->
+<nav class="mobile-bottom-nav d-lg-none">
+  <a href="{% url 'home' %}" class="mob-nav-item {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+    <i class="bi bi-house-fill"></i><span>Home</span>
+  </a>
+  <a href="{% url 'product_list' %}" class="mob-nav-item {% if request.resolver_match.url_name == 'product_list' %}active{% endif %}">
+    <i class="bi bi-grid-fill"></i><span>Shop</span>
+  </a>
+  {% if user.is_authenticated %}
+  <a href="{% url 'cart' %}" class="mob-nav-item mob-cart-center position-relative">
+    <div class="mob-cart-circle">
+      <i class="bi bi-cart3"></i>
+      {% if cart_count > 0 %}<span class="mob-cart-badge">{{ cart_count }}</span>{% endif %}
+    </div>
+  </a>
+  <a href="{% url 'recipes' %}" class="mob-nav-item">
+    <i class="bi bi-journal-richtext"></i><span>Recipes</span>
+  </a>
+  {% endif %}
+  <a href="{% if user.is_authenticated %}{% url 'account' %}{% else %}{% url 'login' %}{% endif %}" class="mob-nav-item {% if request.resolver_match.url_name == 'account' %}active{% endif %}">
+    <i class="bi bi-person-fill"></i><span>Account</span>
+  </a>
+</nav>
+
+<!-- Global Custom Confirmation Modal -->
+<div class="modal fade" id="globalConfirmModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width: 400px;">
+    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fw-bold" id="confirmModalTitle" style="font-family: 'Nunito', sans-serif;">Confirm Action</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body py-3">
+        <div class="d-flex align-items-center gap-3">
+          <div class="rounded-circle p-3 bg-warning bg-opacity-10 text-warning d-flex align-items-center justify-content-center flex-shrink-0" style="width: 52px; height: 52px; font-size: 1.5rem;" id="confirmModalIcon">
+            ⚠️
+          </div>
+          <p class="mb-0 text-muted" id="confirmModalBody" style="font-size: .92rem; line-height: 1.5;">Are you sure you want to proceed?</p>
+        </div>
+      </div>
+      <div class="modal-footer border-0 pt-0">
+        <button type="button" class="btn btn-light rounded-pill px-4 fw-bold btn-sm" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger rounded-pill px-4 fw-bold btn-sm" id="confirmModalActionBtn">Yes, Proceed</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  // Auto-hide messages
+  setTimeout(() => {
+    document.querySelectorAll('.toast-alert').forEach(el => el.style.opacity = '0');
+    setTimeout(() => document.querySelectorAll('.toast-alert').forEach(el => el.remove()), 400);
+  }, 4500);
+
+  // Navbar shrink on scroll
+  const nav = document.getElementById('mainNav');
+  window.addEventListener('scroll', () => {
+    nav.classList.toggle('nav-scrolled', window.scrollY > 30);
+  }, { passive: true });
+
+  // Reusable Modern Confirm Modal Function
+  function openConfirmModal({ title, message, icon, btnText, btnClass, onConfirm }) {
+    document.getElementById('confirmModalTitle').textContent = title || 'Confirm Action';
+    document.getElementById('confirmModalBody').innerHTML = message || 'Are you sure you want to proceed?';
+    if (icon) document.getElementById('confirmModalIcon').innerHTML = icon;
+
+    const actionBtn = document.getElementById('confirmModalActionBtn');
+    actionBtn.textContent = btnText || 'Confirm';
+    actionBtn.className = 'btn rounded-pill px-4 fw-bold btn-sm ' + (btnClass || 'btn-danger');
+
+    actionBtn.onclick = function() {
+      const modalEl = document.getElementById('globalConfirmModal');
+      const modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+      modalInstance.hide();
+      if (onConfirm) onConfirm();
+    };
+
+    const modalInstance = new bootstrap.Modal(document.getElementById('globalConfirmModal'));
+    modalInstance.show();
+  }
+
+  function confirmLogout(formEl) {
+    openConfirmModal({
+      title: 'Log Out',
+      message: 'Are you sure you want to log out of your FoodBasket account?',
+      icon: '🚪',
+      btnText: 'Log Out',
+      btnClass: 'btn-danger',
+      onConfirm: () => formEl.submit()
+    });
+  }
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

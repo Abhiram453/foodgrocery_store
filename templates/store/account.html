@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+{% block title %}My Account | FoodBasket{% endblock %}
+
+{% block content %}
+<div class="container py-4 py-md-5">
+  <!-- Top Back Nav -->
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <button onclick="history.back()" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 fw-bold shadow-sm d-inline-flex align-items-center gap-1" style="font-size: .82rem;">
+      <i class="bi bi-arrow-left"></i> Back
+    </button>
+    <a href="{% url 'home' %}" class="text-muted small text-decoration-none d-inline-flex align-items-center gap-1">
+      <i class="bi bi-house-door"></i> Dashboard
+    </a>
+  </div>
+
+  <!-- Profile Header Card -->
+  <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4" style="background: linear-gradient(135deg, var(--g900), var(--g700)); color: white;">
+    <div class="card-body p-4 p-md-5">
+      <div class="d-flex align-items-center flex-wrap gap-4">
+        <div class="rounded-circle d-flex align-items-center justify-content-center bg-white text-success fw-bold shadow" style="width: 76px; height: 76px; font-size: 2rem;">
+          {{ user.username|first|upper }}
+        </div>
+        <div class="flex-grow-1">
+          <span class="badge bg-success bg-opacity-25 text-white mb-2 px-3 py-1 rounded-pill" style="font-size: .75rem; letter-spacing: .05em;">AUTHENTICATED ACCOUNT</span>
+          <h1 class="fw-bold mb-1 h2" style="font-family: 'Nunito', sans-serif;">{{ user.username }}</h1>
+          <p class="mb-0 text-white-50 small"><i class="bi bi-envelope me-1"></i>{{ user.email|default:"No email set" }} &nbsp;•&nbsp; Member since {{ user.date_joined|date:"M Y" }}</p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+          <a href="{% url 'order_history' %}" class="btn btn-light rounded-pill px-4 fw-bold btn-sm shadow-sm" style="color: var(--g800);">
+            <i class="bi bi-bag me-1"></i>My Orders
+          </a>
+          <form action="{% url 'logout' %}" method="post" id="logoutFormAccount" class="d-inline m-0 p-0">
+            {% csrf_token %}
+            <button type="button" class="btn btn-outline-light rounded-pill px-4 fw-bold btn-sm" onclick="confirmLogout(document.getElementById('logoutFormAccount'))">
+              <i class="bi bi-box-arrow-right me-1"></i>Logout
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Stats Grid -->
+  <div class="row g-3 mb-4">
+    <div class="col-12 col-sm-4">
+      <div class="card border-0 shadow-sm rounded-4 p-3 text-center bg-white">
+        <div class="text-success mb-1" style="font-size: 1.8rem;"><i class="bi bi-box-seam"></i></div>
+        <h3 class="fw-bold h4 mb-0" style="color: var(--g800);">{{ order_count }}</h3>
+        <span class="text-muted small">Total Orders</span>
+      </div>
+    </div>
+    <div class="col-12 col-sm-4">
+      <div class="card border-0 shadow-sm rounded-4 p-3 text-center bg-white">
+        <div class="text-success mb-1" style="font-size: 1.8rem;"><i class="bi bi-currency-rupee"></i></div>
+        <h3 class="fw-bold h4 mb-0" style="color: var(--g800);">₹{{ total_spent }}</h3>
+        <span class="text-muted small">Lifetime Spent</span>
+      </div>
+    </div>
+    <div class="col-12 col-sm-4">
+      <div class="card border-0 shadow-sm rounded-4 p-3 text-center bg-white">
+        <div class="text-success mb-1" style="font-size: 1.8rem;"><i class="bi bi-cart3"></i></div>
+        <h3 class="fw-bold h4 mb-0" style="color: var(--g800);">{{ cart_item_count }}</h3>
+        <span class="text-muted small">Items in Cart</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Account Content -->
+  <div class="row g-4">
+    <!-- Left: Recent Orders -->
+    <div class="col-12 col-lg-8">
+      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+          <h2 class="h5 fw-bold mb-0" style="font-family: 'Nunito', sans-serif;"><i class="bi bi-clock-history text-success me-2"></i>Recent Orders</h2>
+          <a href="{% url 'order_history' %}" class="view-all-link">View All Orders <i class="bi bi-arrow-right"></i></a>
+        </div>
+
+        {% if recent_orders %}
+          {% for order in recent_orders %}
+          <div class="order-card mb-3 shadow-none border">
+            <div class="order-card-head py-2 px-3">
+              <div>
+                <span class="order-card-id">Order #{{ order.id }}</span>
+                <span class="order-card-date ms-2">{{ order.created_at|date:"d M Y, g:i A" }}</span>
+              </div>
+              <span class="order-status-pill s-{{ order.status }}">{{ order.get_status_display }}</span>
+            </div>
+            <div class="order-card-body p-3">
+              <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                  <small class="text-success fw-bold d-block"><i class="bi bi-lightning-charge-fill me-1"></i>{% if order.delivery_slot %}{{ order.delivery_slot.get_slot_display }}{% else %}⚡ Express Delivery (Under 45–60 Mins){% endif %}</small>
+                  <small class="text-muted d-block"><i class="bi bi-geo-alt me-1"></i>{{ order.address|truncatechars:45 }}</small>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                  <div class="fw-bold text-success" style="font-size: 1.1rem;">₹{{ order.total }}</div>
+                  {% if order.status == 'pending' or order.status == 'confirmed' %}
+                  <form action="{% url 'cancel_order' order.id %}" method="post" id="cancelFormAcc{{ order.id }}" class="d-inline m-0 p-0">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.path }}">
+                    <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold" onclick="confirmCancelAccountOrder('{{ order.id }}', document.getElementById('cancelFormAcc{{ order.id }}'))">Cancel</button>
+                  </form>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="text-center py-4">
+            <div class="mb-2" style="font-size: 2.5rem;">🛍️</div>
+            <p class="text-muted mb-3">You haven't placed any orders yet.</p>
+            <a href="{% url 'product_list' %}" class="btn-primary-pill">Start Shopping</a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Right: Account Quick Actions -->
+    <div class="col-12 col-lg-4">
+      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+        <h2 class="h5 fw-bold mb-3" style="font-family: 'Nunito', sans-serif;"><i class="bi bi-grid-fill text-success me-2"></i>Quick Actions</h2>
+        <div class="d-flex flex-column gap-2">
+          <a href="{% url 'cart' %}" class="btn btn-outline-success text-start rounded-3 p-3 d-flex align-items-center justify-content-between">
+            <span><i class="bi bi-cart3 me-2"></i>View Shopping Cart</span>
+            <i class="bi bi-chevron-right small"></i>
+          </a>
+          <a href="{% url 'product_list' %}" class="btn btn-outline-success text-start rounded-3 p-3 d-flex align-items-center justify-content-between">
+            <span><i class="bi bi-shop me-2"></i>Browse Groceries</span>
+            <i class="bi bi-chevron-right small"></i>
+          </a>
+          <a href="{% url 'recipes' %}" class="btn btn-outline-success text-start rounded-3 p-3 d-flex align-items-center justify-content-between">
+            <span><i class="bi bi-journal-richtext me-2"></i>View Recipes</span>
+            <i class="bi bi-chevron-right small"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% block extra_js %}
+<script>
+function confirmCancelAccountOrder(orderId, formEl) {
+  openConfirmModal({
+    title: 'Cancel Order #' + orderId,
+    message: 'Are you sure you want to cancel Order #' + orderId + '? All items will be returned to store stock.',
+    icon: '❌',
+    btnText: 'Yes, Cancel Order',
+    btnClass: 'btn-danger',
+    onConfirm: () => formEl.submit()
+  });
+}
+</script>
+{% endblock %}
+{% endblock %}

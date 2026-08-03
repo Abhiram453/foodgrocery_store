@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+{% block title %}{% if current_category %}{{ current_category.name }} – {% endif %}Shop Fresh Groceries | FoodBasket{% endblock %}
+
+{% block content %}
+<div class="shop-page">
+  <div class="container py-4 py-md-5">
+
+    <!-- Top Back Nav -->
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <button onclick="history.back()" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 fw-bold border-1 shadow-sm d-inline-flex align-items-center gap-1" style="font-size: .82rem;">
+        <i class="bi bi-arrow-left"></i> Back
+      </button>
+      <a href="{% url 'home' %}" class="text-muted small text-decoration-none d-inline-flex align-items-center gap-1">
+        <i class="bi bi-house-door"></i> Dashboard
+      </a>
+    </div>
+
+    <!-- Header -->
+    <div class="shop-header mb-4">
+      <div>
+        <h1 class="shop-page-title">
+          {% if current_category %}{{ current_category.icon }} {{ current_category.name }}
+          {% elif query %}Search: "{{ query }}"
+          {% else %}All Products{% endif %}
+        </h1>
+        <p class="shop-page-count">{{ products.count }} product{% if products.count != 1 %}s{% endif %} found</p>
+      </div>
+      <!-- Sort -->
+      <form method="get" id="sortForm" class="sort-form">
+        {% if query %}<input type="hidden" name="q" value="{{ query }}">{% endif %}
+        <select class="sort-select" name="sort" onchange="sortForm.submit()">
+          <option value="" {% if not sort %}selected{% endif %}>Default</option>
+          <option value="price_asc" {% if sort == 'price_asc' %}selected{% endif %}>Price ↑</option>
+          <option value="price_desc" {% if sort == 'price_desc' %}selected{% endif %}>Price ↓</option>
+          <option value="name" {% if sort == 'name' %}selected{% endif %}>A–Z</option>
+        </select>
+      </form>
+    </div>
+
+    <div class="row g-4">
+
+      <!-- Sidebar -->
+      <div class="col-lg-2 col-md-3 d-none d-md-block">
+        <div class="shop-sidebar">
+          <p class="sidebar-label">Categories</p>
+          <ul class="sidebar-list">
+            <li>
+              <a href="{% url 'product_list' %}{% if query %}?q={{ query }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}"
+                 class="sidebar-link {% if not current_category %}active{% endif %}">
+                🛍️ All Products
+              </a>
+            </li>
+            {% for cat in categories %}
+            <li>
+              <a href="{% url 'category_products' cat.slug %}{% if query %}?q={{ query }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}"
+                 class="sidebar-link {% if current_category.slug == cat.slug %}active{% endif %}">
+                {{ cat.icon }} {{ cat.name }}
+              </a>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+
+      <!-- Mobile category strip -->
+      <div class="col-12 d-md-none">
+        <div class="mobile-cat-strip">
+          <a href="{% url 'product_list' %}{% if query %}?q={{ query }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}" class="mob-cat-pill {% if not current_category %}active{% endif %}">All</a>
+          {% for cat in categories %}
+          <a href="{% url 'category_products' cat.slug %}{% if query %}?q={{ query }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}" class="mob-cat-pill {% if current_category.slug == cat.slug %}active{% endif %}">
+            {{ cat.icon }} {{ cat.name }}
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Products -->
+      <div class="col-lg-10 col-md-9 col-12">
+        {% if products %}
+        <div class="row g-3">
+          {% for product in products %}
+          <div class="col-6 col-sm-4 col-md-4 col-lg-3">
+            <div class="pcard">
+              {% if product.discount_price %}
+              <div class="pcard-badge">{{ product.discount_percent }}% OFF</div>
+              {% endif %}
+              <a href="{% url 'product_detail' product.slug %}" class="pcard-img-link">
+                <div class="pcard-img">
+                  {% if product.image %}
+                    <img src="{{ product.image.url }}" alt="{{ product.name }}" loading="lazy">
+                  {% else %}
+                    <div class="pcard-emoji">{{ product.category.icon }}</div>
+                  {% endif %}
+                </div>
+              </a>
+              <div class="pcard-body">
+                <span class="pcard-cat">{{ product.category.name }}</span>
+                <h3 class="pcard-name">
+                  <a href="{% url 'product_detail' product.slug %}">{{ product.name }}</a>
+                </h3>
+                <span class="pcard-unit">{{ product.get_unit_display }}</span>
+                <div class="pcard-footer">
+                  <div class="pcard-price-row">
+                    <span class="pcard-price">₹{{ product.effective_price }}</span>
+                    {% if product.discount_price %}<span class="pcard-old">₹{{ product.price }}</span>{% endif %}
+                  </div>
+                  {% if product.stock > 0 %}
+                  {% if user.is_authenticated %}
+                  <form action="{% url 'add_to_cart' product.id %}" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="quantity" value="1">
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    <button type="submit" class="pcard-add-btn" title="Add to cart">
+                      <i class="bi bi-cart-plus-fill"></i>
+                    </button>
+                  </form>
+                  {% else %}
+                  <a href="{% url 'login' %}?next={{ request.get_full_path }}" class="pcard-add-btn" title="Login to add to cart">
+                    <i class="bi bi-cart-plus-fill"></i>
+                  </a>
+                  {% endif %}
+                  {% else %}
+                  <span class="pcard-out">Out of Stock</span>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-results">
+          <div class="empty-results-icon">🔍</div>
+          <h3>Nothing found</h3>
+          <p>Try searching something else or browse a category.</p>
+          <a href="{% url 'product_list' %}" class="btn-primary-pill">Browse All Products</a>
+        </div>
+        {% endif %}
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

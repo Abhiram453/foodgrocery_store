@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block title %}Recipes | FoodBasket{% endblock %}
+
+{% block content %}
+<div class="container py-4 py-md-5">
+  <!-- Top Back Nav -->
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <button onclick="history.back()" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 fw-bold shadow-sm d-inline-flex align-items-center gap-1" style="font-size: .82rem;">
+      <i class="bi bi-arrow-left"></i> Back
+    </button>
+    <a href="{% url 'home' %}" class="text-muted small text-decoration-none d-inline-flex align-items-center gap-1">
+      <i class="bi bi-house-door"></i> Dashboard
+    </a>
+  </div>
+
+  <div class="text-center mb-5">
+    <span class="section-eyebrow">Cook at Home</span>
+    <h1 class="section-title mt-1">Recipe Collection</h1>
+    <p class="section-body-text" style="max-width:520px;margin:0 auto">
+      Add ingredients to your cart and we'll suggest the perfect recipes for you!
+    </p>
+  </div>
+
+  <div class="row g-4">
+    {% for recipe in recipes %}
+    <div class="col-12 col-sm-6 col-lg-4">
+      <div class="recipe-card">
+        <div class="recipe-card-top">{{ recipe.emoji }}</div>
+        <div class="recipe-card-body">
+          <h2 class="recipe-card-name">{{ recipe.name }}</h2>
+          <p class="recipe-card-desc">{{ recipe.description }}</p>
+          <div class="recipe-card-meta">
+            <span class="recipe-meta-chip"><i class="bi bi-clock me-1"></i>{{ recipe.prep_time }} min</span>
+            <span class="recipe-meta-chip"><i class="bi bi-people me-1"></i>{{ recipe.servings }} servings</span>
+          </div>
+          <div class="recipe-ingredients mt-3">
+            <div class="ingredient-label">Key Ingredients</div>
+            {% for tag in recipe.get_ingredient_tags %}
+            <span class="ingredient-chip">{{ tag }}</span>
+            {% endfor %}
+          </div>
+          <a href="{% url 'product_list' %}" class="recipe-shop-btn">
+            <i class="bi bi-cart-plus-fill"></i> Shop Ingredients
+          </a>
+        </div>
+      </div>
+    </div>
+    {% empty %}
+    <div class="col-12 text-center py-5">
+      <div style="font-size:3.5rem">🍽️</div>
+      <h3 class="mt-3">No recipes yet</h3>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

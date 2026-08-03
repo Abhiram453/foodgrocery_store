@@ -1,0 +1,253 @@
+{% extends 'base.html' %}
+{% block title %}Your Cart | FoodBasket{% endblock %}
+
+{% block content %}
+<div class="container py-4 py-md-5">
+  <!-- Top Back Nav -->
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <button onclick="history.back()" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 fw-bold shadow-sm d-inline-flex align-items-center gap-1" style="font-size: .82rem;">
+      <i class="bi bi-arrow-left"></i> Back
+    </button>
+    <a href="{% url 'home' %}" class="text-muted small text-decoration-none d-inline-flex align-items-center gap-1">
+      <i class="bi bi-house-door"></i> Dashboard
+    </a>
+  </div>
+
+  <h1 class="page-h1 mb-4"><i class="bi bi-cart3 me-2"></i>Your Cart</h1>
+
+  {% if cart_items %}
+  <div class="row g-4">
+
+    <!-- Cart Items + Coupon -->
+    <div class="col-12 col-lg-8">
+
+      <!-- Items -->
+      <div class="cart-box">
+        {% for item in cart_items %}
+        <div class="cart-row" id="cr{{ item.id }}">
+          <div class="cart-row-img">
+            {% if item.product.image %}
+              <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}">
+            {% else %}
+              <span class="cart-emoji">{{ item.product.category.icon }}</span>
+            {% endif %}
+          </div>
+          <div class="cart-row-info">
+            <div class="cart-row-name">{{ item.product.name }}</div>
+            <div class="cart-row-meta">{{ item.product.get_unit_display }} · {{ item.product.category.name }}</div>
+            <div class="cart-row-price">₹{{ item.product.effective_price }} each</div>
+          </div>
+          <div class="cart-row-right">
+            <div class="qty-stepper qty-stepper-sm">
+              <button class="qty-btn" onclick="updateCartQty({{ item.id }}, {{ item.quantity }} - 1)">−</button>
+              <span class="qty-field-sm" id="qty{{ item.id }}">{{ item.quantity }}</span>
+              <button class="qty-btn" onclick="updateCartQty({{ item.id }}, {{ item.quantity }} + 1)">+</button>
+            </div>
+            <div class="cart-row-subtotal" id="sub{{ item.id }}">₹{{ item.subtotal }}</div>
+            <button type="button" class="cart-remove-btn border-0 bg-transparent" title="Remove" onclick="confirmRemoveCartItem('{{ item.product.name|escapejs }}', '{% url 'remove_from_cart' item.id %}')">
+              <i class="bi bi-trash3"></i>
+            </button>
+          </div>
+        </div>
+        {% if not forloop.last %}<div class="cart-row-divider"></div>{% endif %}
+        {% endfor %}
+      </div>
+
+      <!-- Coupon -->
+      <div class="coupon-box mt-3">
+        <div class="coupon-box-head">
+          <i class="bi bi-ticket-perforated-fill me-2"></i>
+          <span>Apply Coupon</span>
+        </div>
+        {% if cart.coupon %}
+        <div class="coupon-applied">
+          <div class="coupon-applied-text">
+            <i class="bi bi-check-circle-fill text-success me-2"></i>
+            <strong>{{ cart.coupon.code }}</strong> — {{ cart.coupon.description }}
+          </div>
+          <a href="{% url 'remove_coupon' %}" class="coupon-remove-link">Remove</a>
+        </div>
+        {% else %}
+        <form id="couponForm" class="coupon-form">
+          {% csrf_token %}
+          <input type="text" id="couponInput" class="coupon-input" placeholder="Enter your coupon code" autocomplete="off">
+          <button type="submit" class="coupon-apply-btn">Apply</button>
+        </form>
+        <div id="couponMsg" class="coupon-msg-area"></div>
+        {% if active_coupons %}
+        <div class="coupon-hints mt-2">
+          <span class="hints-label">Available codes:</span>
+          {% for coupon in active_coupons %}
+          <button class="hint-pill" onclick="document.getElementById('couponInput').value='{{ coupon.code }}'">
+            {{ coupon.code }}
+          </button>
+          {% endfor %}
+        </div>
+        {% endif %}
+        {% endif %}
+      </div>
+
+      <!-- Continue shopping -->
+      <a href="{% url 'product_list' %}" class="continue-link mt-3">
+        <i class="bi bi-arrow-left me-1"></i>Continue Shopping
+      </a>
+    </div>
+
+    <!-- Summary -->
+    <div class="col-12 col-lg-4">
+      <div class="order-summary-box">
+        <h2 class="summary-heading">Order Summary</h2>
+
+        <div class="summary-line"><span>Subtotal</span><span id="sSubtotal">₹{{ cart.subtotal }}</span></div>
+        {% if cart.coupon %}
+        <div class="summary-line discount-line">
+          <span><i class="bi bi-tag-fill me-1"></i>Discount ({{ cart.coupon.code }})</span>
+          <span id="sDiscount">− ₹{{ cart.discount_amount }}</span>
+        </div>
+        {% else %}
+        <div class="summary-line discount-line d-none" id="discountLineRow">
+          <span><i class="bi bi-tag-fill me-1"></i>Discount</span>
+          <span id="sDiscount">− ₹0</span>
+        </div>
+        {% endif %}
+        <div class="summary-line">
+          <span><i class="bi bi-truck me-1"></i>Delivery</span>
+          <span id="sDelivery">
+            {% if cart.delivery_fee == 0 %}
+            <span class="free-badge">FREE</span>
+            {% else %}
+            ₹{{ cart.delivery_fee }}
+            {% endif %}
+          </span>
+        </div>
+
+        {% if cart.subtotal < 500 %}
+        <div class="free-delivery-nudge">
+          <i class="bi bi-info-circle me-1"></i>
+          Add ₹{{ 500|add:"-0" }} more for FREE delivery
+        </div>
+        {% endif %}
+
+        <div class="summary-divider"></div>
+        <div class="summary-total-line">
+          <span>Total</span>
+          <span id="sTotal">₹{{ cart.total }}</span>
+        </div>
+
+        <a href="{% url 'checkout' %}" class="checkout-btn mt-4">
+          <i class="bi bi-lock-fill me-2"></i>Proceed to Checkout
+        </a>
+        <p class="summary-secure-note"><i class="bi bi-shield-check me-1"></i>Secure & encrypted checkout</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recommended Recipes -->
+  {% if recipes %}
+  <div class="recipes-based-on-cart mt-5">
+    <div class="rbc-head">
+      <span class="rbc-emoji">🍳</span>
+      <div>
+        <h2 class="rbc-title">Cook With Your Cart!</h2>
+        <p class="rbc-sub">Recipes you can make with items already in your cart</p>
+      </div>
+    </div>
+    <div class="row g-3 mt-1">
+      {% for recipe in recipes %}
+      <div class="col-12 col-sm-6 col-md-4">
+        <div class="rbc-card">
+          <div class="rbc-card-emoji">{{ recipe.emoji }}</div>
+          <div class="rbc-card-body">
+            <h3 class="rbc-card-name">{{ recipe.name }}</h3>
+            <p class="rbc-card-desc">{{ recipe.description|truncatechars:90 }}</p>
+            <div class="rbc-card-meta">
+              <span><i class="bi bi-clock me-1"></i>{{ recipe.prep_time }} min</span>
+              <span><i class="bi bi-people me-1"></i>{{ recipe.servings }} servings</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% else %}
+  <!-- Empty Cart -->
+  <div class="empty-cart-state">
+    <div class="ecs-icon">🛒</div>
+    <h2>Your cart is empty</h2>
+    <p>Looks like you haven't added anything yet. Let's fix that!</p>
+    <a href="{% url 'product_list' %}" class="btn-primary-pill mt-3">
+      <i class="bi bi-bag-fill me-2"></i>Start Shopping
+    </a>
+  </div>
+  {% endif %}
+
+</div>
+
+{% block extra_js %}
+<script>
+const CSRF = '{{ csrf_token }}';
+
+function updateCartQty(id, qty) {
+  fetch('/cart/update/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+    body: JSON.stringify({ item_id: id, quantity: qty })
+  }).then(r => r.json()).then(data => {
+    if (!data.success) {
+      alert(data.error || 'Failed to update quantity.');
+      return;
+    }
+    if (qty <= 0) { location.reload(); return; }
+    document.getElementById('qty' + id).textContent = qty;
+    document.getElementById('sub' + id).textContent = '₹' + Math.round(data.item_subtotal);
+    document.getElementById('sSubtotal').textContent = '₹' + Math.round(data.cart_subtotal);
+    document.getElementById('sTotal').textContent = '₹' + Math.round(data.total);
+    const badge = document.getElementById('cartBadge');
+    if (badge) badge.textContent = data.item_count;
+  });
+}
+
+// Coupon
+const couponForm = document.getElementById('couponForm');
+if (couponForm) {
+  couponForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const code = document.getElementById('couponInput').value.trim();
+    if (!code) return;
+    const msg = document.getElementById('couponMsg');
+    msg.innerHTML = '<span class="coupon-loading">Checking…</span>';
+
+    fetch('/cart/apply-coupon/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': CSRF },
+      body: 'code=' + encodeURIComponent(code)
+    }).then(r => r.json()).then(data => {
+      if (data.success) {
+        msg.innerHTML = '<span class="coupon-success"><i class="bi bi-check-circle-fill me-1"></i>' + data.message + '</span>';
+        document.getElementById('sTotal').textContent = '₹' + Math.round(data.total);
+        const dr = document.getElementById('discountLineRow');
+        if (dr) { dr.classList.remove('d-none'); document.getElementById('sDiscount').textContent = '− ₹' + Math.round(data.discount); }
+        setTimeout(() => location.reload(), 1200);
+      } else {
+        msg.innerHTML = '<span class="coupon-error"><i class="bi bi-x-circle-fill me-1"></i>' + data.message + '</span>';
+      }
+    });
+  });
+}
+
+function confirmRemoveCartItem(name, removeUrl) {
+  openConfirmModal({
+    title: 'Remove Item',
+    message: 'Are you sure you want to remove <strong>' + name + '</strong> from your cart?',
+    icon: '🗑️',
+    btnText: 'Remove Item',
+    btnClass: 'btn-danger',
+    onConfirm: () => window.location.href = removeUrl
+  });
+}
+</script>
+{% endblock %}
+{% endblock %}

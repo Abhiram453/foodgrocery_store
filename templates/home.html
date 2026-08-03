@@ -1,0 +1,271 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}FoodBasket – Fresh Groceries Delivered to Your Door{% endblock %}
+
+{% block content %}
+
+{% if user.is_authenticated %}
+  <!-- ══════════════════════════════════════════
+       AUTHENTICATED USER SHOPPING DASHBOARD
+       ══════════════════════════════════════════ -->
+
+  <!-- Welcome Greeting Banner -->
+  <section class="py-4" style="background: linear-gradient(135deg, var(--g100), var(--g50)); border-bottom: 1px solid var(--border);">
+    <div class="container">
+      <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div>
+          <h1 class="fw-bold mb-1" style="font-family: 'Nunito', sans-serif; font-size: 1.6rem; color: var(--g900);">Hello, {{ user.username }}! 👋</h1>
+          <p class="text-muted mb-0" style="font-size: .88rem;">Sourced fresh, delivered on time. Let's fill your basket.</p>
+        </div>
+        <div class="d-flex gap-2">
+          <a href="{% url 'order_history' %}" class="btn btn-sm btn-outline-success px-3 rounded-pill fw-bold" style="font-size: .8rem; border-color: var(--g700); color: var(--g700);">
+            <i class="bi bi-clock-history me-1"></i>Track Orders
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Categories Grid -->
+  <section class="home-section py-4">
+    <div class="container">
+      <div class="section-head mb-3">
+        <div>
+          <span class="section-eyebrow">Quick Categories</span>
+          <h2 class="section-title" style="font-size: 1.3rem;">What are you shopping for?</h2>
+        </div>
+        <a href="{% url 'product_list' %}" class="view-all-link">All Products <i class="bi bi-arrow-right"></i></a>
+      </div>
+
+      {% if categories %}
+      <div class="row g-3 g-md-4">
+        {% for cat in categories %}
+        <div class="col-4 col-sm-4 col-md-2">
+          <a href="{% url 'category_products' cat.slug %}" class="cat-card">
+            <div class="cat-card-icon">{{ cat.icon }}</div>
+            <div class="cat-card-name">{{ cat.name }}</div>
+          </a>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+  </section>
+
+  <!-- Featured Products Grid -->
+  <section class="home-section bg-soft py-4">
+    <div class="container">
+      <div class="section-head mb-3">
+        <div>
+          <span class="section-eyebrow">Fresh Picks</span>
+          <h2 class="section-title" style="font-size: 1.3rem;">Popular Grocery Items</h2>
+        </div>
+        <a href="{% url 'product_list' %}" class="view-all-link">Browse All <i class="bi bi-arrow-right"></i></a>
+      </div>
+
+      {% if featured_products %}
+      <div class="row g-3">
+        {% for product in featured_products %}
+        <div class="col-6 col-md-4 col-lg-3">
+          <div class="pcard">
+            {% if product.discount_price %}
+            <div class="pcard-badge">{{ product.discount_percent }}% OFF</div>
+            {% endif %}
+            <a href="{% url 'product_detail' product.slug %}" class="pcard-img-link">
+              <div class="pcard-img">
+                {% if product.image %}
+                  <img src="{{ product.image.url }}" alt="{{ product.name }}" loading="lazy">
+                {% else %}
+                  <div class="pcard-emoji">{{ product.category.icon }}</div>
+                {% endif %}
+              </div>
+            </a>
+            <div class="pcard-body">
+              <span class="pcard-cat">{{ product.category.name }}</span>
+              <h3 class="pcard-name">
+                <a href="{% url 'product_detail' product.slug %}">{{ product.name }}</a>
+              </h3>
+              <span class="pcard-unit">{{ product.get_unit_display }}</span>
+              <div class="pcard-footer">
+                <div class="pcard-price-row">
+                  <span class="pcard-price">₹{{ product.effective_price }}</span>
+                  {% if product.discount_price %}<span class="pcard-old">₹{{ product.price }}</span>{% endif %}
+                </div>
+                <form action="{% url 'add_to_cart' product.id %}" method="post">
+                  {% csrf_token %}
+                  <input type="hidden" name="quantity" value="1">
+                  <input type="hidden" name="next" value="{{ request.path }}">
+                  <button type="submit" class="pcard-add-btn" title="Add to cart">
+                    <i class="bi bi-cart-plus-fill"></i>
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+  </section>
+
+  <!-- Recipe Teaser Section -->
+  {% if featured_recipes %}
+  <section class="home-section recipe-teaser-section py-4">
+    <div class="container">
+      <div class="row align-items-center g-4">
+        <div class="col-lg-5 col-12">
+          <span class="section-eyebrow">Cook Smarter</span>
+          <h2 class="section-title" style="font-size: 1.3rem;">Suggested Recipes</h2>
+          <p class="section-body-text" style="font-size: .88rem; margin: .5rem 0 1rem;">
+            Add items to your cart and we'll suggest recipes you can cook at home.
+          </p>
+          <a href="{% url 'recipes' %}" class="btn btn-success btn-sm rounded-pill px-3 fw-bold" style="background-color: var(--g700); border: none;">
+            <i class="bi bi-journal-richtext me-1"></i>View All Recipes
+          </a>
+        </div>
+        <div class="col-lg-7 col-12">
+          <div class="recipe-chip-grid">
+            {% for recipe in featured_recipes %}
+            <a href="{% url 'recipes' %}" class="recipe-chip-item">
+              <span>{{ recipe.emoji }} {{ recipe.name }}</span>
+              <small class="text-muted">{{ recipe.prep_time }} min</small>
+            </a>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- Coupons Marquee Ticker -->
+  {% if active_coupons %}
+  <div class="ticker-wrap border-top">
+    <div class="ticker-track">
+      {% for coupon in active_coupons %}
+      <span class="ticker-item"><i class="bi bi-tag-fill"></i> <strong>{{ coupon.code }}</strong> — {{ coupon.description }}</span>
+      <span class="ticker-sep">•</span>
+      {% endfor %}
+      {% for coupon in active_coupons %}
+      <span class="ticker-item"><i class="bi bi-tag-fill"></i> <strong>{{ coupon.code }}</strong> — {{ coupon.description }}</span>
+      <span class="ticker-sep">•</span>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+{% else %}
+  <!-- ══════════════════════════════════════════
+       GUEST MARKETING LANDING PAGE
+       ══════════════════════════════════════════ -->
+
+  <!-- Hero Marketing Section -->
+  <section class="hero">
+    <div class="hero-inner container">
+      <div class="row align-items-center">
+        <div class="col-lg-6 col-12 hero-text-col">
+          <div class="hero-pill mb-3">
+            <i class="bi bi-lightning-charge-fill"></i> Same-Day Delivery Available
+          </div>
+          <h1 class="hero-headline">
+            Fresh Groceries,<br>
+            <span class="hero-highlight">Right at Your Door</span>
+          </h1>
+          <p class="hero-sub">
+            Shop farm-fresh vegetables, organic dairy, seasonal fruits, bakery items and more. Log in to fill your basket!
+          </p>
+          <div class="hero-cta-row">
+            <a href="{% url 'login' %}" class="btn-primary-pill">
+              <i class="bi bi-box-arrow-in-right me-2"></i>Login to Shop
+            </a>
+            <a href="{% url 'register' %}" class="btn-outline-pill">
+              <i class="bi bi-person-plus me-2"></i>Register Now
+            </a>
+          </div>
+        </div>
+
+        <div class="col-lg-6 col-12 hero-visual-col d-none d-lg-flex">
+          <div class="hero-visual">
+            <div class="hero-blob-bg"></div>
+            <div class="hero-float-grid">
+              <div class="hf-item hf-1"><span>🍎</span><small>Fruits</small></div>
+              <div class="hf-item hf-2"><span>🥦</span><small>Veggies</small></div>
+              <div class="hf-item hf-3"><span>🥛</span><small>Dairy</small></div>
+              <div class="hf-item hf-4"><span>🍞</span><small>Bakery</small></div>
+              <div class="hf-item hf-5"><span>🧃</span><small>Drinks</small></div>
+              <div class="hf-item hf-6"><span>🍿</span><small>Snacks</small></div>
+            </div>
+            <div class="hero-delivery-card">
+              <div class="hdc-icon">🚚</div>
+              <div>
+                <div class="hdc-title">Express Delivery</div>
+                <div class="hdc-sub">Free on orders ₹500+</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="hero-wave-bottom">
+      <svg viewBox="0 0 1440 60" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+        <path d="M0,30 C360,60 1080,0 1440,30 L1440,60 L0,60Z" fill="#faf9f7"/>
+      </svg>
+    </div>
+  </section>
+
+  <!-- Coupons Marquee Ticker -->
+  {% if active_coupons %}
+  <div class="ticker-wrap">
+    <div class="ticker-track">
+      {% for coupon in active_coupons %}
+      <span class="ticker-item"><i class="bi bi-tag-fill"></i> <strong>{{ coupon.code }}</strong> — {{ coupon.description }}</span>
+      <span class="ticker-sep">•</span>
+      {% endfor %}
+      {% for coupon in active_coupons %}
+      <span class="ticker-item"><i class="bi bi-tag-fill"></i> <strong>{{ coupon.code }}</strong> — {{ coupon.description }}</span>
+      <span class="ticker-sep">•</span>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Trust Value Props Section -->
+  <section class="trust-strip">
+    <div class="container">
+      <div class="row g-3 text-center">
+        <div class="col-6 col-md-3">
+          <div class="trust-item">
+            <div class="trust-icon">🌱</div>
+            <div class="trust-label">100% Farm Fresh</div>
+            <div class="trust-sub">Direct from local farms</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="trust-item">
+            <div class="trust-icon">⚡</div>
+            <div class="trust-label">Same-Day Delivery</div>
+            <div class="trust-sub">3 time slots daily</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="trust-item">
+            <div class="trust-icon">🏷️</div>
+            <div class="trust-label">Best Prices</div>
+            <div class="trust-sub">Coupons + daily deals</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="trust-item">
+            <div class="trust-icon">🔒</div>
+            <div class="trust-label">Safe Checkout</div>
+            <div class="trust-sub">Encrypted payments</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+{% endif %}
+
+{% endblock %}

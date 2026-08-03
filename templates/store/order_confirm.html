@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% block title %}Order #{{ order.id }} Confirmed | FoodBasket{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="order-confirm-wrap">
+
+    <div class="oc-success-icon">✅</div>
+    <h1 class="oc-title">Order Confirmed!</h1>
+    <p class="oc-sub mt-2">
+      Hey <strong>{{ order.user.username }}</strong>, your order <strong>#{{ order.id }}</strong> has been placed. We'll deliver it fresh!
+    </p>
+
+    <div class="oc-card mt-4">
+      <!-- Delivery info -->
+      <div class="oc-section">
+        <div class="oc-section-label">Delivery Details</div>
+        <div class="oc-detail"><i class="bi bi-geo-alt-fill"></i><span>{{ order.address }}</span></div>
+        <div class="oc-detail"><i class="bi bi-telephone-fill"></i><span>+91 {{ order.phone }}</span></div>
+        <div class="oc-detail"><i class="bi bi-calendar-check-fill"></i><span>{{ order.delivery_slot.get_slot_display }} · {{ order.delivery_slot.date|date:"D, d M Y" }}</span></div>
+      </div>
+
+      <!-- Items -->
+      <div class="oc-section">
+        <div class="oc-section-label">Items Ordered</div>
+        {% for item in order.items.all %}
+        <div class="oc-item-row">
+          <span>{{ item.product_name }} <span class="oc-item-qty">× {{ item.quantity }}</span></span>
+          <span>₹{{ item.subtotal }}</span>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Price breakdown -->
+      <div class="oc-section">
+        <div class="oc-section-label">Price Breakdown</div>
+        <div class="oc-price-row"><span>Subtotal</span><span>₹{{ order.subtotal }}</span></div>
+        {% if order.discount_amount %}
+        <div class="oc-price-row" style="color:var(--g700)"><span>Discount</span><span>−₹{{ order.discount_amount }}</span></div>
+        {% endif %}
+        <div class="oc-price-row"><span>Delivery</span><span>{% if order.delivery_fee == 0 %}FREE{% else %}₹{{ order.delivery_fee }}{% endif %}</span></div>
+        <div class="oc-price-row total-row"><span>Total Paid</span><span>₹{{ order.total }}</span></div>
+      </div>
+    </div>
+
+    <!-- Status tracker -->
+    <div class="status-tracker">
+      <div class="st-step done">
+        <div class="st-step-icon"><i class="bi bi-check-circle-fill"></i></div>
+        <div class="st-step-label">Placed</div>
+      </div>
+      <div class="st-line"></div>
+      <div class="st-step">
+        <div class="st-step-icon"><i class="bi bi-box-seam"></i></div>
+        <div class="st-step-label">Confirmed</div>
+      </div>
+      <div class="st-line"></div>
+      <div class="st-step">
+        <div class="st-step-icon"><i class="bi bi-truck"></i></div>
+        <div class="st-step-label">Out for Delivery</div>
+      </div>
+      <div class="st-line"></div>
+      <div class="st-step">
+        <div class="st-step-icon"><i class="bi bi-house-check"></i></div>
+        <div class="st-step-label">Delivered</div>
+      </div>
+    </div>
+
+    <div class="d-flex flex-wrap justify-content-center gap-3 mt-4">
+      <a href="{% url 'order_history' %}" class="btn-primary-pill">
+        <i class="bi bi-bag me-2"></i>View My Orders
+      </a>
+      <a href="{% url 'product_list' %}" class="btn-outline-pill" style="color:var(--g700);border-color:var(--g700);background:transparent">
+        <i class="bi bi-bag-plus me-2"></i>Continue Shopping
+      </a>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

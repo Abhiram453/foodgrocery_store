@@ -1,0 +1,375 @@
+{% extends 'base.html' %}
+{% block title %}Checkout | FoodBasket{% endblock %}
+
+{% block content %}
+<div class="container py-4 py-md-5">
+  <!-- Top Back Nav -->
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <button onclick="history.back()" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 fw-bold shadow-sm d-inline-flex align-items-center gap-1" style="font-size: .82rem;">
+      <i class="bi bi-arrow-left"></i> Back
+    </button>
+    <a href="{% url 'cart' %}" class="text-muted small text-decoration-none d-inline-flex align-items-center gap-1">
+      <i class="bi bi-cart3"></i> Back to Cart
+    </a>
+  </div>
+
+  <h1 class="page-h1 mb-4"><i class="bi bi-bag-check-fill me-2"></i>Checkout</h1>
+
+  <form method="post" id="checkoutForm" novalidate>
+    {% csrf_token %}
+    <div class="row g-4">
+
+      <!-- LEFT: Address + Slot + Payment -->
+      <div class="col-12 col-lg-8">
+
+        <!-- Address Card -->
+        <div class="checkout-card mb-4">
+          <div class="checkout-card-head">
+            <span class="cc-icon">📍</span>
+            <h2 class="cc-title">Delivery Address</h2>
+          </div>
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="fb-label">Full Address <span class="required">*</span></label>
+              <textarea name="address" class="fb-input" rows="3" placeholder="House number, Street, Area, City, Pincode" required></textarea>
+            </div>
+            <div class="col-12 col-sm-6">
+              <label class="fb-label">Phone Number <span class="required">*</span></label>
+              <div class="phone-input-group">
+                <span class="phone-prefix">+91</span>
+                <input type="tel" name="phone" class="fb-input phone-field" placeholder="98765 43210" maxlength="10" required>
+              </div>
+            </div>
+            <div class="col-12 col-sm-6">
+              <label class="fb-label">Delivery Notes <span class="optional">(optional)</span></label>
+              <input type="text" name="notes" class="fb-input" placeholder="e.g. Leave at door / ring bell">
+            </div>
+          </div>
+        </div>
+
+        <!-- Delivery Option Card (Express Default, Slots Optional) -->
+        <div class="checkout-card mb-4">
+          <div class="checkout-card-head d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-2">
+              <span class="cc-icon">🚀</span>
+              <h2 class="cc-title">Delivery Option</h2>
+            </div>
+            <span class="badge bg-success bg-opacity-10 text-success fw-bold px-3 py-1 rounded-pill" style="font-size: .78rem;">Local Fast Delivery</span>
+          </div>
+
+          <input type="hidden" name="slot_id" id="selectedSlotId" value="express">
+
+          <!-- Delivery Mode Options -->
+          <div class="row g-3 mb-3">
+            <div class="col-12 col-sm-6">
+              <div class="slot-tile w-100 text-start p-3 selected" id="opt_express" onclick="setDeliveryMode('express')" style="cursor: pointer;">
+                <div class="d-flex align-items-center gap-2 mb-1">
+                  <span class="fs-5">⚡</span>
+                  <span class="fw-bold text-success" style="font-size: .95rem;">Express Delivery</span>
+                </div>
+                <div class="text-muted" style="font-size: .8rem;">Delivered within <strong>45–60 minutes</strong></div>
+              </div>
+            </div>
+            <div class="col-12 col-sm-6">
+              <div class="slot-tile w-100 text-start p-3" id="opt_schedule" onclick="setDeliveryMode('schedule')" style="cursor: pointer;">
+                <div class="d-flex align-items-center gap-2 mb-1">
+                  <span class="fs-5">📅</span>
+                  <span class="fw-bold" style="font-size: .95rem; color: var(--ink);">Schedule for Later</span>
+                </div>
+                <div class="text-muted" style="font-size: .8rem;">Choose a specific time slot (Optional)</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Specific Slot Picker (Visible when Schedule is selected) -->
+          <div id="scheduleSlotsContainer" class="d-none mt-3 pt-3 border-top">
+            <p class="cc-subtitle mb-3 fw-bold text-dark">Select an optional time slot for your order:</p>
+            {% regroup slots by date as slots_by_date %}
+            {% for date_group in slots_by_date %}
+            <div class="slot-group mb-3">
+              <div class="slot-group-date">
+                {% if forloop.first %}Today
+                {% elif forloop.counter == 2 %}Tomorrow
+                {% else %}{{ date_group.grouper|date:"D, d M" }}{% endif %}
+              </div>
+              <div class="row g-2">
+                {% for slot in date_group.list %}
+                <div class="col-12 col-sm-4">
+                  <div class="slot-tile slot-time-choice {% if not slot.is_available %}slot-tile-full{% endif %}"
+                       id="slt{{ slot.id }}"
+                       onclick="{% if slot.is_available %}pickSlot({{ slot.id }}, this){% endif %}">
+                    <div class="slot-tile-time">{{ slot.get_slot_display }}</div>
+                    {% if slot.is_available %}
+                    <div class="slot-tile-avail">{{ slot.slots_remaining }} slots left</div>
+                    {% else %}
+                    <div class="slot-tile-full-text">Fully Booked</div>
+                    {% endif %}
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- Payment Method Card -->
+        <div class="checkout-card mb-4">
+          <div class="checkout-card-head">
+            <span class="cc-icon">💳</span>
+            <h2 class="cc-title">Payment Method</h2>
+          </div>
+          <p class="cc-subtitle">Choose how you would like to pay for your groceries.</p>
+
+          <div class="row g-3">
+            <div class="col-12 col-sm-6">
+              <div class="slot-tile w-100 text-start d-flex align-items-center gap-3 selected" id="pm_cod_label" onclick="selectPaymentMethod('COD')" style="cursor: pointer;">
+                <input type="radio" name="payment_method" id="pay_cod" value="COD" checked style="transform: scale(1.2); pointer-events: none;">
+                <div>
+                  <div class="fw-bold" style="font-size: .88rem; color: var(--ink);">Cash on Delivery (COD)</div>
+                  <div class="text-muted" style="font-size: .75rem;">Pay in cash or UPI upon delivery</div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="col-12 col-sm-6">
+              <div class="slot-tile w-100 text-start d-flex align-items-center gap-3" id="pm_online_label" onclick="selectPaymentMethod('ONLINE')" style="cursor: pointer;">
+                <input type="radio" name="payment_method" id="pay_online" value="ONLINE" style="transform: scale(1.2); pointer-events: none;">
+                <div>
+                  <div class="fw-bold" style="font-size: .88rem; color: var(--ink);">Pay Online (Demo Card)</div>
+                  <div class="text-muted" style="font-size: .75rem;">Simulate online credit/debit card</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Mock Card Form -->
+          <div id="cardFormContainer" class="d-none mt-4 p-3 border rounded" style="background: var(--bg); border-color: var(--border) !important;">
+            <h5 class="fw-bold mb-3" style="font-size: .95rem; font-family: 'Nunito', sans-serif;"><i class="bi bi-credit-card-2-front me-2 text-success"></i>Enter Card Details</h5>
+            <div class="row g-3">
+              <div class="col-12">
+                <label class="fb-label">Card Number <span class="required">*</span></label>
+                <input type="text" id="cardNumber" class="fb-input" placeholder="4111 2222 3333 4444" maxlength="19">
+              </div>
+              <div class="col-6">
+                <label class="fb-label">Expiry Date <span class="required">*</span></label>
+                <input type="text" id="cardExpiry" class="fb-input" placeholder="MM/YY" maxlength="5">
+              </div>
+              <div class="col-6">
+                <label class="fb-label">CVV <span class="required">*</span></label>
+                <input type="password" id="cardCvv" class="fb-input" placeholder="123" maxlength="3">
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT: Summary -->
+      <div class="col-12 col-lg-4">
+        <div class="order-summary-box sticky-lg-top" style="top:90px;">
+          <h2 class="summary-heading">Order Summary</h2>
+
+          <div class="checkout-items-list">
+            {% for item in cart.items.all %}
+            <div class="checkout-item-row">
+              <span class="ci-name">{{ item.product.name }}</span>
+              <span class="ci-qty">x{{ item.quantity }}</span>
+              <span class="ci-price">₹{{ item.subtotal }}</span>
+            </div>
+            {% endfor %}
+          </div>
+
+          <div class="summary-divider"></div>
+
+          <div class="summary-line">
+            <span>Subtotal</span>
+            <span>₹{{ cart.subtotal }}</span>
+          </div>
+
+          {% if cart.discount_amount %}
+          <div class="summary-line discount-line">
+            <span>Coupon Discount</span>
+            <span>-₹{{ cart.discount_amount }}</span>
+          </div>
+          {% endif %}
+
+          <div class="summary-line">
+            <span>Delivery Fee</span>
+            {% if cart.subtotal >= 500 %}
+              <span class="free-badge">FREE</span>
+            {% else %}
+              <span>₹40</span>
+            {% endif %}
+          </div>
+
+          <div class="summary-divider"></div>
+
+          <div class="summary-total-line">
+            <span>Total Payable</span>
+            <span style="color: var(--g700); font-size: 1.25rem;">₹{{ cart.total }}</span>
+          </div>
+
+          <button type="submit" class="checkout-btn mt-3">
+            <i class="bi bi-shield-check me-2"></i>Confirm & Place Order (₹{{ cart.total }})
+          </button>
+
+          <p class="summary-secure-note mt-2">
+            <i class="bi bi-lock-fill me-1"></i>Safe & Encrypted Local Checkout
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </form>
+</div>
+
+{% block extra_js %}
+<script>
+function setDeliveryMode(mode) {
+  const optExpress = document.getElementById('opt_express');
+  const optSchedule = document.getElementById('opt_schedule');
+  const scheduleContainer = document.getElementById('scheduleSlotsContainer');
+  const hiddenInput = document.getElementById('selectedSlotId');
+
+  if (mode === 'express') {
+    optExpress.classList.add('selected');
+    optSchedule.classList.remove('selected');
+    scheduleContainer.classList.add('d-none');
+    hiddenInput.value = 'express';
+  } else {
+    optExpress.classList.remove('selected');
+    optSchedule.classList.add('selected');
+    scheduleContainer.classList.remove('d-none');
+    hiddenInput.value = '';
+  }
+}
+
+function pickSlot(id, el) {
+  document.querySelectorAll('.slot-time-choice').forEach(t => t.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('selectedSlotId').value = id;
+}
+
+function selectPaymentMethod(method) {
+  const codLabel = document.getElementById('pm_cod_label');
+  const onlineLabel = document.getElementById('pm_online_label');
+  const cardForm = document.getElementById('cardFormContainer');
+  const radioCod = document.getElementById('pay_cod');
+  const radioOnline = document.getElementById('pay_online');
+
+  if (method === 'COD') {
+    codLabel.classList.add('selected');
+    onlineLabel.classList.remove('selected');
+    cardForm.classList.add('d-none');
+    radioCod.checked = true;
+    radioOnline.checked = false;
+  } else {
+    codLabel.classList.remove('selected');
+    onlineLabel.classList.add('selected');
+    cardForm.classList.remove('d-none');
+    radioCod.checked = false;
+    radioOnline.checked = true;
+  }
+}
+
+// Format card number with spaces every 4 digits
+document.getElementById('cardNumber').addEventListener('input', function (e) {
+  let val = e.target.value.replace(/\D/g, '');
+  let formatted = '';
+  for (let i = 0; i < val.length; i++) {
+    if (i > 0 && i % 4 === 0) formatted += ' ';
+    formatted += val[i];
+  }
+  e.target.value = formatted.substring(0, 19);
+});
+
+// Format expiry input with a slash (MM/YY)
+document.getElementById('cardExpiry').addEventListener('input', function (e) {
+  let val = e.target.value.replace(/\D/g, '');
+  if (val.length >= 2) {
+    e.target.value = val.substring(0, 2) + '/' + val.substring(2, 4);
+  } else {
+    e.target.value = val;
+  }
+});
+
+// Ensure CVV is numbers only
+document.getElementById('cardCvv').addEventListener('input', function (e) {
+  e.target.value = e.target.value.replace(/\D/g, '').substring(0, 3);
+});
+
+let formConfirmed = false;
+
+document.getElementById('checkoutForm').addEventListener('submit', function(e) {
+  if (formConfirmed) return; // Allow form to submit after modal confirmation
+
+  // Validate address field
+  const addressText = document.querySelector('textarea[name="address"]').value.trim();
+  const phoneText = document.querySelector('input[name="phone"]').value.trim();
+
+  if (!addressText || !phoneText) {
+    e.preventDefault();
+    openConfirmModal({
+      title: 'Missing Required Fields',
+      message: 'Please enter your full delivery address and 10-digit phone number to proceed.',
+      icon: '📍',
+      btnText: 'OK, Got It',
+      btnClass: 'btn-success',
+      onConfirm: () => {}
+    });
+    return;
+  }
+
+  if (phoneText.length !== 10) {
+    e.preventDefault();
+    openConfirmModal({
+      title: 'Invalid Phone Number',
+      message: 'Please enter a valid 10-digit mobile phone number.',
+      icon: '📱',
+      btnText: 'OK, Got It',
+      btnClass: 'btn-success',
+      onConfirm: () => {}
+    });
+    return;
+  }
+
+  // Validate Card Details if ONLINE is selected
+  const radioOnline = document.getElementById('pay_online');
+  if (radioOnline.checked) {
+    const cardNum = document.getElementById('cardNumber').value.replace(/\s/g, '');
+    const expiry = document.getElementById('cardExpiry').value;
+    const cvv = document.getElementById('cardCvv').value;
+
+    if (cardNum.length !== 16 || expiry.length !== 5 || cvv.length !== 3) {
+      e.preventDefault();
+      openConfirmModal({
+        title: 'Invalid Card Details',
+        message: 'Please enter valid 16-digit card number, MM/YY expiry date, and 3-digit CVV.',
+        icon: '💳',
+        btnText: 'OK, Fix Card Info',
+        btnClass: 'btn-success',
+        onConfirm: () => {}
+      });
+      return;
+    }
+  }
+
+  // Modern Confirmation Modal before order creation
+  e.preventDefault();
+  const self = this;
+  openConfirmModal({
+    title: 'Confirm & Place Order',
+    message: 'Are you sure you want to place this order for <strong>₹{{ cart.total }}</strong>?',
+    icon: '🛍️',
+    btnText: 'Yes, Place Order (₹{{ cart.total }})',
+    btnClass: 'btn-success',
+    onConfirm: () => {
+      formConfirmed = true;
+      self.submit();
+    }
+  });
+});
+</script>
+{% endblock %}
+{% endblock %}
