@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: foodbasket_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_DB=foodbasket_db
+      - POSTGRES_USER=foodbasket_user
+      - POSTGRES_PASSWORD=foodbasket_secure_pass
+    ports:
+      - "5432:5432"
+
+  web:
+    build: .
+    container_name: foodbasket_web
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=True
+      - DATABASE_URL=postgres://foodbasket_user:foodbasket_secure_pass@db:5432/foodbasket_db
+    depends_on:
+      - db
+
+volumes:
+  postgres_data:

@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}Super Admin Login | FoodBasket{% endblock %}
+
+{% block content %}
+<div class="auth-page-wrap" style="background: linear-gradient(135deg, #1c2d3d, #0f172a);">
+  <div class="auth-card shadow-lg p-5 rounded-4 bg-white" style="max-width: 480px; width: 100%;">
+    <div class="text-center mb-4">
+      <div class="auth-logo mb-2" style="font-size: 3.2rem;">👑</div>
+      <h1 class="auth-title fw-bold" style="font-family: 'Nunito', sans-serif; font-size: 1.8rem; color: #0f172a;">Super Admin</h1>
+      <p class="auth-subtitle text-muted">Authenticate to access control panel and monitor performance</p>
+    </div>
+
+    <form method="post" id="superAdminLoginForm">
+      {% csrf_token %}
+      
+      <div class="mb-3">
+        <label class="auth-label fw-bold text-muted small" for="id_username">SUPERUSER USERNAME</label>
+        <div class="auth-input-group position-relative">
+          <i class="bi bi-shield-lock position-absolute" style="left: 15px; top: 12px; color: #aaa;"></i>
+          <input type="text" name="username" id="id_username" class="form-control ps-5 py-2.5 rounded-3" placeholder="Enter admin username" autofocus required style="border: 1.5px solid #eee;">
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <label class="auth-label fw-bold text-muted small" for="id_password">SECRET PASSWORD</label>
+        <div class="auth-input-group position-relative">
+          <i class="bi bi-key position-absolute" style="left: 15px; top: 12px; color: #aaa;"></i>
+          <input type="password" name="password" id="id_password" class="form-control ps-5 py-2.5 rounded-3" placeholder="Enter secret password" required style="border: 1.5px solid #eee;">
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-dark w-100 py-2.5 rounded-3 fw-bold shadow-sm" style="background-color: #0f172a; border: none;">
+        <i class="bi bi-lock-fill me-2"></i>Access Admin Panel
+      </button>
+    </form>
+
+    <div class="text-center mt-4 border-top pt-3">
+      <p class="text-muted small mb-0">
+        Unauthorized access attempts will be logged.
+      </p>
+      <p class="text-muted small mt-2 mb-0">
+        Are you a customer? <a href="{% url 'login' %}" class="text-decoration-none">Back to Customer Login</a>
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}

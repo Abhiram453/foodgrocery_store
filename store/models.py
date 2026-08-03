@@ -10,16 +10,37 @@ class UserProfile(models.Model):
     ROLE_CHOICES = [
         ('customer', 'Customer'),
         ('vendor', 'Vendor'),
-        ('admin', 'Admin'),
+        ('superadmin', 'Super Admin'),
     ]
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='customer')
     email_verified = models.BooleanField(default=False)
     phone = models.CharField(max_length=15, blank=True)
+    otp_code = models.CharField(max_length=6, blank=True, null=True)
+    otp_expiry = models.DateTimeField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.user.username} ({self.role})"
+
+
+class VendorProfile(models.Model):
+    STATUS_CHOICES = [
+        ('pending', '⏳ Pending Approval'),
+        ('approved', '✅ Approved'),
+        ('rejected', '❌ Rejected'),
+    ]
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='vendor_profile')
+    shop_name = models.CharField(max_length=255)
+    shop_address = models.TextField()
+    pincode = models.CharField(max_length=10)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    assigned_area = models.CharField(max_length=255, blank=True, null=True, help_text="Pincodes or delivery areas assigned to this vendor")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.shop_name} ({self.get_status_display()})"
 
 
 @receiver(post_save, sender=User)

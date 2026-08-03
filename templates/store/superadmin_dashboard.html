@@ -1,0 +1,179 @@
+{% extends 'base.html' %}
+{% block title %}Super Admin Control Panel | FoodBasket{% endblock %}
+
+{% block content %}
+<div class="container py-4 py-md-5">
+  <!-- Admin Welcome Header -->
+  <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 bg-dark text-white">
+    <div class="card-body p-4 p-md-5">
+      <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <div>
+          <span class="badge bg-primary bg-opacity-25 text-primary mb-2 px-3 py-1 rounded-pill" style="font-size: .75rem; letter-spacing: .05em;">GLOBAL ADMINISTRATION</span>
+          <h1 class="fw-bold mb-1 h2" style="font-family: 'Nunito', sans-serif;">Super Admin Dashboard</h1>
+          <p class="mb-0 text-white-50 small">Manage vendor approvals, assign regional pincodes, and monitor store metrics.</p>
+        </div>
+        <div class="d-flex gap-2">
+          <a href="/admin/" class="btn btn-primary rounded-pill px-4 fw-bold btn-sm shadow-sm">
+            <i class="bi bi-shield-fill-check me-1"></i>Django Admin Panel
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Global Metrics Grid -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm rounded-4 p-3 text-center bg-white">
+        <div class="text-primary mb-1" style="font-size: 1.8rem;"><i class="bi bi-wallet2"></i></div>
+        <h3 class="fw-bold h4 mb-0" style="color: var(--ink);">₹{{ total_sales }}</h3>
+        <span class="text-muted small">Total Delivered Sales</span>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm rounded-4 p-3 text-center bg-white">
+        <div class="text-success mb-1" style="font-size: 1.8rem;"><i class="bi bi-cart-check"></i></div>
+        <h3 class="fw-bold h4 mb-0" style="color: var(--ink);">{{ total_orders }}</h3>
+        <span class="text-muted small">Total Orders Logged</span>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm rounded-4 p-3 text-center bg-white">
+        <div class="text-info mb-1" style="font-size: 1.8rem;"><i class="bi bi-people"></i></div>
+        <h3 class="fw-bold h4 mb-0" style="color: var(--ink);">{{ total_users }}</h3>
+        <span class="text-muted small">Registered Users</span>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm rounded-4 p-3 text-center bg-white">
+        <div class="text-secondary mb-1" style="font-size: 1.8rem;"><i class="bi bi-shop"></i></div>
+        <h3 class="fw-bold h4 mb-0" style="color: var(--ink);">{{ approved_vendors.count }}</h3>
+        <span class="text-muted small">Approved Active Shops</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 1. Pending Vendor Approvals -->
+  <div class="card border-0 shadow-sm rounded-4 bg-white p-4 mb-4">
+    <h2 class="h5 fw-bold mb-3" style="font-family: 'Nunito', sans-serif;"><i class="bi bi-hourglass-split text-warning me-2"></i>Pending Vendor Registration Requests</h2>
+    <div class="table-responsive">
+      <table class="table align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Vendor Name</th>
+            <th>Shop Name</th>
+            <th>Shop Address</th>
+            <th>Pincode</th>
+            <th class="text-end">Approval Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for vendor in pending_vendors %}
+          <tr>
+            <td><strong class="text-dark">{{ vendor.user.username }}</strong><small class="text-muted d-block">{{ vendor.user.email }}</small></td>
+            <td>{{ vendor.shop_name }}</td>
+            <td>{{ vendor.shop_address }}</td>
+            <td><span class="badge bg-light text-dark border">{{ vendor.pincode }}</span></td>
+            <td class="text-end">
+              <div class="d-inline-flex gap-2">
+                <form method="post" action="{% url 'superadmin_approve_vendor' vendor.id %}" class="m-0 p-0">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-success btn-sm rounded-pill px-3 fw-bold">Approve</button>
+                </form>
+                <form method="post" action="{% url 'superadmin_reject_vendor' vendor.id %}" class="m-0 p-0">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3">Reject</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="text-center py-4 text-muted small">No pending vendor approval requests.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 2. Active Vendor Management -->
+  <div class="card border-0 shadow-sm rounded-4 bg-white p-4 mb-4">
+    <h2 class="h5 fw-bold mb-3" style="font-family: 'Nunito', sans-serif;"><i class="bi bi-check-circle-fill text-success me-2"></i>Approved & Active Partners</h2>
+    <div class="table-responsive">
+      <table class="table align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Shop Name</th>
+            <th>Pincode</th>
+            <th>Owner</th>
+            <th>Assigned Area</th>
+            <th class="text-end">Pincode / Area Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for vendor in approved_vendors %}
+          <tr>
+            <td><strong class="text-dark">{{ vendor.shop_name }}</strong></td>
+            <td><span class="badge bg-light text-dark border">{{ vendor.pincode }}</span></td>
+            <td>{{ vendor.user.username }}</td>
+            <td>
+              {% if vendor.assigned_area %}
+                <span class="badge bg-success bg-opacity-10 text-success fw-bold">{{ vendor.assigned_area }}</span>
+              {% else %}
+                <span class="text-muted small">None Assigned</span>
+              {% endif %}
+            </td>
+            <td class="text-end">
+              <!-- Assign Area Form Inline -->
+              <form method="post" action="{% url 'superadmin_assign_area' vendor.id %}" class="d-flex align-items-center justify-content-end gap-2 m-0 p-0">
+                {% csrf_token %}
+                <input type="text" name="assigned_area" class="form-control form-control-sm" placeholder="e.g. Area Code or local regions" style="max-width: 180px;" value="{{ vendor.assigned_area|default:'' }}">
+                <button type="submit" class="btn btn-sm btn-outline-success rounded-pill px-3">Save</button>
+              </form>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="text-center py-4 text-muted small">No active approved shops.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 3. Recent Global Transactions -->
+  <div class="card border-0 shadow-sm rounded-4 bg-white p-4">
+    <h2 class="h5 fw-bold mb-3" style="font-family: 'Nunito', sans-serif;"><i class="bi bi-clock-history text-primary me-2"></i>Recent Transactions</h2>
+    <div class="table-responsive">
+      <table class="table align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Order ID</th>
+            <th>Customer</th>
+            <th>Total Amount</th>
+            <th>Status</th>
+            <th>Date Placed</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for order in recent_orders %}
+          <tr>
+            <td><strong class="text-dark">#{{ order.id }}</strong></td>
+            <td>{{ order.user.username }}</td>
+            <td class="fw-bold text-success">₹{{ order.total }}</td>
+            <td><span class="order-status-pill s-{{ order.status }}">{{ order.get_status_display }}</span></td>
+            <td class="text-muted small">{{ order.created_at|date:"d M Y, g:i A" }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="text-center py-4 text-muted small">No transactions logged yet.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

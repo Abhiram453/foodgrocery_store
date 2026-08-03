@@ -61,12 +61,13 @@
 
     <div class="collapse navbar-collapse" id="navbarMain">
       <!-- Search -->
-      <form class="nav-search-form ms-lg-4 me-auto" action="{% url 'product_list' %}" method="get">
+      <form class="nav-search-form ms-lg-4 me-auto position-relative" action="{% url 'product_list' %}" method="get" autocomplete="off">
         <div class="nav-search-wrap">
           <i class="bi bi-search nav-search-icon"></i>
-          <input type="search" name="q" class="nav-search-input" placeholder="Search for fruits, vegetables, dairy…" value="{{ request.GET.q }}">
+          <input type="search" name="q" id="navSearchInput" class="nav-search-input" placeholder="Search for fruits, vegetables, dairy…" value="{{ request.GET.q }}">
           <button type="submit" class="nav-search-btn">Search</button>
         </div>
+        <div id="autocompleteResults" class="dropdown-menu shadow-lg w-100 mt-1 border-0 rounded-3 p-2 d-none" style="position: absolute; top: 100%; left: 0; z-index: 1050; max-height: 300px; overflow-y: auto;"></div>
       </form>
 
       <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-1">
@@ -126,8 +127,16 @@
             <i class="bi bi-chevron-down ms-1 small"></i>
           </a>
           <ul class="dropdown-menu dropdown-menu-end cat-dropdown shadow-lg">
-            <li><a class="dropdown-item cat-item" href="{% url 'account' %}"><span class="cat-item-icon">👤</span> My Account</a></li>
-            <li><a class="dropdown-item cat-item" href="{% url 'order_history' %}"><span class="cat-item-icon">📦</span> My Orders</a></li>
+            {% if user.is_superuser or user.profile.role == 'superadmin' %}
+              <li><a class="dropdown-item cat-item" href="{% url 'superadmin_dashboard' %}"><span class="cat-item-icon">👑</span> Admin Panel</a></li>
+            {% endif %}
+            {% if user.profile.role == 'vendor' %}
+              <li><a class="dropdown-item cat-item" href="{% url 'vendor_dashboard' %}"><span class="cat-item-icon">🏪</span> Vendor Portal</a></li>
+            {% endif %}
+            {% if user.profile.role == 'customer' or not user.profile.role %}
+              <li><a class="dropdown-item cat-item" href="{% url 'account' %}"><span class="cat-item-icon">👤</span> My Account</a></li>
+              <li><a class="dropdown-item cat-item" href="{% url 'order_history' %}"><span class="cat-item-icon">📦</span> My Orders</a></li>
+            {% endif %}
             <li><hr class="dropdown-divider my-1"></li>
             <li>
               <form action="{% url 'logout' %}" method="post" id="logoutFormNav">
@@ -360,6 +369,52 @@
       btnText: 'Log Out',
       btnClass: 'btn-danger',
       onConfirm: () => formEl.submit()
+    });
+  }
+
+  // Search Autocomplete Script
+  const searchInput = document.getElementById('navSearchInput');
+  const resultsDiv = document.getElementById('autocompleteResults');
+
+  if (searchInput && resultsDiv) {
+    searchInput.addEventListener('input', function() {
+      const q = this.value.trim();
+      if (q.length < 2) {
+        resultsDiv.classList.add('d-none');
+        resultsDiv.innerHTML = '';
+        return;
+      }
+
+      fetch(`/api/search/autocomplete/?q=${encodeURIComponent(q)}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.results && data.results.length > 0) {
+            let html = '';
+            data.results.forEach(item => {
+              html += `
+                <a href="${item.url}" class="dropdown-item d-flex justify-content-between align-items-center py-2 rounded" style="font-size: .88rem;">
+                  <span><span class="me-2">${item.icon}</span><strong>${item.name}</strong> <span class="text-muted small">(${item.category})</span></span>
+                  <span class="text-success fw-bold">₹${item.price}</span>
+                </a>
+              `;
+            });
+            resultsDiv.innerHTML = html;
+            resultsDiv.classList.remove('d-none');
+          } else {
+            resultsDiv.innerHTML = '<div class="text-muted small p-2">No matching products found</div>';
+            resultsDiv.classList.remove('d-none');
+          }
+        })
+        .catch(() => {
+          resultsDiv.classList.add('d-none');
+        });
+    });
+
+    // Close dropdown on click outside
+    document.addEventListener('click', function(e) {
+      if (!searchInput.contains(e.target) && !resultsDiv.contains(e.target)) {
+        resultsDiv.classList.add('d-none');
+      }
     });
   }
 </script>

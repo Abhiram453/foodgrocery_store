@@ -1,5 +1,8 @@
 from django.urls import path
 from . import views
+from . import api_views
+from . import vendor_views
+from . import superadmin_views
 
 urlpatterns = [
     path('', views.home, name='home'),
@@ -20,15 +23,30 @@ urlpatterns = [
     # Checkout, Account & Orders
     path('checkout/', views.checkout, name='checkout'),
     path('order/confirm/<int:order_id>/', views.order_confirm, name='order_confirm'),
+    path('order/invoice/<int:order_id>/', views.order_invoice, name='order_invoice'),
     path('orders/', views.order_history, name='order_history'),
     path('orders/cancel/<int:order_id>/', views.cancel_order, name='cancel_order'),
     path('account/', views.account_view, name='account'),
 
-    # Vendor / wishlist
-    path('vendor/dashboard/', views.vendor_dashboard, name='vendor_dashboard'),
-    path('vendor/products/new/', views.vendor_product_form, name='vendor_product_new'),
-    path('vendor/products/<int:product_id>/edit/', views.vendor_product_form, name='vendor_product_edit'),
-    path('vendor/products/<int:product_id>/delete/', views.vendor_product_delete, name='vendor_product_delete'),
+    # Vendor portal routes
+    path('vendor/login/', vendor_views.vendor_login, name='vendor_login'),
+    path('vendor/register/', vendor_views.vendor_register, name='vendor_register'),
+    path('vendor/pending/', vendor_views.vendor_pending, name='vendor_pending'),
+    path('vendor/dashboard/', vendor_views.vendor_dashboard, name='vendor_dashboard'),
+    path('vendor/products/new/', vendor_views.vendor_product_form, name='vendor_product_new'),
+    path('vendor/products/<int:product_id>/edit/', vendor_views.vendor_product_form, name='vendor_product_edit'),
+    path('vendor/products/<int:product_id>/delete/', vendor_views.vendor_product_delete, name='vendor_product_delete'),
+    path('vendor/orders/', vendor_views.vendor_orders, name='vendor_orders'),
+    path('vendor/orders/<int:order_id>/status-update/', vendor_views.vendor_order_status_update, name='vendor_order_status_update'),
+
+    # Super Admin portal routes
+    path('superadmin/login/', superadmin_views.superadmin_login, name='superadmin_login'),
+    path('superadmin/dashboard/', superadmin_views.superadmin_dashboard, name='superadmin_dashboard'),
+    path('superadmin/vendor/<int:vendor_id>/approve/', superadmin_views.superadmin_approve_vendor, name='superadmin_approve_vendor'),
+    path('superadmin/vendor/<int:vendor_id>/reject/', superadmin_views.superadmin_reject_vendor, name='superadmin_reject_vendor'),
+    path('superadmin/vendor/<int:vendor_id>/assign-area/', superadmin_views.superadmin_assign_area, name='superadmin_assign_area'),
+
+    # Wishlist
     path('wishlist/', views.wishlist_view, name='wishlist'),
     path('wishlist/toggle/<int:product_id>/', views.toggle_wishlist, name='toggle_wishlist'),
 
@@ -37,4 +55,10 @@ urlpatterns = [
 
     # AJAX
     path('api/slots/', views.get_slots, name='get_slots'),
+    path('api/search/autocomplete/', views.search_autocomplete, name='search_autocomplete'),
+
+    # REST API endpoints (JWT protected)
+    path('api/token/', api_views.api_token_obtain, name='api_token_obtain'),
+    path('api/products/', api_views.api_products, name='api_products'),
+    path('api/orders/', api_views.api_orders, name='api_orders'),
 ]

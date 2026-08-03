@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block title %}Application Status | FoodBasket{% endblock %}
+
+{% block content %}
+<div class="container py-5 text-center">
+  <div class="card mx-auto shadow-sm border-0 rounded-4 p-5" style="max-width: 600px; background-color: white;">
+    {% if vendor_profile.status == 'pending' %}
+      <div class="text-warning mb-3" style="font-size: 4rem;">⏳</div>
+      <h1 class="fw-bold mb-3" style="font-family: 'Nunito', sans-serif; color: #d97706;">Approval Pending</h1>
+      <p class="text-muted mb-4 lead">
+        Your registration details for <strong>"{{ vendor_profile.shop_name }}"</strong> have been submitted successfully.
+      </p>
+      <div class="alert alert-warning border-0 p-3 rounded-3 small">
+        <i class="bi bi-info-circle-fill me-1"></i> Our admin team is reviewing your application. You will be able to log in and upload your products as soon as your account is approved.
+      </div>
+    {% elif vendor_profile.status == 'rejected' %}
+      <div class="text-danger mb-3" style="font-size: 4rem;">❌</div>
+      <h1 class="fw-bold mb-3" style="font-family: 'Nunito', sans-serif; color: #dc2626;">Application Rejected</h1>
+      <p class="text-muted mb-4 lead">
+        Unfortunately, your vendor application for <strong>"{{ vendor_profile.shop_name }}"</strong> was rejected.
+      </p>
+      <div class="alert alert-danger border-0 p-3 rounded-3 small">
+        <i class="bi bi-x-circle-fill me-1"></i> Please contact our Super Admin support at <strong>support@foodbasket.com</strong> for assistance or clarification.
+      </div>
+    {% else %}
+      <div class="text-success mb-3" style="font-size: 4rem;">✅</div>
+      <h1 class="fw-bold mb-3" style="font-family: 'Nunito', sans-serif; color: #1e7e4a;">Shop Active</h1>
+      <p class="text-muted mb-4 lead">Your application has been approved!</p>
+      <a href="{% url 'vendor_dashboard' %}" class="btn btn-success rounded-pill px-4">Go to Dashboard</a>
+    {% endif %}
+
+    <div class="mt-4 border-top pt-3">
+      <form action="{% url 'logout' %}" method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-outline-secondary rounded-pill px-4 btn-sm">
+          <i class="bi bi-box-arrow-right me-1"></i>Logout / Back to Home
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

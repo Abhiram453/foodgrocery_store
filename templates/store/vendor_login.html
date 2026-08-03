@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}Vendor Login | FoodBasket{% endblock %}
+
+{% block content %}
+<div class="auth-page-wrap" style="background: linear-gradient(135deg, #198754, #125e3b);">
+  <div class="auth-card shadow-lg p-5 rounded-4 bg-white" style="max-width: 480px; width: 100%;">
+    <div class="text-center mb-4">
+      <div class="auth-logo mb-2" style="font-size: 3rem;">🏪</div>
+      <h1 class="auth-title fw-bold" style="font-family: 'Nunito', sans-serif; font-size: 1.8rem; color: #125e3b;">Vendor Login</h1>
+      <p class="auth-subtitle text-muted">Sign in to manage your local shop and products</p>
+    </div>
+
+    <form method="post" id="vendorLoginForm">
+      {% csrf_token %}
+      
+      <div class="mb-3">
+        <label class="auth-label fw-bold text-muted small" for="id_username">USERNAME</label>
+        <div class="auth-input-group position-relative">
+          <i class="bi bi-person position-absolute" style="left: 15px; top: 12px; color: #aaa;"></i>
+          <input type="text" name="username" id="id_username" class="form-control ps-5 py-2.5 rounded-3" placeholder="Enter vendor username" autofocus required style="border: 1.5px solid #eee;">
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <label class="auth-label fw-bold text-muted small" for="id_password">PASSWORD</label>
+        <div class="auth-input-group position-relative">
+          <i class="bi bi-lock position-absolute" style="left: 15px; top: 12px; color: #aaa;"></i>
+          <input type="password" name="password" id="id_password" class="form-control ps-5 py-2.5 rounded-3" placeholder="Enter password" required style="border: 1.5px solid #eee;">
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-success w-100 py-2.5 rounded-3 fw-bold shadow-sm" style="background-color: #198754; border: none;">
+        <i class="bi bi-box-arrow-in-right me-2"></i>Vendor Login
+      </button>
+    </form>
+
+    <div class="text-center mt-4 border-top pt-3">
+      <p class="text-muted small mb-0">
+        Want to sell with us? <a href="{% url 'vendor_register' %}" class="fw-bold text-success text-decoration-none">Register your shop</a>
+      </p>
+      <p class="text-muted small mt-2 mb-0">
+        Are you a customer? <a href="{% url 'login' %}" class="text-decoration-none">Customer Login</a>
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}

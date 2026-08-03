@@ -14,6 +14,15 @@ class UpgradeFlowTests(TestCase):
         self.vendor_profile.role = 'vendor'
         self.vendor_profile.save()
 
+        from .models import VendorProfile
+        VendorProfile.objects.create(
+            user=self.vendor,
+            shop_name="Test Shop",
+            shop_address="Test Address",
+            pincode="123456",
+            status='approved'
+        )
+
         self.category = Category.objects.create(name='Fruits', slug='fruits')
         self.product = Product.objects.create(
             category=self.category,

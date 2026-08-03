@@ -365,8 +365,24 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
     btnText: 'Yes, Place Order (₹{{ cart.total }})',
     btnClass: 'btn-success',
     onConfirm: () => {
-      formConfirmed = true;
-      self.submit();
+      if (radioOnline.checked) {
+        // Show Stripe/Razorpay mock processing modal
+        openConfirmModal({
+          title: 'Secure Payment Processing',
+          message: '<div class="text-center py-3"><div class="spinner-border text-success mb-3" role="status"></div><p class="mb-0 fw-semibold text-dark">Contacting Stripe / Razorpay servers...</p><p class="small text-muted mb-0">Processing secure transaction of <strong>₹{{ cart.total }}</strong></p></div>',
+          icon: '💳',
+          btnText: 'Processing Payment...',
+          btnClass: 'btn-secondary disabled',
+          onConfirm: () => {}
+        });
+        setTimeout(() => {
+          formConfirmed = true;
+          self.submit();
+        }, 2200);
+      } else {
+        formConfirmed = true;
+        self.submit();
+      }
     }
   });
 });

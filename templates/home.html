@@ -67,10 +67,23 @@
       <div class="row g-3">
         {% for product in featured_products %}
         <div class="col-6 col-md-4 col-lg-3">
-          <div class="pcard">
+          <div class="pcard position-relative">
             {% if product.discount_price %}
             <div class="pcard-badge">{{ product.discount_percent }}% OFF</div>
             {% endif %}
+            
+            {% if user.is_authenticated %}
+            <div class="position-absolute top-0 end-0 m-2" style="z-index: 10;">
+              <form action="{% url 'toggle_wishlist' product.id %}" method="post" class="m-0 p-0">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.path }}">
+                <button type="submit" class="btn btn-sm btn-light rounded-circle shadow-sm border" style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center; background: white;">
+                  <i class="bi bi-heart{% if product.id in wishlist_ids %}-fill text-danger{% else %} text-muted{% endif %}"></i>
+                </button>
+              </form>
+            </div>
+            {% endif %}
+            
             <a href="{% url 'product_detail' product.slug %}" class="pcard-img-link">
               <div class="pcard-img">
                 {% if product.image %}

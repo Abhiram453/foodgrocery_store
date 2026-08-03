@@ -61,13 +61,20 @@ def home(request):
         valid_to__gte=now,
     )
     featured_recipes = Recipe.objects.all()[:6]
+    
+    wishlist_ids = []
+    if request.user.is_authenticated:
+        wishlist_ids = list(Wishlist.objects.filter(user=request.user).values_list('product_id', flat=True))
+
     return render(request, 'home.html', {
         'categories': categories,
         'all_categories': all_categories,
         'featured_products': featured_products,
         'active_coupons': active_coupons,
         'featured_recipes': featured_recipes,
+        'wishlist_ids': wishlist_ids,
     })
+
 
 
 # ─────────────────────────────────────────────
@@ -97,12 +104,17 @@ def product_list(request, slug=None):
         products = products.order_by('name')
 
     categories = Category.objects.all()
+    wishlist_ids = []
+    if request.user.is_authenticated:
+        wishlist_ids = list(Wishlist.objects.filter(user=request.user).values_list('product_id', flat=True))
+
     return render(request, 'store/product_list.html', {
         'products': products,
         'categories': categories,
         'current_category': current_category,
         'query': q,
         'sort': sort,
+        'wishlist_ids': wishlist_ids,
     })
 
 
@@ -122,6 +134,39 @@ def product_detail(request, slug):
 def get_or_create_profile(user):
     profile, _ = UserProfile.objects.get_or_create(user=user)
     return profile
+
+
+def check_and_send_low_stock_alert(product):
+    if product.is_low_stock:
+        from django.core.mail import send_mail
+        from django.contrib.auth.models import User
+        
+        subject = f"⚠️ Low Stock Alert: {product.name}"
+        message = (
+            f"Hello,\n\n"
+            f"This is an automated warning that the product '{product.name}' in your inventory is running low.\n\n"
+            f"Current Stock: {product.stock}\n"
+            f"Low Stock Threshold: {product.low_stock_threshold}\n\n"
+            f"Please update the stock count as soon as possible to ensure order availability.\n\n"
+            f"Best regards,\n"
+            f"FoodBasket Systems"
+        )
+        
+        recipients = []
+        if product.vendor and product.vendor.email:
+            recipients.append(product.vendor.email)
+            
+        superadmins = User.objects.filter(is_superuser=True)
+        for sa in superadmins:
+            if sa.email and sa.email not in recipients:
+                recipients.append(sa.email)
+                
+        if recipients:
+            try:
+                send_mail(subject, message, 'noreply@foodbasket.com', recipients, fail_silently=True)
+            except Exception:
+                pass
+
 
 
 # ─────────────────────────────────────────────
@@ -347,6 +392,7 @@ def checkout(request):
             # Reduce stock
             item.product.stock -= item.quantity
             item.product.save()
+            check_and_send_low_stock_alert(item.product)
 
         # Update slot bookings if a specific slot was selected
         if slot:
@@ -373,6 +419,13 @@ def checkout(request):
 def order_confirm(request, order_id):
     order = get_object_or_404(Order, id=order_id, user=request.user)
     return render(request, 'store/order_confirm.html', {'order': order})
+
+
+@login_required
+def order_invoice(request, order_id):
+    order = get_object_or_404(Order, id=order_id, user=request.user)
+    return render(request, 'store/order_invoice.html', {'order': order})
+
 
 
 @login_required
@@ -531,3 +584,22 @@ def get_slots(request):
             'is_available': s.is_available,
         })
     return JsonResponse({'slots': result})
+
+
+def search_autocomplete(request):
+    query = request.GET.get('q', '').strip()
+    result = []
+    if len(query) >= 2:
+        products = Product.objects.filter(
+            Q(name__icontains=query) | Q(category__name__icontains=query)
+        ).select_related('category')[:6]
+        for p in products:
+            result.append({
+                'name': p.name,
+                'price': float(p.effective_price),
+                'category': p.category.name,
+                'icon': p.category.icon,
+                'url': f'/product/{p.slug}/'
+            })
+    return JsonResponse({'results': result})
+

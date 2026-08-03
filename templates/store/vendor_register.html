@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block title %}Register Shop | FoodBasket{% endblock %}
+
+{% block content %}
+<div class="auth-page-wrap" style="background: linear-gradient(135deg, #198754, #125e3b);">
+  <div class="auth-card shadow-lg p-5 rounded-4 bg-white" style="max-width: 580px; width: 100%; margin-top: 2rem; margin-bottom: 2rem;">
+    <div class="text-center mb-4">
+      <div class="auth-logo mb-2" style="font-size: 3rem;">🛍️</div>
+      <h1 class="auth-title fw-bold" style="font-family: 'Nunito', sans-serif; font-size: 1.8rem; color: #125e3b;">Partner Register</h1>
+      <p class="auth-subtitle text-muted">Register your local shop to start selling to customers near you</p>
+    </div>
+
+    <form method="post" id="vendorRegisterForm">
+      {% csrf_token %}
+      
+      {% if form.errors %}
+      <div class="alert alert-danger p-2 small">
+        <i class="bi bi-exclamation-triangle-fill me-1"></i> Please correct the errors below.
+      </div>
+      {% endif %}
+
+      <div class="row g-3">
+        <div class="col-12 col-md-6">
+          <label class="auth-label fw-bold text-muted small">USERNAME</label>
+          {{ form.username }}
+          {{ form.username.errors }}
+        </div>
+        <div class="col-12 col-md-6">
+          <label class="auth-label fw-bold text-muted small">EMAIL ADDRESS</label>
+          {{ form.email }}
+          {{ form.email.errors }}
+        </div>
+        <div class="col-12">
+          <label class="auth-label fw-bold text-muted small">PASSWORD</label>
+          {{ form.password }}
+          {{ form.password.errors }}
+        </div>
+        <div class="col-12 col-md-8">
+          <label class="auth-label fw-bold text-muted small">SHOP NAME</label>
+          {{ form.shop_name }}
+          {{ form.shop_name.errors }}
+        </div>
+        <div class="col-12 col-md-4">
+          <label class="auth-label fw-bold text-muted small">PINCODE</label>
+          {{ form.pincode }}
+          {{ form.pincode.errors }}
+        </div>
+        <div class="col-12">
+          <label class="auth-label fw-bold text-muted small">SHOP FULL ADDRESS</label>
+          {{ form.shop_address }}
+          {{ form.shop_address.errors }}
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-success w-100 py-2.5 rounded-3 fw-bold mt-4 shadow-sm" style="background-color: #198754; border: none;">
+        <i class="bi bi-shop me-2"></i>Register Shop
+      </button>
+    </form>
+
+    <div class="text-center mt-4 border-top pt-3">
+      <p class="text-muted small mb-0">
+        Already have a shop registered? <a href="{% url 'vendor_login' %}" class="fw-bold text-success text-decoration-none">Vendor Login</a>
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}
