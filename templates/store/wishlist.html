@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block title %}Wishlist | FoodBasket{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <h1 class="fw-bold mb-4">Your Wishlist</h1>
+
+  {% if items %}
+  <div class="row g-4">
+    {% for item in items %}
+    <div class="col-md-6 col-lg-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <h5 class="card-title">{{ item.product.name }}</h5>
+          <p class="text-muted small mb-3">{{ item.product.category.name }}</p>
+          <p class="fw-bold mb-3">₹{{ item.product.effective_price }}</p>
+          <form method="post" action="{% url 'toggle_wishlist' item.product.id %}">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{% url 'wishlist' %}">
+            <button class="btn btn-outline-danger btn-sm">Remove</button>
+          </form>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="alert alert-info">Your wishlist is empty. Save products you love from the store.</div>
+  {% endif %}
+</div>
+{% endblock %}

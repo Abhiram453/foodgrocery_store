@@ -11,8 +11,9 @@ from datetime import date, timedelta
 
 from .models import (
     Category, Product, Cart, CartItem,
-    Coupon, DeliverySlot, Order, OrderItem, Recipe
+    Coupon, DeliverySlot, Order, OrderItem, Recipe, UserProfile, Wishlist
 )
+from .forms import ProductForm
 
 
 # ─────────────────────────────────────────────
@@ -112,6 +113,15 @@ def product_detail(request, slug):
         'product': product,
         'related': related,
     })
+
+
+# ─────────────────────────────────────────────
+# Auth helpers
+# ─────────────────────────────────────────────
+
+def get_or_create_profile(user):
+    profile, _ = UserProfile.objects.get_or_create(user=user)
+    return profile
 
 
 # ─────────────────────────────────────────────
@@ -409,6 +419,86 @@ def account_view(request):
         'total_spent': total_spent,
         'cart_item_count': cart.item_count,
     })
+
+
+# ─────────────────────────────────────────────
+# Vendor dashboard & wishlist
+# ─────────────────────────────────────────────
+
+@login_required
+def vendor_dashboard(request):
+    profile = get_or_create_profile(request.user)
+    if profile.role != 'vendor' and not request.user.is_staff:
+        messages.error(request, 'Only vendors can access this area.')
+        return redirect('home')
+
+    products = Product.objects.filter(vendor=request.user).order_by('-created_at')
+    low_stock_products = [p for p in products if p.is_low_stock]
+    return render(request, 'store/vendor_dashboard.html', {
+        'products': products,
+        'low_stock_products': low_stock_products,
+    })
+
+
+@login_required
+def vendor_product_form(request, product_id=None):
+    profile = get_or_create_profile(request.user)
+    if profile.role != 'vendor' and not request.user.is_staff:
+        messages.error(request, 'Only vendors can access this area.')
+        return redirect('home')
+
+    product = get_object_or_404(Product, pk=product_id) if product_id else None
+    if product and product.vendor_id not in [request.user.id, None] and not request.user.is_staff:
+        messages.error(request, 'You can only edit your own products.')
+        return redirect('vendor_dashboard')
+
+    form = ProductForm(request.POST or None, request.FILES or None, instance=product)
+    if request.method == 'POST' and form.is_valid():
+        obj = form.save(commit=False)
+        obj.vendor = request.user
+        obj.save()
+        messages.success(request, 'Product saved successfully.')
+        return redirect('vendor_dashboard')
+
+    return render(request, 'store/vendor_product_form.html', {'form': form, 'product': product})
+
+
+@login_required
+@require_POST
+def vendor_product_delete(request, product_id):
+    profile = get_or_create_profile(request.user)
+    if profile.role != 'vendor' and not request.user.is_staff:
+        messages.error(request, 'Only vendors can access this area.')
+        return redirect('home')
+
+    product = get_object_or_404(Product, pk=product_id)
+    if product.vendor_id != request.user.id and not request.user.is_staff:
+        messages.error(request, 'You can only delete your own products.')
+        return redirect('vendor_dashboard')
+
+    product.delete()
+    messages.success(request, 'Product removed successfully.')
+    return redirect('vendor_dashboard')
+
+
+@login_required
+@require_POST
+def toggle_wishlist(request, product_id):
+    product = get_object_or_404(Product, id=product_id)
+    wishlist_item, created = Wishlist.objects.get_or_create(user=request.user, product=product)
+    if not created:
+        wishlist_item.delete()
+        messages.info(request, f'Removed {product.name} from wishlist.')
+    else:
+        messages.success(request, f'Added {product.name} to wishlist.')
+    next_url = request.POST.get('next') or request.META.get('HTTP_REFERER') or 'home'
+    return redirect(next_url)
+
+
+@login_required
+def wishlist_view(request):
+    items = Wishlist.objects.filter(user=request.user).select_related('product')
+    return render(request, 'store/wishlist.html', {'items': items})
 
 
 # ─────────────────────────────────────────────

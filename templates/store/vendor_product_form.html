@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}{% if product %}Edit Product{% else %}New Product{% endif %} | FoodBasket{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card shadow-sm border-0">
+        <div class="card-body p-4">
+          <h2 class="fw-bold mb-2">{% if product %}Edit Product{% else %}Add New Product{% endif %}</h2>
+          <p class="text-muted">Manage inventory, pricing, and stock directly from your vendor dashboard.</p>
+
+          <form method="post" enctype="multipart/form-data" class="mt-4">
+            {% csrf_token %}
+            {% for field in form %}
+            <div class="mb-3">
+              <label class="form-label fw-semibold" for="{{ field.id_for_label }}">{{ field.label }}</label>
+              {{ field }}
+              {% if field.help_text %}
+              <div class="form-text">{{ field.help_text }}</div>
+              {% endif %}
+              {% if field.errors %}
+              <div class="text-danger small mt-1">{{ field.errors|striptags }}</div>
+              {% endif %}
+            </div>
+            {% endfor %}
+
+            <div class="d-flex gap-2 mt-4">
+              <button type="submit" class="btn btn-success">Save Product</button>
+              <a href="{% url 'vendor_dashboard' %}" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

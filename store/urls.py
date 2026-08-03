@@ -24,6 +24,14 @@ urlpatterns = [
     path('orders/cancel/<int:order_id>/', views.cancel_order, name='cancel_order'),
     path('account/', views.account_view, name='account'),
 
+    # Vendor / wishlist
+    path('vendor/dashboard/', views.vendor_dashboard, name='vendor_dashboard'),
+    path('vendor/products/new/', views.vendor_product_form, name='vendor_product_new'),
+    path('vendor/products/<int:product_id>/edit/', views.vendor_product_form, name='vendor_product_edit'),
+    path('vendor/products/<int:product_id>/delete/', views.vendor_product_delete, name='vendor_product_delete'),
+    path('wishlist/', views.wishlist_view, name='wishlist'),
+    path('wishlist/toggle/<int:product_id>/', views.toggle_wishlist, name='toggle_wishlist'),
+
     # Recipes
     path('recipes/', views.recipes_view, name='recipes'),
 
