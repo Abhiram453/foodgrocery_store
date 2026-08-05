@@ -50,6 +50,8 @@ def get_or_create_cart(request):
 # ─────────────────────────────────────────────
 
 def home(request):
+    if check_location(request):
+        return redirect('select_location')
     from django.utils import timezone as tz
     now = tz.now()
     categories = Category.objects.all()[:6]
@@ -82,6 +84,8 @@ def home(request):
 # ─────────────────────────────────────────────
 
 def product_list(request, slug=None):
+    if check_location(request):
+        return redirect('select_location')
     products = get_location_filtered_products(request, Product.objects.filter(stock__gt=0))
     current_category = None
 
@@ -119,6 +123,8 @@ def product_list(request, slug=None):
 
 
 def product_detail(request, slug):
+    if check_location(request):
+        return redirect('select_location')
     product = get_object_or_404(Product, slug=slug)
     related = Product.objects.filter(category=product.category).exclude(id=product.id)[:4]
     return render(request, 'store/product_detail.html', {
@@ -134,6 +140,15 @@ def product_detail(request, slug):
 def get_or_create_profile(user):
     profile, _ = UserProfile.objects.get_or_create(user=user)
     return profile
+
+
+def check_location(request):
+    if request.user.is_authenticated:
+        profile = get_or_create_profile(request.user)
+        if profile.role == 'customer' and not request.session.get('user_pincode'):
+            return True
+    return False
+
 
 
 def check_and_send_low_stock_alert(product):
@@ -175,6 +190,8 @@ def check_and_send_low_stock_alert(product):
 
 @login_required
 def cart_view(request):
+    if check_location(request):
+        return redirect('select_location')
     from django.utils import timezone as tz
     now = tz.now()
     cart = get_or_create_cart(request)
@@ -683,5 +700,39 @@ def get_location_filtered_products(request, queryset=None):
             Q(vendor__isnull=True)
         )
     return queryset
+
+
+def select_location(request):
+    if not request.user.is_authenticated:
+        return redirect('login')
+        
+    profile = get_or_create_profile(request.user)
+    if profile.role != 'customer':
+        return redirect('home')
+
+    if request.method == 'POST':
+        pincode = request.POST.get('pincode', '').strip()
+        if pincode:
+            request.session['user_pincode'] = pincode
+            
+            # Simple mock area mapping
+            area_mapping = {
+                '500001': 'Koti, Hyderabad',
+                '500032': 'Gachibowli, Hyderabad',
+                '500072': 'Kukatpally, Hyderabad',
+                '500081': 'Madhapur, Hyderabad',
+                '110001': 'Connaught Place, New Delhi',
+                '400001': 'Fort, Mumbai',
+                '600001': 'George Town, Chennai',
+                '560001': 'Majestic, Bengaluru',
+            }
+            request.session['user_area_name'] = area_mapping.get(pincode, f"Pincode: {pincode}")
+            
+            next_url = request.GET.get('next') or 'home'
+            messages.success(request, f"Delivery location set to {request.session['user_area_name']}! 📍")
+            return redirect(next_url)
+            
+    return render(request, 'store/select_location.html')
+
 
 

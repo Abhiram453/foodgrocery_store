@@ -27,6 +27,7 @@ urlpatterns = [
     path('orders/', views.order_history, name='order_history'),
     path('orders/cancel/<int:order_id>/', views.cancel_order, name='cancel_order'),
     path('account/', views.account_view, name='account'),
+    path('select-location/', views.select_location, name='select_location'),
 
     # Vendor portal routes
     path('vendor/login/', vendor_views.vendor_login, name='vendor_login'),

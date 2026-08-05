@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% block title %}Select Delivery Location | FoodBasket{% endblock %}
+
+{% block content %}
+<div class="auth-page-wrap" style="background: linear-gradient(135deg, #125e3b, #198754); min-height: calc(100vh - 100px); display: flex; align-items: center; justify-content: center; padding: 2rem 1rem;">
+  <div class="auth-card shadow-lg p-4 p-md-5 rounded-4 bg-white" style="max-width: 520px; width: 100%;">
+    <div class="text-center mb-4">
+      <div class="auth-logo mb-2" style="font-size: 3.5rem; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.05));">📍</div>
+      <h1 class="auth-title fw-bold" style="font-family: 'Nunito', sans-serif; font-size: 1.8rem; color: #125e3b;">Set Delivery Area</h1>
+      <p class="auth-subtitle text-muted" style="font-size: .88rem;">Enter your pincode or select an active zone below to find shops near you</p>
+    </div>
+
+    <!-- Manual Pincode Input Form -->
+    <form method="post" id="selectLocationForm" class="mb-4">
+      {% csrf_token %}
+      <div class="mb-3">
+        <label class="auth-label fw-bold text-muted small d-block text-center mb-2" for="pincodeInput">ENTER 6-DIGIT PINCODE</label>
+        <input type="text" name="pincode" id="pincodeInput" class="form-control text-center py-3 rounded-pill fw-bold border-2" placeholder="e.g. 500032" required pattern="[0-9]{6}" title="Please enter a valid 6-digit pincode" style="letter-spacing: .15em; font-size: 1.25rem; border-color: #ddd;" autofocus>
+      </div>
+
+      <button type="submit" class="btn btn-success w-100 py-3 rounded-pill fw-bold shadow-sm" style="background-color: #198754; border: none; font-size: 1rem;">
+        <i class="bi bi-geo-alt me-2"></i>Set Delivery Location
+      </button>
+    </form>
+
+    <!-- Divider -->
+    <div class="d-flex align-items-center mb-4">
+      <hr class="flex-grow-1 text-muted opacity-25 m-0">
+      <span class="px-3 text-muted small fw-bold" style="font-size: .75rem;">SELECT ACTIVE ZONE</span>
+      <hr class="flex-grow-1 text-muted opacity-25 m-0">
+    </div>
+
+    <!-- Quick Select Zones Grid -->
+    <div class="row g-2 mb-2" id="quickSelectGrid">
+      <div class="col-6">
+        <button type="button" class="btn btn-light w-100 text-start p-3 border rounded-3 d-flex flex-column gap-1 zone-btn" onclick="quickSelectLocation('500032')" style="background-color: #fafafa; border-color: #eee;">
+          <span class="fw-bold text-dark" style="font-size: .85rem;">Gachibowli</span>
+          <span class="text-success small fw-semibold" style="font-size: .75rem;"><i class="bi bi-pin-map-fill"></i> 500032</span>
+        </button>
+      </div>
+      <div class="col-6">
+        <button type="button" class="btn btn-light w-100 text-start p-3 border rounded-3 d-flex flex-column gap-1 zone-btn" onclick="quickSelectLocation('500072')" style="background-color: #fafafa; border-color: #eee;">
+          <span class="fw-bold text-dark" style="font-size: .85rem;">Kukatpally</span>
+          <span class="text-success small fw-semibold" style="font-size: .75rem;"><i class="bi bi-pin-map-fill"></i> 500072</span>
+        </button>
+      </div>
+      <div class="col-6">
+        <button type="button" class="btn btn-light w-100 text-start p-3 border rounded-3 d-flex flex-column gap-1 zone-btn" onclick="quickSelectLocation('500081')" style="background-color: #fafafa; border-color: #eee;">
+          <span class="fw-bold text-dark" style="font-size: .85rem;">Madhapur</span>
+          <span class="text-success small fw-semibold" style="font-size: .75rem;"><i class="bi bi-pin-map-fill"></i> 500081</span>
+        </button>
+      </div>
+      <div class="col-6">
+        <button type="button" class="btn btn-light w-100 text-start p-3 border rounded-3 d-flex flex-column gap-1 zone-btn" onclick="quickSelectLocation('500001')" style="background-color: #fafafa; border-color: #eee;">
+          <span class="fw-bold text-dark" style="font-size: .85rem;">Koti</span>
+          <span class="text-success small fw-semibold" style="font-size: .75rem;"><i class="bi bi-pin-map-fill"></i> 500001</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="text-center mt-4 border-top pt-3">
+      <p class="text-muted small mb-0">
+        Active delivery zones only. Change zone anytime from the navbar.
+      </p>
+    </div>
+  </div>
+</div>
+
+{% block extra_js %}
+<script>
+function quickSelectLocation(pincode) {
+  const input = document.getElementById('pincodeInput');
+  input.value = pincode;
+  document.getElementById('selectLocationForm').submit();
+}
+</script>
+{% endblock %}
+{% endblock %}
