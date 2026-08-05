@@ -15,7 +15,14 @@
       {% csrf_token %}
       <div class="mb-3">
         <label class="auth-label fw-bold text-muted small d-block text-center mb-2" for="pincodeInput">ENTER 6-DIGIT PINCODE</label>
-        <input type="text" name="pincode" id="pincodeInput" class="form-control text-center py-3 rounded-pill fw-bold border-2" placeholder="e.g. 500032" required pattern="[0-9]{6}" title="Please enter a valid 6-digit pincode" style="letter-spacing: .15em; font-size: 1.25rem; border-color: #ddd;" autofocus>
+        <input type="text" name="pincode" id="pincodeInput" class="form-control text-center py-3 rounded-pill fw-bold border-2" placeholder="e.g. 625001" required pattern="[0-9]{6}" title="Please enter a valid 6-digit pincode" style="letter-spacing: .15em; font-size: 1.25rem; border-color: #ddd;" autofocus>
+      </div>
+
+      <!-- Geolocation Detection Button (Option B) -->
+      <div class="mb-3 text-center">
+        <button type="button" class="btn btn-outline-success w-100 py-2.5 rounded-pill fw-bold d-inline-flex align-items-center justify-content-center gap-2" onclick="detectLocation()" id="detectBtn" style="border-width: 2px;">
+          <i class="bi bi-geo-alt-fill"></i> Detect My Location
+        </button>
       </div>
 
       <button type="submit" class="btn btn-success w-100 py-3 rounded-pill fw-bold shadow-sm" style="background-color: #198754; border: none; font-size: 1rem;">
@@ -72,6 +79,57 @@ function quickSelectLocation(pincode) {
   const input = document.getElementById('pincodeInput');
   input.value = pincode;
   document.getElementById('selectLocationForm').submit();
+}
+
+function detectLocation() {
+  const btn = document.getElementById('detectBtn');
+  if (!navigator.geolocation) {
+    alert("Geolocation is not supported by your browser.");
+    return;
+  }
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Detecting Location...';
+  
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      const lat = position.coords.latitude;
+      const lng = position.coords.longitude;
+      
+      fetch(`/api/location/reverse-geocode/?lat=${lat}&lng=${lng}`)
+        .then(r => r.json())
+        .then(data => {
+          if (data.success) {
+            const input = document.getElementById('pincodeInput');
+            input.value = data.pincode;
+            
+            // Show dynamic alert on selection card
+            const existingAlert = document.querySelector('.detected-alert');
+            if (existingAlert) existingAlert.remove();
+            
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-success py-2 px-3 mt-3 rounded-3 small text-center detected-alert shadow-sm border-0';
+            alertDiv.innerHTML = `📍 Detected: <strong>${data.area_name}</strong>. Click 'Set Delivery Location' to proceed.`;
+            input.parentNode.appendChild(alertDiv);
+          } else {
+            alert("Could not detect local pincode. Please enter manually.");
+          }
+          resetBtn();
+        })
+        .catch(() => {
+          alert("Error detecting location. Please enter manually.");
+          resetBtn();
+        });
+    },
+    (error) => {
+      alert("Location permission denied or unavailable. Please enter pincode manually.");
+      resetBtn();
+    }
+  );
+  
+  function resetBtn() {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-geo-alt-fill"></i> Detect My Location';
+  }
 }
 </script>
 {% endblock %}
