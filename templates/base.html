@@ -44,6 +44,20 @@
       <span>Food<strong>Basket</strong></span>
     </a>
 
+    <!-- Location Selector Widget -->
+    <div class="ms-lg-3 ms-2 d-inline-flex align-items-center" onclick="openLocationModal()" style="cursor: pointer;" id="navLocationWidget">
+      <div class="rounded-pill bg-light border px-3 py-1.5 d-flex align-items-center gap-2 shadow-sm nav-location-btn" style="transition: all 0.2s;">
+        <span style="font-size: 1rem;">📍</span>
+        <div class="text-start d-none d-sm-block">
+          <div class="text-muted" style="font-size: .65rem; line-height: 1; font-weight: bold; text-transform: uppercase;">Deliver to</div>
+          <div class="fw-bold text-dark" id="navLocationText" style="font-size: .78rem; max-width: 140px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+            {% if request.session.user_area_name %}{{ request.session.user_area_name }}{% else %}Select Location{% endif %}
+          </div>
+        </div>
+        <span class="small text-muted d-none d-sm-inline"><i class="bi bi-chevron-down"></i></span>
+      </div>
+    </div>
+
     <!-- Mobile cart + toggler -->
     <div class="d-flex align-items-center gap-2 d-lg-none">
       {% if user.is_authenticated %}
@@ -302,6 +316,47 @@
   </a>
 </nav>
 
+<!-- Location Selection Modal -->
+<div class="modal fade" id="locationSelectModal" tabindex="-1" aria-hidden="true" {% if not request.session.user_pincode %}data-bs-backdrop="static" data-bs-keyboard="false"{% endif %}>
+  <div class="modal-dialog modal-dialog-centered" style="max-width: 440px;">
+    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden bg-white">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fw-bold" style="font-family: 'Nunito', sans-serif;">Select Delivery Location</h5>
+        {% if request.session.user_pincode %}
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        {% endif %}
+      </div>
+      <div class="modal-body py-4">
+        <div class="text-center mb-4">
+          <div style="font-size: 3rem;">📍</div>
+          <p class="text-muted small mt-2">Enter your pincode or detect your location to view nearby shops and available fresh groceries.</p>
+        </div>
+
+        <!-- Geolocation Button -->
+        <button type="button" class="btn btn-outline-success w-100 rounded-pill py-2.5 fw-bold mb-3 d-inline-flex align-items-center justify-content-center gap-2" onclick="detectUserLocation()" id="btnDetectLoc">
+          <i class="bi bi-geo-alt-fill"></i> Detect Current Location
+        </button>
+
+        <div class="d-flex align-items-center mb-3">
+          <hr class="flex-grow-1 text-muted opacity-25">
+          <span class="px-2 text-muted small fw-bold">OR ENTER PINCODE</span>
+          <hr class="flex-grow-1 text-muted opacity-25">
+        </div>
+
+        <!-- Manual Pincode Input Form -->
+        <form id="pincodeForm" onsubmit="submitPincode(event)">
+          <div class="mb-3">
+            <input type="text" id="manualPincodeInput" class="form-control text-center py-2.5 rounded-pill fw-bold border-2" placeholder="e.g. 500032" required pattern="[0-9]{6}" title="Please enter a valid 6-digit pincode" style="letter-spacing: .1em; font-size: 1.1rem;">
+          </div>
+          <button type="submit" class="btn btn-success w-100 rounded-pill py-2.5 fw-bold">
+            Confirm Location
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Global Custom Confirmation Modal -->
 <div class="modal fade" id="globalConfirmModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered" style="max-width: 400px;">
@@ -416,6 +471,118 @@
         resultsDiv.classList.add('d-none');
       }
     });
+  }
+
+  // Location Selection Modal helper functions
+  const locationModalEl = document.getElementById('locationSelectModal');
+  const locationModal = locationModalEl ? new bootstrap.Modal(locationModalEl) : null;
+
+  function openLocationModal() {
+    if (locationModal) {
+      locationModal.show();
+    }
+  }
+
+  // Auto-prompt location if not set in session for logged in customer
+  {% if not request.session.user_pincode and user.is_authenticated and user.profile.role == 'customer' %}
+    window.addEventListener('DOMContentLoaded', () => {
+      openLocationModal();
+    });
+  {% endif %}
+
+  function submitPincode(event) {
+    if (event) event.preventDefault();
+    const pincode = document.getElementById('manualPincodeInput').value.trim();
+    if (pincode.length !== 6 || isNaN(pincode)) {
+      alert("Please enter a valid 6-digit pincode.");
+      return;
+    }
+    
+    // Save to session via API
+    fetch('/api/location/set/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token }}'
+      },
+      body: JSON.stringify({ pincode: pincode })
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        if (locationModal) locationModal.hide();
+        location.reload();
+      } else {
+        alert("Error saving location. Please try again.");
+      }
+    })
+    .catch(() => {
+      alert("Network error. Please try again.");
+    });
+  }
+
+  function detectUserLocation() {
+    const btn = document.getElementById('btnDetectLoc');
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser.");
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Detecting Location...';
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+
+        // Call reverse geocoding API
+        fetch(`/api/location/reverse-geocode/?lat=${lat}&lng=${lng}`)
+          .then(r => r.json())
+          .then(data => {
+            if (data.success) {
+              // Set session location
+              fetch('/api/location/set/', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                  pincode: data.pincode,
+                  area_name: data.area_name
+                })
+              })
+              .then(r => r.json())
+              .then(setData => {
+                if (setData.success) {
+                  if (locationModal) locationModal.hide();
+                  location.reload();
+                } else {
+                  alert("Error saving detected location.");
+                  resetDetectBtn();
+                }
+              });
+            } else {
+              alert("Could not determine area from coordinates. Please enter pincode manually.");
+              resetDetectBtn();
+            }
+          })
+          .catch(() => {
+            alert("Could not contact geolocation service. Please enter pincode manually.");
+            resetDetectBtn();
+          });
+      },
+      (error) => {
+        alert("Location permission denied or unavailable. Please enter pincode manually.");
+        resetDetectBtn();
+      }
+    );
+
+    function resetDetectBtn() {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-geo-alt-fill"></i> Detect Current Location';
+    }
   }
 </script>
 {% block extra_js %}{% endblock %}

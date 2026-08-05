@@ -54,7 +54,7 @@ def home(request):
     now = tz.now()
     categories = Category.objects.all()[:6]
     all_categories = Category.objects.all()
-    featured_products = Product.objects.filter(is_featured=True, stock__gt=0)[:8]
+    featured_products = get_location_filtered_products(request, Product.objects.filter(is_featured=True, stock__gt=0))[:8]
     active_coupons = Coupon.objects.filter(
         is_active=True,
         valid_from__lte=now,
@@ -82,7 +82,7 @@ def home(request):
 # ─────────────────────────────────────────────
 
 def product_list(request, slug=None):
-    products = Product.objects.filter(stock__gt=0)
+    products = get_location_filtered_products(request, Product.objects.filter(stock__gt=0))
     current_category = None
 
     if slug:
@@ -602,4 +602,86 @@ def search_autocomplete(request):
                 'url': f'/product/{p.slug}/'
             })
     return JsonResponse({'results': result})
+
+
+from django.views.decorators.csrf import csrf_exempt
+
+@csrf_exempt
+def set_location(request):
+    """
+    AJAX view to set the user's pincode in the session.
+    """
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            pincode = data.get('pincode', '').strip()
+            area_name = data.get('area_name', '').strip()
+        except Exception:
+            pincode = request.POST.get('pincode', '').strip()
+            area_name = request.POST.get('area_name', '').strip()
+
+        if pincode:
+            request.session['user_pincode'] = pincode
+            if area_name:
+                request.session['user_area_name'] = area_name
+            else:
+                area_mapping = {
+                    '500001': 'Koti, Hyderabad',
+                    '500032': 'Gachibowli, Hyderabad',
+                    '500072': 'Kukatpally, Hyderabad',
+                    '500081': 'Madhapur, Hyderabad',
+                    '110001': 'Connaught Place, New Delhi',
+                    '400001': 'Fort, Mumbai',
+                    '600001': 'George Town, Chennai',
+                    '560001': 'Majestic, Bengaluru',
+                }
+                request.session['user_area_name'] = area_mapping.get(pincode, f"Pincode: {pincode}")
+
+            return JsonResponse({'success': True, 'pincode': pincode, 'area_name': request.session['user_area_name']})
+    
+    return JsonResponse({'success': False, 'error': 'Invalid request'}, status=400)
+
+
+def reverse_geocode(request):
+    """
+    Simulates reverse geocoding from coordinates to local pincode & area.
+    """
+    lat = request.GET.get('lat')
+    lng = request.GET.get('lng')
+    
+    pincode = '500032'
+    area_name = 'Gachibowli, Hyderabad'
+    
+    if lat and lng:
+        try:
+            flat = float(lat)
+            flng = float(lng)
+            if int(flat * 10) % 2 == 0:
+                pincode = '500072'
+                area_name = 'Kukatpally, Hyderabad'
+            elif int(flng * 10) % 2 == 0:
+                pincode = '500081'
+                area_name = 'Madhapur, Hyderabad'
+        except ValueError:
+            pass
+            
+    return JsonResponse({
+        'success': True,
+        'pincode': pincode,
+        'area_name': area_name
+    })
+
+
+def get_location_filtered_products(request, queryset=None):
+    if queryset is None:
+        queryset = Product.objects.filter(stock__gt=0)
+    pincode = request.session.get('user_pincode')
+    if pincode:
+        queryset = queryset.filter(
+            Q(vendor__vendor_profile__pincode=pincode) |
+            Q(vendor__vendor_profile__assigned_area__icontains=pincode) |
+            Q(vendor__isnull=True)
+        )
+    return queryset
+
 

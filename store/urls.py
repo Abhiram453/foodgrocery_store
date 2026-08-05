@@ -56,6 +56,8 @@ urlpatterns = [
     # AJAX
     path('api/slots/', views.get_slots, name='get_slots'),
     path('api/search/autocomplete/', views.search_autocomplete, name='search_autocomplete'),
+    path('api/location/set/', views.set_location, name='set_location'),
+    path('api/location/reverse-geocode/', views.reverse_geocode, name='reverse_geocode'),
 
     # REST API endpoints (JWT protected)
     path('api/token/', api_views.api_token_obtain, name='api_token_obtain'),

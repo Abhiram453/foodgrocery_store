@@ -47,3 +47,22 @@ class UpgradeFlowTests(TestCase):
         self.client.login(username='vendor', password='secret')
         response = self.client.get(reverse('vendor_dashboard'))
         self.assertEqual(response.status_code, 200)
+
+    def test_location_session_setting(self):
+        response = self.client.post(reverse('set_location'), data='{"pincode": "123456"}', content_type='application/json')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.client.session['user_pincode'], '123456')
+
+    def test_location_filtering_products(self):
+        session = self.client.session
+        session['user_pincode'] = '123456'
+        session.save()
+        response = self.client.get(reverse('product_list'))
+        self.assertContains(response, 'Apple')
+
+        session = self.client.session
+        session['user_pincode'] = '500032'
+        session.save()
+        response = self.client.get(reverse('product_list'))
+        self.assertNotContains(response, 'Apple')
+
