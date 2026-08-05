@@ -45,6 +45,7 @@
     </a>
 
     <!-- Location Selector Widget -->
+    {% if user.is_authenticated and user.profile.role == 'customer' %}
     <a href="{% url 'select_location' %}" class="ms-lg-3 ms-2 d-inline-flex align-items-center text-decoration-none" id="navLocationWidget">
       <div class="rounded-pill bg-light border px-3 py-1.5 d-flex align-items-center gap-2 shadow-sm nav-location-btn" style="transition: all 0.2s;">
         <span style="font-size: 1rem;">📍</span>
@@ -57,6 +58,7 @@
         <span class="small text-muted d-none d-sm-inline"><i class="bi bi-chevron-down"></i></span>
       </div>
     </a>
+    {% endif %}
 
     <!-- Mobile cart + toggler -->
     <div class="d-flex align-items-center gap-2 d-lg-none">
