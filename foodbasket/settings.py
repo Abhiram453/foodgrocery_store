@@ -19,15 +19,26 @@ INSTALLED_APPS = [
     'store',
 ]
 
+try:
+    import whitenoise
+    HAS_WHITENOISE = True
+except ImportError:
+    HAS_WHITENOISE = False
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+]
+if HAS_WHITENOISE:
+    MIDDLEWARE.append('whitenoise.middleware.WhiteNoiseMiddleware')
+
+MIDDLEWARE.extend([
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-]
+])
 
 ROOT_URLCONF = 'foodbasket.urls'
 
@@ -132,6 +143,15 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage" if HAS_WHITENOISE else "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
