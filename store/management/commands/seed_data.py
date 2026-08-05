@@ -74,6 +74,80 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         self.stdout.write('Seeding FoodBasket database...')
 
+        from django.contrib.auth import get_user_model
+        from store.models import UserProfile, VendorProfile
+        
+        User = get_user_model()
+        
+        # Create Super Admin if not exists
+        admin_user, created = User.objects.get_or_create(
+            username='admin',
+            defaults={
+                'email': 'admin@foodbasket.com',
+                'is_staff': True,
+                'is_superuser': True,
+            }
+        )
+        if created:
+            admin_user.set_password('adminpass')
+            admin_user.save()
+        admin_profile, _ = UserProfile.objects.get_or_create(user=admin_user)
+        admin_profile.role = 'superadmin'
+        admin_profile.save()
+        self.stdout.write(self.style.SUCCESS('  OK: Super Admin created (admin / adminpass)'))
+
+        # Seed Vendors in Madurai area
+        vendors_data = [
+            {
+                'username': 'madurai_mart',
+                'email': 'mart@madurai.com',
+                'shop_name': 'Madurai Fresh Mart',
+                'shop_address': '12 Meenakshi Kovil Street, Madurai Main',
+                'pincode': '625001',
+            },
+            {
+                'username': 'meenakshi_groceries',
+                'email': 'groceries@meenakshi.com',
+                'shop_name': 'Meenakshi Groceries',
+                'shop_address': '45 K.Pudur Bazaar Road, Madurai',
+                'pincode': '625020',
+            },
+            {
+                'username': 'nellai_organics',
+                'email': 'organics@nellai.com',
+                'shop_name': 'Nellai Organic Store',
+                'shop_address': '89 Anna Nagar Main Road, Madurai',
+                'pincode': '625009',
+            }
+        ]
+        
+        seeded_vendors = []
+        for v in vendors_data:
+            user, created = User.objects.get_or_create(
+                username=v['username'],
+                defaults={'email': v['email']}
+            )
+            if created:
+                user.set_password('vendorpass')
+                user.save()
+            
+            profile, _ = UserProfile.objects.get_or_create(user=user)
+            profile.role = 'vendor'
+            profile.save()
+            
+            vendor_profile, _ = VendorProfile.objects.get_or_create(
+                user=user,
+                defaults={
+                    'shop_name': v['shop_name'],
+                    'shop_address': v['shop_address'],
+                    'pincode': v['pincode'],
+                    'status': 'approved'
+                }
+            )
+            seeded_vendors.append(user)
+            
+        self.stdout.write(self.style.SUCCESS(f'  OK: {len(seeded_vendors)} vendors created (password: vendorpass)'))
+
         # Categories
         cat_map = {}
         for cat_data in CATEGORIES:
@@ -89,8 +163,11 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(f'  OK: {len(CATEGORIES)} categories created'))
 
         # Products
-        for p in PRODUCTS:
+        for idx, p in enumerate(PRODUCTS):
             slug = p['name'].lower().replace(' ', '-').replace('(', '').replace(')', '')
+            # Assign products round-robin to the seeded vendors
+            assigned_vendor = seeded_vendors[idx % len(seeded_vendors)]
+
             product, _ = Product.objects.get_or_create(
                 slug=slug,
                 defaults={
@@ -103,6 +180,7 @@ class Command(BaseCommand):
                     'recipe_tags': p.get('recipe_tags', ''),
                     'description': p.get('description', ''),
                     'stock': 100,
+                    'vendor': assigned_vendor,
                 }
             )
         self.stdout.write(self.style.SUCCESS(f'  OK: {len(PRODUCTS)} products created'))

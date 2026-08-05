@@ -651,6 +651,10 @@ def set_location(request):
                     '400001': 'Fort, Mumbai',
                     '600001': 'George Town, Chennai',
                     '560001': 'Majestic, Bengaluru',
+                    '625001': 'Madurai Main, Madurai',
+                    '625020': 'K.Pudur, Madurai',
+                    '625009': 'Anna Nagar, Madurai',
+                    '625003': 'Tallakulam, Madurai',
                 }
                 request.session['user_area_name'] = area_mapping.get(pincode, f"Pincode: {pincode}")
 
@@ -725,6 +729,10 @@ def select_location(request):
                 '400001': 'Fort, Mumbai',
                 '600001': 'George Town, Chennai',
                 '560001': 'Majestic, Bengaluru',
+                '625001': 'Madurai Main, Madurai',
+                '625020': 'K.Pudur, Madurai',
+                '625009': 'Anna Nagar, Madurai',
+                '625003': 'Tallakulam, Madurai',
             }
             request.session['user_area_name'] = area_mapping.get(pincode, f"Pincode: {pincode}")
             
