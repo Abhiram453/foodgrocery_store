@@ -54,16 +54,16 @@
 
     <!-- Location Selector Widget -->
     {% if user.is_authenticated and user.profile.role == 'customer' %}
-    <a href="{% url 'select_location' %}" class="ms-lg-3 ms-2 d-inline-flex align-items-center text-decoration-none" id="navLocationWidget">
-      <div class="d-flex align-items-center bg-white border px-3 py-1.5 shadow-sm nav-location-btn" style="border-radius: 50px; border-color: #e9ecef !important; transition: all 0.2s ease-in-out; gap: 8px;">
-        <span style="font-size: 1.1rem; line-height: 1;">📍</span>
-        <div class="text-start d-flex flex-column" style="line-height: 1.15;">
-          <span style="color: #6c757d; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Deliver to</span>
-          <span class="fw-bold text-dark" id="navLocationText" style="font-size: 0.85rem; letter-spacing: -0.01em;">
+    <a href="{% url 'select_location' %}" class="ms-lg-3 ms-2 d-inline-flex align-items-center text-decoration-none" id="navLocationWidget" style="flex-shrink: 0;">
+      <div class="d-flex align-items-center bg-white border px-3 py-1.5 shadow-sm nav-location-btn" style="border-radius: 50px; border-color: #e9ecef !important; transition: all 0.2s ease-in-out; gap: 8px; flex-shrink: 0; white-space: nowrap;">
+        <span style="font-size: 1.1rem; line-height: 1; flex-shrink: 0;">📍</span>
+        <div class="text-start d-flex flex-column" style="line-height: 1.15; flex-shrink: 0;">
+          <span style="color: #6c757d; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; white-space: nowrap;">Deliver to</span>
+          <span class="fw-bold text-dark" id="navLocationText" style="font-size: 0.85rem; letter-spacing: -0.01em; white-space: nowrap;">
             {% if request.session.user_pincode %}Pincode: {{ request.session.user_pincode }}{% else %}Select Location{% endif %}
           </span>
         </div>
-        <span style="color: #6c757d; font-size: 0.75rem; margin-left: 2px;"><i class="bi bi-chevron-down"></i></span>
+        <span style="color: #6c757d; font-size: 0.75rem; margin-left: 2px; flex-shrink: 0;"><i class="bi bi-chevron-down"></i></span>
       </div>
     </a>
     {% endif %}
