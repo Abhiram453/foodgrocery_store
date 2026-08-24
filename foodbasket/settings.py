@@ -63,6 +63,9 @@ WSGI_APPLICATION = 'foodbasket.wsgi.application'
 
 import urllib.parse
 db_url = os.environ.get('DATABASE_URL')
+if not db_url and (os.environ.get('RENDER') or os.environ.get('PRODUCTION') == 'True'):
+    db_url = 'postgresql://foodgrocery_store_user:O6ymNhTDdU0KMDXKwE6Jdtgbns6bBvO7@dpg-d9pfqeajnfac73ejtopg-a/foodgrocery_store'
+
 if db_url:
     url = urllib.parse.urlparse(db_url)
     DATABASES = {
