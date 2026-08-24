@@ -112,12 +112,14 @@ def vendor_dashboard(request):
     order_items = OrderItem.objects.filter(product__vendor=request.user)
     total_sales = order_items.aggregate(total=Sum(F('price') * F('quantity')))['total'] or 0
     total_orders = Order.objects.filter(items__in=order_items).distinct().count()
+    avg_order_value = float(total_sales) / total_orders if total_orders > 0 else 0.0
     
     return render(request, 'store/vendor_dashboard.html', {
         'products': products,
         'low_stock_products': low_stock_products,
         'total_sales': total_sales,
         'total_orders': total_orders,
+        'avg_order_value': avg_order_value,
     })
 
 @vendor_required
