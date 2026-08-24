@@ -1,80 +1,241 @@
 {% extends 'base.html' %}
-{% block title %}Order #{{ order.id }} Confirmed | FoodBasket{% endblock %}
+{% load static %}
+{% block title %}Order #{{ order.id }} Status | FoodBasket{% endblock %}
 
 {% block content %}
-<div class="container py-5">
-  <div class="order-confirm-wrap">
+<div class="container py-4 py-md-5">
+  <!-- Top Breadcrumb / Nav -->
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <a href="{% url 'home' %}" class="text-decoration-none text-muted small d-inline-flex align-items-center gap-1">
+      <i class="bi bi-house-door"></i> Home
+    </a>
+    <span class="text-muted small">/</span>
+    <span class="text-dark small fw-bold">Order #{{ order.id }} Tracking</span>
+  </div>
 
-    <div class="oc-success-icon">✅</div>
-    <h1 class="oc-title">Order Confirmed!</h1>
-    <p class="oc-sub mt-2">
-      Hey <strong>{{ order.user.username }}</strong>, your order <strong>#{{ order.id }}</strong> has been placed. We'll deliver it fresh!
-    </p>
-
-    <div class="oc-card mt-4">
-      <!-- Delivery info -->
-      <div class="oc-section">
-        <div class="oc-section-label">Delivery Details</div>
-        <div class="oc-detail"><i class="bi bi-geo-alt-fill"></i><span>{{ order.address }}</span></div>
-        <div class="oc-detail"><i class="bi bi-telephone-fill"></i><span>+91 {{ order.phone }}</span></div>
-        <div class="oc-detail"><i class="bi bi-calendar-check-fill"></i><span>{{ order.delivery_slot.get_slot_display }} · {{ order.delivery_slot.date|date:"D, d M Y" }}</span></div>
-      </div>
-
-      <!-- Items -->
-      <div class="oc-section">
-        <div class="oc-section-label">Items Ordered</div>
-        {% for item in order.items.all %}
-        <div class="oc-item-row">
-          <span>{{ item.product_name }} <span class="oc-item-qty">× {{ item.quantity }}</span></span>
-          <span>₹{{ item.subtotal }}</span>
+  <div class="row g-4">
+    <!-- ── LEFT COLUMN: DELIVERY TIMELINE & MAP ── -->
+    <div class="col-12 col-lg-7">
+      <!-- 1. Countdown / Status Card -->
+      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-3">
+        <div class="row align-items-center g-3">
+          <div class="col-8">
+            <span class="text-muted small fw-bold uppercase letter-spacing" style="font-size: 0.72rem;">ORDER #FM-{{ order.id }}</span>
+            {% if order.status == 'delivered' %}
+              <h2 class="fw-bold text-success mb-1 mt-1" style="font-family: 'Inter', sans-serif; font-size: 1.8rem; letter-spacing: -0.02em;">Delivered Successfully</h2>
+              <p class="text-muted small mb-0">Delivered by driver Michael</p>
+            {% elif order.status == 'cancelled' %}
+              <h2 class="fw-bold text-danger mb-1 mt-1" style="font-family: 'Inter', sans-serif; font-size: 1.8rem; letter-spacing: -0.02em;">Order Cancelled</h2>
+              <p class="text-muted small mb-0">Refund has been processed</p>
+            {% else %}
+              <h2 class="fw-bold text-success mb-1 mt-1" style="font-family: 'Inter', sans-serif; font-size: 1.8rem; letter-spacing: -0.02em;">Arriving in <span class="text-success text-decoration-underline">15–20 min</span></h2>
+              <p class="text-muted small mb-0">Driver assigned: Michael</p>
+            {% endif %}
+          </div>
+          <div class="col-4 text-end">
+            {% if order.status != 'delivered' and order.status != 'cancelled' %}
+              <div class="d-inline-flex align-items-center justify-content-center text-white fw-bold px-3 py-2.5 rounded-3 shadow-sm" style="background-color: var(--g700); font-family: 'Inter', sans-serif; font-size: 1.25rem; min-width: 90px; gap: 6px;">
+                <i class="bi bi-clock small"></i>
+                <span id="countdownTimer">14:32</span>
+              </div>
+            {% else %}
+              <div class="d-inline-flex align-items-center justify-content-center text-success fw-bold px-3 py-2.5 rounded-3" style="background-color: #e6f7ed; font-family: 'Inter', sans-serif; font-size: 1.1rem;">
+                <i class="bi bi-check-circle-fill me-1"></i> Done
+              </div>
+            {% endif %}
+          </div>
         </div>
-        {% endfor %}
       </div>
 
-      <!-- Price breakdown -->
-      <div class="oc-section">
-        <div class="oc-section-label">Price Breakdown</div>
-        <div class="oc-price-row"><span>Subtotal</span><span>₹{{ order.subtotal }}</span></div>
-        {% if order.discount_amount %}
-        <div class="oc-price-row" style="color:var(--g700)"><span>Discount</span><span>−₹{{ order.discount_amount }}</span></div>
-        {% endif %}
-        <div class="oc-price-row"><span>Delivery</span><span>{% if order.delivery_fee == 0 %}FREE{% else %}₹{{ order.delivery_fee }}{% endif %}</span></div>
-        <div class="oc-price-row total-row"><span>Total Paid</span><span>₹{{ order.total }}</span></div>
+      <!-- 2. Interactive Order Timeline Status Card -->
+      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-3">
+        <h3 class="fw-bold text-dark mb-4" style="font-family: 'Inter', sans-serif; font-size: 1.25rem; letter-spacing: -0.01em;">Order Status</h3>
+        
+        <div class="position-relative ps-4" style="border-left: 2px solid #e9ecef; margin-left: 10px;">
+          <!-- Step 1: Placed -->
+          <div class="mb-4 position-relative">
+            <div class="position-absolute d-flex align-items-center justify-content-center rounded-circle text-white bg-success" style="left: -32px; top: 0px; width: 22px; height: 22px; font-size: 0.75rem; z-index: 10;">
+              <i class="bi bi-check"></i>
+            </div>
+            <h6 class="fw-bold text-dark mb-0" style="font-size: 0.95rem;">Order Placed</h6>
+            <p class="text-muted small mb-0">Today at {{ order.created_at|date:"g:i A" }}</p>
+          </div>
+
+          <!-- Step 2: Processed -->
+          <div class="mb-4 position-relative">
+            <div class="position-absolute d-flex align-items-center justify-content-center rounded-circle text-white {% if order.status != 'pending' %}bg-success{% else %}bg-secondary{% endif %}" style="left: -32px; top: 0px; width: 22px; height: 22px; font-size: 0.75rem; z-index: 10;">
+              {% if order.status != 'pending' %}<i class="bi bi-check"></i>{% else %}<span style="font-size: 0.55rem;">●</span>{% endif %}
+            </div>
+            <h6 class="fw-bold {% if order.status != 'pending' %}text-dark{% else %}text-muted{% endif %} mb-0" style="font-size: 0.95rem;">Processed by Vendor</h6>
+            <p class="text-muted small mb-0">{% if order.status != 'pending' %}Vendor has accepted and packed your items.{% else %}Waiting for vendor approval.{% endif %}</p>
+          </div>
+
+          <!-- Step 3: Out for Delivery -->
+          <div class="mb-4 position-relative">
+            <div class="position-absolute d-flex align-items-center justify-content-center rounded-circle {% if order.status == 'out_for_delivery' or order.status == 'delivered' %}bg-success text-white{% else %}bg-white border text-secondary{% endif %}" style="left: -32px; top: 0px; width: 22px; height: 22px; font-size: 0.75rem; z-index: 10; {% if order.status == 'out_for_delivery' %}border: 2px solid var(--g700) !important;{% endif %}">
+              {% if order.status == 'delivered' %}<i class="bi bi-check"></i>{% elif order.status == 'out_for_delivery' %}<span class="spinner-grow spinner-grow-sm text-success" style="width: 8px; height: 8px;"></span>{% else %}<span style="font-size: 0.55rem;">●</span>{% endif %}
+            </div>
+            <h6 class="fw-bold {% if order.status == 'out_for_delivery' or order.status == 'delivered' %}text-dark{% else %}text-muted{% endif %} mb-0" style="font-size: 0.95rem;">Out for Delivery</h6>
+            <p class="text-muted small mb-0">{% if order.status == 'out_for_delivery' or order.status == 'delivered' %}Michael is on the way to your location.{% else %}Waiting to dispatch.{% endif %}</p>
+          </div>
+
+          <!-- Step 4: Delivered -->
+          <div class="position-relative">
+            <div class="position-absolute d-flex align-items-center justify-content-center rounded-circle {% if order.status == 'delivered' %}bg-success text-white{% else %}bg-white border text-secondary{% endif %}" style="left: -32px; top: 0px; width: 22px; height: 22px; font-size: 0.75rem; z-index: 10;">
+              {% if order.status == 'delivered' %}<i class="bi bi-check"></i>{% else %}<span style="font-size: 0.55rem;">●</span>{% endif %}
+            </div>
+            <h6 class="fw-bold {% if order.status == 'delivered' %}text-dark{% else %}text-muted{% endif %} mb-0" style="font-size: 0.95rem;">Delivered</h6>
+            <p class="text-muted small mb-0">{% if order.status == 'delivered' %}Delivered and received successfully.{% else %}Expected within your chosen delivery slot.{% endif %}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Dynamic Route Map Card -->
+      <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-3 bg-light" style="border-color: #e9ecef !important;">
+        <div class="card-body p-0 position-relative" style="height: 200px;">
+          <!-- Stylized SVG Delivery Path Map -->
+          <svg class="w-100 h-100" viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg" style="background: #f1f3f5;">
+            <!-- Grid pattern overlay -->
+            <defs>
+              <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(0,0,0,0.03)" stroke-width="1"/>
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#grid)" />
+            
+            <!-- Delivery Road Path -->
+            <path d="M 60,140 Q 140,60 200,120 T 340,80" fill="none" stroke="#2ebb71" stroke-width="4" stroke-linecap="round" stroke-dasharray="8 6" opacity="0.6"/>
+            <path d="M 60,140 Q 140,60 200,120 T 340,80" fill="none" stroke="#006837" stroke-width="4" stroke-linecap="round" id="mapPath"/>
+            
+            <!-- Start Marker (Market) -->
+            <circle cx="60" cy="140" r="10" fill="#006837" />
+            <circle cx="60" cy="140" r="16" fill="#006837" fill-opacity="0.15" />
+            <text x="60" y="165" font-size="11" font-weight="bold" fill="#6c757d" text-anchor="middle" font-family="'Inter', sans-serif">Market</text>
+            
+            <!-- End Marker (Home) -->
+            <polygon points="340,66 348,78 332,78" fill="#e92e3d" />
+            <circle cx="340" cy="80" r="8" fill="#e92e3d" />
+            <text x="340" y="102" font-size="11" font-weight="bold" fill="#6c757d" text-anchor="middle" font-family="'Inter', sans-serif">Home</text>
+            
+            <!-- Moving Delivery Driver Pin -->
+            <circle cx="0" cy="0" r="6" fill="#ffc107" id="driverPin" style="filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.3));">
+              <animateMotion dur="12s" repeatCount="indefinite" path="M 60,140 Q 140,60 200,120 T 340,80" />
+            </circle>
+          </svg>
+        </div>
       </div>
     </div>
 
-    <!-- Status tracker -->
-    <div class="status-tracker">
-      <div class="st-step done">
-        <div class="st-step-icon"><i class="bi bi-check-circle-fill"></i></div>
-        <div class="st-step-label">Placed</div>
-      </div>
-      <div class="st-line"></div>
-      <div class="st-step">
-        <div class="st-step-icon"><i class="bi bi-box-seam"></i></div>
-        <div class="st-step-label">Confirmed</div>
-      </div>
-      <div class="st-line"></div>
-      <div class="st-step">
-        <div class="st-step-icon"><i class="bi bi-truck"></i></div>
-        <div class="st-step-label">Out for Delivery</div>
-      </div>
-      <div class="st-line"></div>
-      <div class="st-step">
-        <div class="st-step-icon"><i class="bi bi-house-check"></i></div>
-        <div class="st-step-label">Delivered</div>
-      </div>
-    </div>
+    <!-- ── RIGHT COLUMN: DETAILS SUMMARY ── -->
+    <div class="col-12 col-lg-5">
+      <!-- 1. Delivery Details Card -->
+      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
+        <h4 class="text-muted small fw-bold mb-3" style="font-size: 0.72rem; letter-spacing: 0.05em; font-family: 'Inter', sans-serif;">DELIVERY DETAILS</h4>
+        <div class="d-flex align-items-start gap-3 mb-4">
+          <div class="rounded-circle bg-light d-flex align-items-center justify-content-center text-success flex-shrink-0" style="width: 42px; height: 42px; border: 1px solid #e9ecef;">
+            <i class="bi bi-geo-alt" style="font-size: 1.25rem;"></i>
+          </div>
+          <div>
+            <h6 class="fw-bold mb-1 text-dark" style="font-size: 0.95rem;">Home Address</h6>
+            <p class="text-muted small mb-0" style="line-height: 1.45;">{{ order.address }}</p>
+          </div>
+        </div>
 
-    <div class="d-flex flex-wrap justify-content-center gap-3 mt-4">
-      <a href="{% url 'order_history' %}" class="btn-primary-pill">
-        <i class="bi bi-bag me-2"></i>View My Orders
+        <div class="border-top pt-3 d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center gap-3">
+            <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=150" alt="Driver" class="rounded-circle" style="width: 44px; height: 44px; object-fit: cover;">
+            <div>
+              <h6 class="fw-bold mb-0 text-dark" style="font-size: 0.92rem;">Michael T.</h6>
+              <div class="text-warning small" style="font-size: 0.8rem;">
+                <i class="bi bi-star-fill text-warning me-1"></i>4.9
+              </div>
+            </div>
+          </div>
+          <a href="tel:+91{{ order.phone }}" class="rounded-circle bg-light d-flex align-items-center justify-content-center text-dark text-decoration-none" style="width: 40px; height: 40px; border: 1px solid #e9ecef; transition: all 0.2s;">
+            <i class="bi bi-telephone"></i>
+          </a>
+        </div>
+      </div>
+
+      <!-- 2. Order Summary Card -->
+      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
+        <h4 class="text-muted small fw-bold mb-3" style="font-size: 0.72rem; letter-spacing: 0.05em; font-family: 'Inter', sans-serif;">ORDER SUMMARY</h4>
+        
+        <div class="d-flex flex-column gap-3 mb-4">
+          {% for item in order.items.all %}
+          <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-3">
+              <div class="rounded-3 bg-light d-flex align-items-center justify-content-center text-success flex-shrink-0" style="width: 48px; height: 48px; border: 1px solid #e9ecef; font-size: 1.5rem;">
+                {% if item.product.image %}
+                  <img src="{{ item.product.image.url }}" alt="{{ item.product_name }}" class="w-100 h-100 rounded-3" style="object-fit: cover;">
+                {% else %}
+                  {{ item.product.category.icon|default:"🛒" }}
+                {% endif %}
+              </div>
+              <div>
+                <h6 class="fw-bold mb-0 text-dark" style="font-size: 0.92rem;">{{ item.product_name }}</h6>
+                <span class="text-muted small">Qty: {{ item.quantity }}</span>
+              </div>
+            </div>
+            <span class="fw-bold text-dark" style="font-size: 0.95rem;">₹{{ item.subtotal }}</span>
+          </div>
+          {% endfor %}
+        </div>
+
+        <div class="border-top pt-3">
+          <div class="d-flex justify-content-between mb-2">
+            <span class="text-muted small">Subtotal</span>
+            <span class="text-dark small fw-medium">₹{{ order.subtotal }}</span>
+          </div>
+          {% if order.discount_amount %}
+          <div class="d-flex justify-content-between mb-2 text-success">
+            <span class="small">Coupon Discount</span>
+            <span class="small fw-medium">−₹{{ order.discount_amount }}</span>
+          </div>
+          {% endif %}
+          <div class="d-flex justify-content-between mb-3">
+            <span class="text-muted small">Delivery Fee</span>
+            <span class="text-dark small fw-medium">{% if order.delivery_fee == 0 %}FREE{% else %}₹{{ order.delivery_fee }}{% endif %}</span>
+          </div>
+          <div class="d-flex justify-content-between border-top pt-3">
+            <span class="fw-bold text-dark">Total</span>
+            <span class="fw-bold text-success" style="font-size: 1.2rem;">₹{{ order.total }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Need Help Outline Button -->
+      <a href="#" class="btn btn-outline-success w-100 rounded-pill py-2.5 fw-bold d-flex align-items-center justify-content-center gap-2" style="border-color: #ced4da; color: #4b5563; font-size: 0.9rem;">
+        <i class="bi bi-question-circle"></i> Need Help?
       </a>
-      <a href="{% url 'product_list' %}" class="btn-outline-pill" style="color:var(--g700);border-color:var(--g700);background:transparent">
-        <i class="bi bi-bag-plus me-2"></i>Continue Shopping
-      </a>
     </div>
-
   </div>
 </div>
+
+<script>
+// Live Ticking Countdown Clock (from 14m 32s as default)
+let minutes = 14;
+let seconds = 32;
+const timerEl = document.getElementById('countdownTimer');
+
+if (timerEl) {
+  const interval = setInterval(() => {
+    if (seconds === 0) {
+      if (minutes === 0) {
+        clearInterval(interval);
+        timerEl.innerText = "00:00";
+        return;
+      }
+      minutes--;
+      seconds = 59;
+    } else {
+      seconds--;
+    }
+    
+    const displayMins = minutes < 10 ? '0' + minutes : minutes;
+    const displaySecs = seconds < 10 ? '0' + seconds : seconds;
+    timerEl.innerText = `${displayMins}:${displaySecs}`;
+  }, 1000);
+}
+</script>
 {% endblock %}
