@@ -124,12 +124,12 @@
                     <input type="hidden" name="quantity" value="1">
                     <input type="hidden" name="next" value="{{ request.get_full_path }}">
                     <button type="submit" class="pcard-add-btn" title="Add to cart">
-                      <i class="bi bi-cart-plus-fill"></i>
+                      <i class="bi bi-plus-lg"></i>
                     </button>
                   </form>
                   {% else %}
                   <a href="{% url 'login' %}?next={{ request.get_full_path }}" class="pcard-add-btn" title="Login to add to cart">
-                    <i class="bi bi-cart-plus-fill"></i>
+                    <i class="bi bi-plus-lg"></i>
                   </a>
                   {% endif %}
                   {% else %}

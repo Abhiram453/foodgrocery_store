@@ -6,13 +6,13 @@
 
 /* ── Design Tokens ── */
 :root {
-  --g900: #0c3320;
-  --g800: #145a32;
-  --g700: #1e7e4a;
-  --g600: #27a45e;
-  --g400: #4cc97d;
-  --g100: #e8f8ee;
-  --g50:  #f3fdf6;
+  --g900: #004d26;
+  --g800: #005c2e;
+  --g700: #006837; /* Figma primary green */
+  --g600: #008040;
+  --g400: #2ebb71;
+  --g100: #e6f7ed;
+  --g50:  #f2faf5;
 
   --orange:  #f97316;
   --orange-l:#fff4ed;
@@ -22,9 +22,9 @@
   --ink:     #111827;
   --ink-2:   #374151;
   --ink-3:   #6b7280;
-  --border:  #e5e7eb;
-  --bg:      #faf9f7;
-  --bg2:     #f3f4f6;
+  --border:  #e9ecef;
+  --bg:      #f8f9fa;
+  --bg2:     #f1f3f5;
   --white:   #ffffff;
 
   --radius-xs: 6px;
@@ -486,25 +486,31 @@ img { max-width: 100%; display: block; }
 ══════════════════════════════════════════ */
 .cat-card {
   display: flex; flex-direction: column; align-items: center;
-  text-align: center; padding: 1.25rem .75rem;
-  background: white; border-radius: var(--radius-lg);
-  border: 2px solid transparent;
-  box-shadow: var(--shadow-xs);
-  transition: transform var(--t), border-color var(--t), box-shadow var(--t);
-  cursor: pointer;
+  text-align: center; background: transparent; border: none;
+  cursor: pointer; transition: transform var(--t);
+  text-decoration: none;
 }
 .cat-card:hover {
-  transform: translateY(-5px);
-  border-color: var(--g400);
-  box-shadow: var(--shadow-md);
+  transform: translateY(-4px);
 }
-.cat-card-icon { font-size: 2.5rem; margin-bottom: .5rem; line-height: 1; }
-.cat-card-name { font-size: .8rem; font-weight: 700; color: var(--ink-2); }
+.cat-card-icon-wrap {
+  width: 76px; height: 76px; border-radius: 50%;
+  background: var(--bg2); display: flex; align-items: center;
+  justify-content: center; margin-bottom: .6rem; font-size: 2rem;
+  transition: background-color var(--t), transform var(--t);
+}
+.cat-card:hover .cat-card-icon-wrap {
+  background-color: var(--g100);
+  transform: scale(1.05);
+}
+.cat-card-name {
+  font-size: .85rem; font-weight: 600; color: var(--ink);
+  font-family: 'Inter', sans-serif;
+}
 
 @media (max-width: 480px) {
-  .cat-card-icon { font-size: 2rem; }
-  .cat-card-name { font-size: .72rem; }
-  .cat-card { padding: 1rem .5rem; }
+  .cat-card-icon-wrap { width: 62px; height: 62px; font-size: 1.6rem; }
+  .cat-card-name { font-size: .75rem; }
 }
 
 /* ══════════════════════════════════════════
