@@ -1,155 +1,210 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block title %}My Account | FoodBasket{% endblock %}
 
 {% block content %}
 <div class="container py-4 py-md-5">
-  <!-- Top Back Nav -->
-  <div class="d-flex align-items-center justify-content-between mb-3">
-    <button onclick="history.back()" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 fw-bold shadow-sm d-inline-flex align-items-center gap-1" style="font-size: .82rem;">
-      <i class="bi bi-arrow-left"></i> Back
-    </button>
-    <a href="{% url 'home' %}" class="text-muted small text-decoration-none d-inline-flex align-items-center gap-1">
-      <i class="bi bi-house-door"></i> Dashboard
-    </a>
-  </div>
-
-  <!-- Profile Header Card -->
-  <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4" style="background: linear-gradient(135deg, var(--g900), var(--g700)); color: white;">
-    <div class="card-body p-4 p-md-5">
-      <div class="d-flex align-items-center flex-wrap gap-4">
-        <div class="rounded-circle d-flex align-items-center justify-content-center bg-white text-success fw-bold shadow" style="width: 76px; height: 76px; font-size: 2rem;">
-          {{ user.username|first|upper }}
-        </div>
-        <div class="flex-grow-1">
-          <span class="badge bg-success bg-opacity-25 text-white mb-2 px-3 py-1 rounded-pill" style="font-size: .75rem; letter-spacing: .05em;">AUTHENTICATED ACCOUNT</span>
-          <h1 class="fw-bold mb-1 h2" style="font-family: 'Nunito', sans-serif;">{{ user.username }}</h1>
-          <p class="mb-0 text-white-50 small"><i class="bi bi-envelope me-1"></i>{{ user.email|default:"No email set" }} &nbsp;•&nbsp; Member since {{ user.date_joined|date:"M Y" }}</p>
-        </div>
-        <div class="d-flex gap-2 flex-wrap">
-          <a href="{% url 'order_history' %}" class="btn btn-light rounded-pill px-4 fw-bold btn-sm shadow-sm" style="color: var(--g800);">
-            <i class="bi bi-bag me-1"></i>My Orders
-          </a>
-          <form action="{% url 'logout' %}" method="post" id="logoutFormAccount" class="d-inline m-0 p-0">
-            {% csrf_token %}
-            <button type="button" class="btn btn-outline-light rounded-pill px-4 fw-bold btn-sm" onclick="confirmLogout(document.getElementById('logoutFormAccount'))">
-              <i class="bi bi-box-arrow-right me-1"></i>Logout
-            </button>
-          </form>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Quick Stats Grid -->
-  <div class="row g-3 mb-4">
-    <div class="col-12 col-sm-4">
-      <div class="card border-0 shadow-sm rounded-4 p-3 text-center bg-white">
-        <div class="text-success mb-1" style="font-size: 1.8rem;"><i class="bi bi-box-seam"></i></div>
-        <h3 class="fw-bold h4 mb-0" style="color: var(--g800);">{{ order_count }}</h3>
-        <span class="text-muted small">Total Orders</span>
-      </div>
-    </div>
-    <div class="col-12 col-sm-4">
-      <div class="card border-0 shadow-sm rounded-4 p-3 text-center bg-white">
-        <div class="text-success mb-1" style="font-size: 1.8rem;"><i class="bi bi-currency-rupee"></i></div>
-        <h3 class="fw-bold h4 mb-0" style="color: var(--g800);">₹{{ total_spent }}</h3>
-        <span class="text-muted small">Lifetime Spent</span>
-      </div>
-    </div>
-    <div class="col-12 col-sm-4">
-      <div class="card border-0 shadow-sm rounded-4 p-3 text-center bg-white">
-        <div class="text-success mb-1" style="font-size: 1.8rem;"><i class="bi bi-cart3"></i></div>
-        <h3 class="fw-bold h4 mb-0" style="color: var(--g800);">{{ cart_item_count }}</h3>
-        <span class="text-muted small">Items in Cart</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- Main Account Content -->
   <div class="row g-4">
-    <!-- Left: Recent Orders -->
-    <div class="col-12 col-lg-8">
-      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
-        <div class="d-flex align-items-center justify-content-between mb-4">
-          <h2 class="h5 fw-bold mb-0" style="font-family: 'Nunito', sans-serif;"><i class="bi bi-clock-history text-success me-2"></i>Recent Orders</h2>
-          <a href="{% url 'order_history' %}" class="view-all-link">View All Orders <i class="bi bi-arrow-right"></i></a>
+    <!-- ── LEFT COLUMN: MY ACCOUNT SIDEBAR ── -->
+    <div class="col-12 col-lg-3">
+      <div class="pe-lg-3">
+        <h2 class="fw-bold mb-1 text-dark" style="font-family: 'Inter', sans-serif; font-size: 1.5rem; letter-spacing: -0.02em;">My Account</h2>
+        <p class="text-muted small mb-4">Manage your profile</p>
+        
+        <div class="d-flex flex-column gap-1">
+          <a href="{% url 'account' %}" class="account-sidebar-link active">
+            <i class="bi bi-person-circle"></i>
+            <span>Profile Dashboard</span>
+          </a>
+          <a href="{% url 'order_history' %}" class="account-sidebar-link">
+            <i class="bi bi-clock-history"></i>
+            <span>My Orders</span>
+          </a>
+          <a href="{% url 'wishlist' %}" class="account-sidebar-link">
+            <i class="bi bi-heart"></i>
+            <span>Wishlist</span>
+          </a>
+          <a href="#" class="account-sidebar-link">
+            <i class="bi bi-card-list"></i>
+            <span>Saved Cards</span>
+          </a>
         </div>
-
-        {% if recent_orders %}
-          {% for order in recent_orders %}
-          <div class="order-card mb-3 shadow-none border">
-            <div class="order-card-head py-2 px-3">
-              <div>
-                <span class="order-card-id">Order #{{ order.id }}</span>
-                <span class="order-card-date ms-2">{{ order.created_at|date:"d M Y, g:i A" }}</span>
-              </div>
-              <span class="order-status-pill s-{{ order.status }}">{{ order.get_status_display }}</span>
-            </div>
-            <div class="order-card-body p-3">
-              <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                <div>
-                  <small class="text-success fw-bold d-block"><i class="bi bi-lightning-charge-fill me-1"></i>{% if order.delivery_slot %}{{ order.delivery_slot.get_slot_display }}{% else %}⚡ Express Delivery (Under 45–60 Mins){% endif %}</small>
-                  <small class="text-muted d-block"><i class="bi bi-geo-alt me-1"></i>{{ order.address|truncatechars:45 }}</small>
-                </div>
-                <div class="d-flex align-items-center gap-3">
-                  <div class="fw-bold text-success" style="font-size: 1.1rem;">₹{{ order.total }}</div>
-                  {% if order.status == 'pending' or order.status == 'confirmed' %}
-                  <form action="{% url 'cancel_order' order.id %}" method="post" id="cancelFormAcc{{ order.id }}" class="d-inline m-0 p-0">
-                    {% csrf_token %}
-                    <input type="hidden" name="next" value="{{ request.path }}">
-                    <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold" onclick="confirmCancelAccountOrder('{{ order.id }}', document.getElementById('cancelFormAcc{{ order.id }}'))">Cancel</button>
-                  </form>
-                  {% endif %}
-                </div>
-              </div>
-            </div>
-          </div>
-          {% endfor %}
-        {% else %}
-          <div class="text-center py-4">
-            <div class="mb-2" style="font-size: 2.5rem;">🛍️</div>
-            <p class="text-muted mb-3">You haven't placed any orders yet.</p>
-            <a href="{% url 'product_list' %}" class="btn-primary-pill">Start Shopping</a>
-          </div>
-        {% endif %}
       </div>
     </div>
 
-    <!-- Right: Account Quick Actions -->
-    <div class="col-12 col-lg-4">
-      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
-        <h2 class="h5 fw-bold mb-3" style="font-family: 'Nunito', sans-serif;"><i class="bi bi-grid-fill text-success me-2"></i>Quick Actions</h2>
-        <div class="d-flex flex-column gap-2">
-          <a href="{% url 'cart' %}" class="btn btn-outline-success text-start rounded-3 p-3 d-flex align-items-center justify-content-between">
-            <span><i class="bi bi-cart3 me-2"></i>View Shopping Cart</span>
-            <i class="bi bi-chevron-right small"></i>
-          </a>
-          <a href="{% url 'product_list' %}" class="btn btn-outline-success text-start rounded-3 p-3 d-flex align-items-center justify-content-between">
-            <span><i class="bi bi-shop me-2"></i>Browse Groceries</span>
-            <i class="bi bi-chevron-right small"></i>
-          </a>
-          <a href="{% url 'recipes' %}" class="btn btn-outline-success text-start rounded-3 p-3 d-flex align-items-center justify-content-between">
-            <span><i class="bi bi-journal-richtext me-2"></i>View Recipes</span>
-            <i class="bi bi-chevron-right small"></i>
-          </a>
+    <!-- ── RIGHT COLUMN: DASHBOARD CONTENT ── -->
+    <div class="col-12 col-lg-9">
+      <!-- 1. Welcome Banner Card -->
+      <div class="card border-0 rounded-4 overflow-hidden mb-4 shadow-sm" style="background-color: var(--g700); color: white;">
+        <div class="card-body p-4">
+          <div class="d-flex align-items-center gap-3">
+            <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150" alt="Avatar" class="rounded-circle border border-2 border-white shadow-sm" style="width: 72px; height: 72px; object-fit: cover;">
+            <div>
+              <h2 class="fw-bold mb-1" style="font-family: 'Inter', sans-serif; font-size: 1.6rem; letter-spacing: -0.01em;">Welcome back, {{ user.username }}</h2>
+              <p class="mb-0 text-white-50 small">Premium Member since 2026</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Profile Details Grid -->
+      <div class="row g-4 mb-4">
+        <!-- Personal Information Card -->
+        <div class="col-12 col-md-8">
+          <div class="card border-0 shadow-sm rounded-4 p-4 bg-white" style="height: 100%;">
+            <div class="d-flex align-items-center justify-content-between mb-4">
+              <h3 class="fw-bold text-dark mb-0" style="font-family: 'Inter', sans-serif; font-size: 1.2rem; letter-spacing: -0.01em;">Personal Information</h3>
+              <a href="#" class="text-success text-decoration-none small fw-bold d-inline-flex align-items-center gap-1">
+                <i class="bi bi-pencil-square"></i> Edit
+              </a>
+            </div>
+            
+            <div class="row g-3">
+              <div class="col-6">
+                <label class="text-muted small fw-bold mb-1 d-block" style="font-size: 0.72rem;">Full Name</label>
+                <div class="bg-light px-3 py-2.5 rounded-3 text-dark fw-medium" style="font-size: 0.9rem;">
+                  {{ user.first_name|default:user.username }} {{ user.last_name }}
+                </div>
+              </div>
+              <div class="col-6">
+                <label class="text-muted small fw-bold mb-1 d-block" style="font-size: 0.72rem;">Email Address</label>
+                <div class="bg-light px-3 py-2.5 rounded-3 text-dark fw-medium" style="font-size: 0.9rem; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                  {{ user.email|default:"no-email@example.com" }}
+                </div>
+              </div>
+              <div class="col-6">
+                <label class="text-muted small fw-bold mb-1 d-block" style="font-size: 0.72rem;">Phone Number</label>
+                <div class="bg-light px-3 py-2.5 rounded-3 text-dark fw-medium" style="font-size: 0.9rem;">
+                  +1 (555) 123-4567
+                </div>
+              </div>
+              <div class="col-6">
+                <label class="text-muted small fw-bold mb-1 d-block" style="font-size: 0.72rem;">Loyalty Points</label>
+                <div class="px-3 py-2.5 rounded-3 text-success fw-bold d-flex align-items-center justify-content-between" style="font-size: 0.9rem; background-color: #e6f7ed;">
+                  <span>1,450 pts</span>
+                  <i class="bi bi-arrow-repeat text-success"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Order Card -->
+        <div class="col-12 col-md-4">
+          <div class="card border-0 shadow-sm rounded-4 p-4 bg-white" style="height: 100%;">
+            <div class="d-flex align-items-center justify-content-between mb-4">
+              <h3 class="fw-bold text-dark mb-0" style="font-family: 'Inter', sans-serif; font-size: 1.2rem; letter-spacing: -0.01em;">Recent Order</h3>
+              <a href="{% url 'order_history' %}" class="text-muted text-decoration-none small fw-bold">View All</a>
+            </div>
+
+            {% if recent_orders %}
+              {% with order=recent_orders.0 %}
+              <div class="d-flex align-items-start gap-3 mb-3">
+                <div class="rounded-3 bg-light d-flex align-items-center justify-content-center text-success flex-shrink-0" style="width: 48px; height: 48px; border: 1px solid #e9ecef;">
+                  <i class="bi bi-truck" style="font-size: 1.4rem;"></i>
+                </div>
+                <div>
+                  <h6 class="fw-bold mb-0 text-dark" style="font-size: 0.92rem;">Order #FB-{{ order.id }}</h6>
+                  <p class="text-muted small mb-0">{{ order.created_at|date:"d M Y" }}</p>
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <span class="text-muted small">Status</span>
+                  <span class="text-success small fw-bold">{{ order.get_status_display }}</span>
+                </div>
+                <div class="progress" style="height: 6px;">
+                  <div class="progress-bar bg-success" role="progressbar" style="width: {% if order.status == 'pending' %}25%{% elif order.status == 'confirmed' %}50%{% elif order.status == 'shipped' %}75%{% else %}100%{% endif %};"></div>
+                </div>
+              </div>
+
+              <a href="{% url 'order_history' %}" class="btn btn-outline-success w-100 rounded-pill fw-bold btn-sm py-2" style="border-color: var(--g700); color: var(--g700);">Track Order</a>
+              {% endwith %}
+            {% else %}
+              <div class="text-center py-4 my-auto">
+                <div class="mb-2" style="font-size: 2rem;">🛍️</div>
+                <p class="text-muted small mb-0">No recent orders placed.</p>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Saved Addresses Card -->
+      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+          <h3 class="fw-bold text-dark mb-0" style="font-family: 'Inter', sans-serif; font-size: 1.2rem; letter-spacing: -0.01em;">Saved Addresses</h3>
+          <button class="btn btn-success btn-sm rounded-pill px-3 fw-bold border-0" style="background-color: var(--g700);"><i class="bi bi-plus-lg me-1"></i>Add New</button>
+        </div>
+
+        <div class="row g-3">
+          <!-- Home Address -->
+          <div class="col-12 col-md-4">
+            <div class="p-3 rounded-4 border bg-white position-relative" style="height: 100%; border-color: #e9ecef !important;">
+              <span class="badge position-absolute top-0 end-0 m-3 px-2 py-1 bg-success bg-opacity-10 text-success rounded-3" style="font-size: 0.65rem;">DEFAULT</span>
+              <div class="d-flex align-items-center gap-2 mb-2">
+                <i class="bi bi-house-door text-success" style="font-size: 1.1rem;"></i>
+                <h6 class="fw-bold mb-0 text-dark" style="font-size: 0.95rem;">Home</h6>
+              </div>
+              <p class="text-muted small mb-0" style="line-height: 1.4;">
+                123 Green Valley Road,<br>
+                Apt 4B, Springfield, IL 62701
+              </p>
+            </div>
+          </div>
+
+          <!-- Office Address -->
+          <div class="col-12 col-md-4">
+            <div class="p-3 rounded-4 border bg-white" style="height: 100%; border-color: #e9ecef !important;">
+              <div class="d-flex align-items-center gap-2 mb-2">
+                <i class="bi bi-briefcase text-success" style="font-size: 1.1rem;"></i>
+                <h6 class="fw-bold mb-0 text-dark" style="font-size: 0.95rem;">Office</h6>
+              </div>
+              <p class="text-muted small mb-0" style="line-height: 1.4;">
+                Tech Hub Building, Floor 12,<br>
+                456 Innovation Blvd, Chicago, IL 60601
+              </p>
+            </div>
+          </div>
+
+          <!-- Add Address Placeholder -->
+          <div class="col-12 col-md-4">
+            <div class="p-3 rounded-4 border border-dashed d-flex flex-column align-items-center justify-content-center text-center cursor-pointer hover-bg-light" style="height: 100%; border: 1.5px dashed #ced4da !important; min-height: 116px;">
+              <i class="bi bi-plus-circle text-muted mb-1" style="font-size: 1.5rem;"></i>
+              <span class="text-muted small fw-bold">Add New Address</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </div>
 </div>
 
-{% block extra_js %}
-<script>
-function confirmCancelAccountOrder(orderId, formEl) {
-  openConfirmModal({
-    title: 'Cancel Order #' + orderId,
-    message: 'Are you sure you want to cancel Order #' + orderId + '? All items will be returned to store stock.',
-    icon: '❌',
-    btnText: 'Yes, Cancel Order',
-    btnClass: 'btn-danger',
-    onConfirm: () => formEl.submit()
-  });
+<style>
+.account-sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #4b5563;
+  text-decoration: none;
+  transition: all 0.2s;
 }
-</script>
-{% endblock %}
+.account-sidebar-link:hover {
+  background-color: #f1f3f5;
+  color: var(--g700);
+}
+.account-sidebar-link.active {
+  background-color: #f1f3f5;
+  color: var(--g700);
+  font-weight: 600;
+}
+.border-dashed:hover {
+  background-color: #f8f9fa;
+}
+</style>
 {% endblock %}
