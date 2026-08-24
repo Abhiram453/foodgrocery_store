@@ -568,7 +568,12 @@ def toggle_wishlist(request, product_id):
 @login_required
 def wishlist_view(request):
     items = Wishlist.objects.filter(user=request.user).select_related('product')
-    return render(request, 'store/wishlist.html', {'items': items})
+    from .models import Category
+    categories = Category.objects.all()
+    return render(request, 'store/wishlist.html', {
+        'items': items,
+        'categories': categories,
+    })
 
 
 # ─────────────────────────────────────────────
