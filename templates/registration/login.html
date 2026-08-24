@@ -1,54 +1,75 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block title %}Login | FoodBasket{% endblock %}
 
 {% block content %}
-<div class="auth-page-wrap">
-  <div class="auth-card">
-    <div class="mb-3">
-      <button onclick="history.back()" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 fw-bold border-1 shadow-sm d-inline-flex align-items-center gap-1" style="font-size: .8rem;">
-        <i class="bi bi-arrow-left"></i> Back
-      </button>
+<div class="container py-5 d-flex align-items-center justify-content-center" style="min-height: calc(100vh - 180px);">
+  <div class="card border-0 shadow rounded-4 overflow-hidden w-100" style="max-width: 900px; border: 1px solid #e9ecef !important;">
+    <div class="row g-0">
+      <!-- ── LEFT PANEL: BRAND TEXT OVER IMAGE ── -->
+      <div class="col-md-6 d-none d-md-flex flex-column justify-content-between p-5 text-white position-relative" style="background: linear-gradient(rgba(0,0,0,0.25), rgba(0,0,0,0.25)), url('https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&q=80&w=600') center/cover no-repeat; min-height: 480px; border-top-left-radius: 16px; border-bottom-left-radius: 16px;">
+        <!-- Brand Logo -->
+        <div class="d-flex align-items-center gap-2">
+          <img src="{% static 'images/logo.png' %}" alt="FoodBasket" style="height: 38px; width: auto; object-fit: contain; filter: brightness(0) invert(1);">
+        </div>
+        
+        <!-- Bottom Taglines -->
+        <div>
+          <h2 class="fw-bold mb-2" style="font-family: 'Inter', sans-serif; font-size: 1.8rem; line-height: 1.2;">Premium quality,<br>delivered fresh.</h2>
+          <p class="text-white-50 small mb-0" style="font-size: 0.85rem; line-height: 1.4;">Sign in to access your curated grocery experience or manage your storefront.</p>
+        </div>
+      </div>
+
+      <!-- ── RIGHT PANEL: LOGIN FORM ── -->
+      <div class="col-12 col-md-6 p-4 p-md-5 d-flex flex-column justify-content-center bg-white" style="border-top-right-radius: 16px; border-bottom-right-radius: 16px;">
+        <h2 class="fw-bold text-dark mb-1" style="font-family: 'Inter', sans-serif; font-size: 1.7rem; letter-spacing: -0.02em;">Welcome back</h2>
+        <p class="text-muted small mb-4">Please choose how you want to sign in.</p>
+        
+        <!-- Tab Selector -->
+        <div class="d-flex border-bottom mb-4" style="border-color: #e9ecef !important;">
+          <a href="#" class="pb-2 fw-bold text-decoration-none text-success border-bottom border-2 border-success pe-3" style="font-size: 0.85rem; font-family: 'Inter', sans-serif;">Customer Login</a>
+          <a href="{% url 'vendor_login' %}" class="pb-2 fw-bold text-decoration-none text-muted ps-3" style="font-size: 0.85rem; font-family: 'Inter', sans-serif;">Vendor Login</a>
+        </div>
+
+        <!-- Notification messages -->
+        {% if messages %}
+          {% for message in messages %}
+            <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-success{% endif %} border-0 rounded-3 py-2 px-3 mb-3 small" role="alert">
+              {{ message }}
+            </div>
+          {% endfor %}
+        {% endif %}
+
+        <!-- Form fields -->
+        <form method="post">
+          {% csrf_token %}
+          {% if next %}
+          <input type="hidden" name="next" value="{{ next }}">
+          {% endif %}
+
+          <div class="mb-3">
+            <label class="text-muted small fw-bold mb-1 d-block" style="font-size: 0.72rem;">Email Address / Username</label>
+            <input type="text" name="username" class="form-control rounded-3" placeholder="Enter your email or username" style="padding: 0.65rem 1rem; border-color: #ced4da; font-size: 0.9rem;" required autofocus>
+          </div>
+
+          <div class="mb-4">
+            <label class="text-muted small fw-bold mb-1 d-block" style="font-size: 0.72rem;">Password / One-Time Password (OTP)</label>
+            <div class="d-flex gap-2">
+              <input type="password" name="password" class="form-control rounded-3" placeholder="Enter password / 6-digit OTP" style="padding: 0.65rem 1rem; border-color: #ced4da; font-size: 0.9rem;" required>
+              <button type="button" class="btn btn-light border px-3 rounded-3 small fw-bold text-dark flex-shrink-0" style="font-size: 0.8rem; background-color: #f1f3f5; border-color: #e9ecef !important;" onclick="alert('Demo Mode: Try entering password directly')">Get OTP</button>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-success w-100 rounded-pill py-2.5 fw-bold border-0 d-flex align-items-center justify-content-center gap-1 mt-2" style="background-color: var(--g700); font-size: 0.9rem;">
+            Sign In as Customer <i class="bi bi-arrow-right"></i>
+          </button>
+        </form>
+        
+        <p class="text-center text-muted small mt-4 mb-0">
+          Don't have an account? <a href="{% url 'register' %}" class="text-success fw-bold text-decoration-none">Create one free</a>
+        </p>
+      </div>
     </div>
-    <div class="auth-logo">🛒</div>
-    <h1 class="auth-title">Welcome back!</h1>
-    <p class="auth-subtitle">Sign in to your FoodBasket account</p>
-
-    <form method="post">
-      {% csrf_token %}
-      {% if next %}
-      <input type="hidden" name="next" value="{{ next }}">
-      {% endif %}
-
-      {% if form.errors and not messages %}
-      <div class="toast-alert toast-error mb-3" style="border-radius:8px;padding:.65rem 1rem;margin-bottom:.75rem">
-        <i class="bi bi-x-circle-fill me-1"></i> Invalid username or password. Try again.
-      </div>
-      {% endif %}
-
-      <div class="mb-3">
-        <label class="auth-label" for="id_username">Username</label>
-        <div class="auth-input-group">
-          <i class="bi bi-person auth-input-icon"></i>
-          <input type="text" name="username" id="id_username" class="auth-input" placeholder="Your username" autofocus required>
-        </div>
-      </div>
-
-      <div class="mb-4">
-        <label class="auth-label" for="id_password">Password</label>
-        <div class="auth-input-group">
-          <i class="bi bi-lock auth-input-icon"></i>
-          <input type="password" name="password" id="id_password" class="auth-input" placeholder="Your password" required>
-        </div>
-      </div>
-
-      <button type="submit" class="auth-submit-btn">
-        <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
-      </button>
-    </form>
-
-    <p class="auth-footer-text">
-      Don't have an account? <a href="{% url 'register' %}" class="auth-footer-link">Create one free</a>
-    </p>
   </div>
 </div>
 {% endblock %}

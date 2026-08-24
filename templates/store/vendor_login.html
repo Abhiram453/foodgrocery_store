@@ -1,46 +1,73 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block title %}Vendor Login | FoodBasket{% endblock %}
 
 {% block content %}
-<div class="auth-page-wrap" style="background: linear-gradient(135deg, #198754, #125e3b);">
-  <div class="auth-card shadow-lg p-5 rounded-4 bg-white" style="max-width: 480px; width: 100%;">
-    <div class="text-center mb-4">
-      <div class="auth-logo mb-2" style="font-size: 3rem;">🏪</div>
-      <h1 class="auth-title fw-bold" style="font-family: 'Nunito', sans-serif; font-size: 1.8rem; color: #125e3b;">Vendor Login</h1>
-      <p class="auth-subtitle text-muted">Sign in to manage your local shop and products</p>
-    </div>
-
-    <form method="post" id="vendorLoginForm">
-      {% csrf_token %}
-      
-      <div class="mb-3">
-        <label class="auth-label fw-bold text-muted small" for="id_username">USERNAME</label>
-        <div class="auth-input-group position-relative">
-          <i class="bi bi-person position-absolute" style="left: 15px; top: 12px; color: #aaa;"></i>
-          <input type="text" name="username" id="id_username" class="form-control ps-5 py-2.5 rounded-3" placeholder="Enter vendor username" autofocus required style="border: 1.5px solid #eee;">
+<div class="container py-5 d-flex align-items-center justify-content-center" style="min-height: calc(100vh - 180px);">
+  <div class="card border-0 shadow rounded-4 overflow-hidden w-100" style="max-width: 900px; border: 1px solid #e9ecef !important;">
+    <div class="row g-0">
+      <!-- ── LEFT PANEL: BRAND TEXT OVER IMAGE ── -->
+      <div class="col-md-6 d-none d-md-flex flex-column justify-content-between p-5 text-white position-relative" style="background: linear-gradient(rgba(0,0,0,0.25), rgba(0,0,0,0.25)), url('https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&q=80&w=600') center/cover no-repeat; min-height: 480px; border-top-left-radius: 16px; border-bottom-left-radius: 16px;">
+        <!-- Brand Logo -->
+        <div class="d-flex align-items-center gap-2">
+          <img src="{% static 'images/logo.png' %}" alt="FoodBasket" style="height: 38px; width: auto; object-fit: contain; filter: brightness(0) invert(1);">
+        </div>
+        
+        <!-- Bottom Taglines -->
+        <div>
+          <h2 class="fw-bold mb-2" style="font-family: 'Inter', sans-serif; font-size: 1.8rem; line-height: 1.2;">Premium quality,<br>delivered fresh.</h2>
+          <p class="text-white-50 small mb-0" style="font-size: 0.85rem; line-height: 1.4;">Sign in to access your curated grocery experience or manage your storefront.</p>
         </div>
       </div>
 
-      <div class="mb-4">
-        <label class="auth-label fw-bold text-muted small" for="id_password">PASSWORD</label>
-        <div class="auth-input-group position-relative">
-          <i class="bi bi-lock position-absolute" style="left: 15px; top: 12px; color: #aaa;"></i>
-          <input type="password" name="password" id="id_password" class="form-control ps-5 py-2.5 rounded-3" placeholder="Enter password" required style="border: 1.5px solid #eee;">
+      <!-- ── RIGHT PANEL: LOGIN FORM ── -->
+      <div class="col-12 col-md-6 p-4 p-md-5 d-flex flex-column justify-content-center bg-white" style="border-top-right-radius: 16px; border-bottom-right-radius: 16px;">
+        <h2 class="fw-bold text-dark mb-1" style="font-family: 'Inter', sans-serif; font-size: 1.7rem; letter-spacing: -0.02em;">Welcome back</h2>
+        <p class="text-muted small mb-4">Please choose how you want to sign in.</p>
+        
+        <!-- Tab Selector -->
+        <div class="d-flex border-bottom mb-4" style="border-color: #e9ecef !important;">
+          <a href="{% url 'login' %}" class="pb-2 fw-bold text-decoration-none text-muted pe-3" style="font-size: 0.85rem; font-family: 'Inter', sans-serif;">Customer Login</a>
+          <a href="#" class="pb-2 fw-bold text-decoration-none text-success border-bottom border-2 border-success ps-3" style="font-size: 0.85rem; font-family: 'Inter', sans-serif;">Vendor Login</a>
+        </div>
+
+        <!-- Notification messages -->
+        {% if messages %}
+          {% for message in messages %}
+            <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-success{% endif %} border-0 rounded-3 py-2 px-3 mb-3 small" role="alert">
+              {{ message }}
+            </div>
+          {% endfor %}
+        {% endif %}
+
+        <!-- Form fields -->
+        <form method="post">
+          {% csrf_token %}
+          {% if next %}
+          <input type="hidden" name="next" value="{{ next }}">
+          {% endif %}
+
+          <div class="mb-3">
+            <label class="text-muted small fw-bold mb-1 d-block" style="font-size: 0.72rem;">Vendor Username</label>
+            <input type="text" name="username" class="form-control rounded-3" placeholder="Enter your vendor username" style="padding: 0.65rem 1rem; border-color: #ced4da; font-size: 0.9rem;" required autofocus>
+          </div>
+
+          <div class="mb-4">
+            <label class="text-muted small fw-bold mb-1 d-block" style="font-size: 0.72rem;">Password</label>
+            <input type="password" name="password" class="form-control rounded-3" placeholder="Enter your password" style="padding: 0.65rem 1rem; border-color: #ced4da; font-size: 0.9rem;" required>
+          </div>
+
+          <button type="submit" class="btn btn-success w-100 rounded-pill py-2.5 fw-bold border-0 d-flex align-items-center justify-content-center gap-1 mt-2" style="background-color: var(--g700); font-size: 0.9rem;">
+            Sign In as Vendor <i class="bi bi-arrow-right"></i>
+          </button>
+        </form>
+        
+        <div class="text-center mt-4 border-top pt-3">
+          <p class="text-muted small mb-0">
+            Want to sell with us? <a href="{% url 'vendor_register' %}" class="fw-bold text-success text-decoration-none">Register your shop</a>
+          </p>
         </div>
       </div>
-
-      <button type="submit" class="btn btn-success w-100 py-2.5 rounded-3 fw-bold shadow-sm" style="background-color: #198754; border: none;">
-        <i class="bi bi-box-arrow-in-right me-2"></i>Vendor Login
-      </button>
-    </form>
-
-    <div class="text-center mt-4 border-top pt-3">
-      <p class="text-muted small mb-0">
-        Want to sell with us? <a href="{% url 'vendor_register' %}" class="fw-bold text-success text-decoration-none">Register your shop</a>
-      </p>
-      <p class="text-muted small mt-2 mb-0">
-        Are you a customer? <a href="{% url 'login' %}" class="text-decoration-none">Customer Login</a>
-      </p>
     </div>
   </div>
 </div>
