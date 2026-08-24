@@ -85,6 +85,7 @@
 
     <div class="collapse navbar-collapse" id="navbarMain">
       <!-- Search -->
+      {% if user.is_authenticated %}
       <form class="nav-search-form ms-lg-4 me-auto position-relative" action="{% url 'product_list' %}" method="get" autocomplete="off">
         <div class="nav-search-wrap">
           <i class="bi bi-search nav-search-icon"></i>
@@ -93,6 +94,7 @@
         </div>
         <div id="autocompleteResults" class="dropdown-menu shadow-lg w-100 mt-1 border-0 rounded-3 p-2 d-none" style="position: absolute; top: 100%; left: 0; z-index: 1050; max-height: 300px; overflow-y: auto;"></div>
       </form>
+      {% endif %}
 
       <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-1">
 
