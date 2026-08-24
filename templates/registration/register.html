@@ -2,53 +2,77 @@
 {% block title %}Create Account | FoodBasket{% endblock %}
 
 {% block content %}
-<div class="auth-page-wrap">
-  <div class="auth-card">
-    <div class="mb-3">
-      <button onclick="history.back()" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 fw-bold border-1 shadow-sm d-inline-flex align-items-center gap-1" style="font-size: .8rem;">
-        <i class="bi bi-arrow-left"></i> Back
-      </button>
-    </div>
-    <div class="auth-logo">🛒</div>
-    <h1 class="auth-title">Join FoodBasket</h1>
-    <p class="auth-subtitle">Create your free account and start shopping fresh</p>
-
-    <form method="post">
-      {% csrf_token %}
-
-      {% for field in form %}
-      <div class="mb-3">
-        <label class="auth-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
-        <div class="auth-input-group">
-          <i class="bi bi-{% if 'password' in field.html_name %}lock{% elif 'email' in field.html_name %}envelope{% else %}person{% endif %} auth-input-icon"></i>
-          <input
-            type="{% if 'password' in field.html_name %}password{% elif 'email' in field.html_name %}email{% else %}text{% endif %}"
-            name="{{ field.html_name }}"
-            id="{{ field.id_for_label }}"
-            class="auth-input {% if field.errors %}is-invalid{% endif %}"
-            placeholder="{{ field.label }}"
-            value="{% if not 'password' in field.html_name %}{{ field.value|default:'' }}{% endif %}"
-            {% if field.field.required %}required{% endif %}>
+<div class="auth-page-wrap" style="background: #f0f2f5; min-height: calc(100vh - 120px); display: flex; align-items: center; justify-content: center; padding: 2rem 1rem; font-family: 'Nunito', sans-serif;">
+  <div class="container d-flex justify-content-center">
+    <div class="row shadow-lg rounded-4 overflow-hidden bg-white w-100" style="max-width: 880px; min-height: 520px;">
+      
+      <!-- Left Panel: Create Account Form -->
+      <div class="col-md-7 d-flex flex-column justify-content-center p-4 p-md-5 order-2 order-md-1">
+        <div class="text-center mb-4">
+          <h2 class="fw-bold text-success mb-2" style="font-size: 2.2rem; color: #198754 !important;">Create Account</h2>
+          
+          <!-- Mock Social Icons matching user image -->
+          <div class="d-flex justify-content-center gap-2.5 mt-3 mb-2">
+            <a href="#" class="btn btn-outline-secondary rounded-circle d-flex align-items-center justify-content-center p-0 shadow-sm border border-light" style="width: 38px; height: 38px; color: #555; background: #fff;"><i class="bi bi-facebook" style="font-size: 0.95rem;"></i></a>
+            <a href="#" class="btn btn-outline-secondary rounded-circle d-flex align-items-center justify-content-center p-0 shadow-sm border border-light" style="width: 38px; height: 38px; color: #555; background: #fff;"><i class="bi bi-google" style="font-size: 0.95rem;"></i></a>
+            <a href="#" class="btn btn-outline-secondary rounded-circle d-flex align-items-center justify-content-center p-0 shadow-sm border border-light" style="width: 38px; height: 38px; color: #555; background: #fff;"><i class="bi bi-linkedin" style="font-size: 0.95rem;"></i></a>
+          </div>
+          <span class="text-muted small">or use your email for registration:</span>
         </div>
-        {% if field.errors %}
-        {% for error in field.errors %}
-        <div class="invalid-feedback d-block">{{ error }}</div>
-        {% endfor %}
-        {% endif %}
-        {% if field.help_text %}
-        <div style="font-size:.75rem;color:var(--ink-3);margin-top:.3rem">{{ field.help_text|safe }}</div>
-        {% endif %}
+
+        <form method="post" class="w-100">
+          {% csrf_token %}
+
+          {% for field in form %}
+          <div class="mb-3">
+            <div class="input-group shadow-sm border rounded-3 overflow-hidden bg-light" style="border-color: #f0f2f5 !important;">
+              <span class="input-group-text border-0 bg-light text-muted px-3">
+                <i class="bi bi-{% if 'password' in field.html_name %}lock{% elif 'email' in field.html_name %}envelope{% else %}person{% endif %}"></i>
+              </span>
+              <input
+                type="{% if 'password' in field.html_name %}password{% elif 'email' in field.html_name %}email{% else %}text{% endif %}"
+                name="{{ field.html_name }}"
+                id="{{ field.id_for_label }}"
+                class="form-control border-0 bg-light py-2.5"
+                placeholder="{{ field.label }}"
+                value="{% if not 'password' in field.html_name %}{{ field.value|default:'' }}{% endif %}"
+                {% if field.field.required %}required{% endif %}
+                style="box-shadow: none; font-size: 0.92rem;">
+            </div>
+            {% if field.errors %}
+            {% for error in field.errors %}
+            <div class="invalid-feedback d-block px-2" style="font-size: 0.78rem;">{{ error }}</div>
+            {% endfor %}
+            {% endif %}
+          </div>
+          {% endfor %}
+
+          <div class="text-center mt-4">
+            <button type="submit" class="btn btn-success rounded-pill px-5 py-2.5 fw-bold shadow-sm w-100 w-md-auto" style="background: #198754; border: none; font-size: 0.88rem; letter-spacing: 0.05em; transition: all 0.2s;">
+              SIGN UP
+            </button>
+          </div>
+        </form>
+
+        <div class="text-center mt-4 d-md-none">
+          <p class="text-muted small mb-0">Already have an account? <a href="{% url 'login' %}" class="fw-bold text-success text-decoration-none">Sign in</a></p>
+        </div>
       </div>
-      {% endfor %}
 
-      <button type="submit" class="auth-submit-btn">
-        <i class="bi bi-person-check me-2"></i>Create Account
-      </button>
-    </form>
-
-    <p class="auth-footer-text">
-      Already have an account? <a href="{% url 'login' %}" class="auth-footer-link">Sign in</a>
-    </p>
+      <!-- Right Panel: Welcome Back redirection details -->
+      <div class="col-md-5 d-none d-md-flex flex-column justify-content-center align-items-center text-center p-5 text-white position-relative order-1 order-md-2" style="background: linear-gradient(135deg, #198754 0%, #20c997 100%);">
+        <div class="position-absolute top-0 start-0 m-4 fw-bold d-flex align-items-center gap-1" style="font-size: 1.2rem; opacity: 0.9;">
+          <span>🛒</span> FoodBasket
+        </div>
+        
+        <h2 class="fw-bold mb-3" style="font-size: 2.2rem; letter-spacing: -0.02em;">Welcome Back!</h2>
+        <p class="mb-4 text-white-50" style="font-size: 0.95rem; max-width: 260px; line-height: 1.6;">To keep connected with us please login with your personal info</p>
+        <a href="{% url 'login' %}" class="btn border-2 rounded-pill px-5 py-2.5 fw-bold text-white shadow-sm border-white" style="transition: all 0.2s; font-size: 0.85rem; letter-spacing: 0.05em; background: transparent;">
+          SIGN IN
+        </a>
+      </div>
+      
+    </div>
   </div>
 </div>
 {% endblock %}
