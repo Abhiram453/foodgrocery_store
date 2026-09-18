@@ -33,5 +33,5 @@ ENV PYTHONUNBUFFERED 1
 
 EXPOSE 8000
 
-# Collect static files, run migrations, and start Gunicorn server
-CMD ["sh", "-c", "python manage.py collectstatic --noinput && python manage.py migrate --noinput && gunicorn --bind 0.0.0.0:8000 foodbasket.wsgi:application"]
+# Collect static files, run migrations, seed demo data, and start Gunicorn server
+CMD ["sh", "-c", "python manage.py collectstatic --noinput && python manage.py migrate --noinput && python manage.py seed_data && gunicorn --bind 0.0.0.0:8000 foodbasket.wsgi:application"]

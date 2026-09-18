@@ -61,12 +61,23 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'foodbasket.wsgi.application'
 
+import socket
 import urllib.parse
+
 db_url = os.environ.get('DATABASE_URL')
-if not db_url and (os.environ.get('RENDER') or os.environ.get('PRODUCTION') == 'True'):
-    db_url = 'postgresql://foodgrocery_store_user:O6ymNhTDdU0KMDXKwE6Jdtgbns6bBvO7@dpg-d9pfqeajnfac73ejtopg-a/foodgrocery_store'
+postgres_ready = False
 
 if db_url:
+    try:
+        url = urllib.parse.urlparse(db_url)
+        if url.hostname:
+            socket.getaddrinfo(url.hostname, url.port or 5432)
+            postgres_ready = True
+    except Exception as e:
+        print(f"[Warning] DATABASE_URL host could not be resolved ({e}). Falling back to SQLite.")
+        postgres_ready = False
+
+if postgres_ready and db_url:
     url = urllib.parse.urlparse(db_url)
     DATABASES = {
         'default': {
