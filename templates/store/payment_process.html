@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+{% block title %}Complete Payment | FoodBasket{% endblock %}
+
+{% block content %}
+<div class="container py-5 text-center">
+  <div class="card shadow-sm mx-auto p-4 p-md-5" style="max-width: 540px; border-radius: 16px;">
+    <div class="mb-4">
+      <div class="display-4 text-success mb-2">💳</div>
+      <h2 class="fw-bold h4">Completing Online Payment</h2>
+      <p class="text-muted small">Order #{{ order.id }} &bull; Total: <strong class="text-dark">₹{{ order.total }}</strong></p>
+    </div>
+
+    <div class="alert alert-light border text-start mb-4" style="border-radius: 12px;">
+      <div class="d-flex justify-content-between mb-1">
+        <span class="text-muted small">Delivery Address:</span>
+        <span class="fw-semibold small">{{ order.delivery_address|truncatechars:35 }}</span>
+      </div>
+      <div class="d-flex justify-content-between mb-1">
+        <span class="text-muted small">Pincode:</span>
+        <span class="fw-semibold small">{{ order.delivery_pincode }}</span>
+      </div>
+      <div class="d-flex justify-content-between">
+        <span class="text-muted small">Amount Payable:</span>
+        <span class="fw-bold text-success">₹{{ order.total }}</span>
+      </div>
+    </div>
+
+    <div id="paymentStatus" class="mb-4">
+      <div class="spinner-border text-success mb-3" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <p class="text-muted small mb-0">Connecting to secure payment gateway...</p>
+    </div>
+
+    <div class="d-grid gap-2">
+      <button id="rzpPayBtn" class="btn btn-success fw-bold py-2 rounded-pill shadow-sm">
+        <i class="bi bi-shield-lock me-2"></i>Pay ₹{{ order.total }} with Razorpay
+      </button>
+      <a href="{% url 'order_history' %}" class="btn btn-link text-muted small text-decoration-none">
+        Cancel and return to orders
+      </a>
+    </div>
+  </div>
+</div>
+
+{% block extra_js %}
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const isMock = "{{ razorpay_order_id }}".startsWith("order_mock_");
+  const options = {
+    key: "{{ razorpay_key_id }}",
+    amount: "{{ amount }}",
+    currency: "{{ currency }}",
+    name: "FoodBasket",
+    description: "Order #{{ order.id }}",
+    order_id: "{{ razorpay_order_id }}",
+    prefill: {
+      name: "{{ order.user.get_full_name|default:order.user.username }}",
+      email: "{{ order.user.email }}",
+      contact: "{{ phone }}"
+    },
+    theme: {
+      color: "#1e7e4a"
+    },
+    handler: function (response) {
+      verifyPayment(response.razorpay_order_id, response.razorpay_payment_id, response.razorpay_signature);
+    },
+    modal: {
+      ondismiss: function () {
+        document.getElementById('paymentStatus').innerHTML = '<div class="alert alert-warning py-2 small mb-0">Payment window closed. Click the button below to retry.</div>';
+      }
+    }
+  };
+
+  function verifyPayment(rpOrderId, rpPaymentId, rpSignature) {
+    document.getElementById('paymentStatus').innerHTML = '<div class="spinner-border text-success mb-2" role="status"></div><p class="small text-muted mb-0">Verifying payment signature...</p>';
+    fetch("{% url 'verify_razorpay_payment' %}", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": "{{ csrf_token }}"
+      },
+      body: JSON.stringify({
+        order_id: "{{ order.id }}",
+        razorpay_order_id: rpOrderId,
+        razorpay_payment_id: rpPaymentId,
+        razorpay_signature: rpSignature
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        window.location.href = data.redirect_url;
+      } else {
+        document.getElementById('paymentStatus').innerHTML = '<div class="alert alert-danger py-2 small mb-0">' + (data.error || 'Verification failed') + '</div>';
+      }
+    })
+    .catch(err => {
+      document.getElementById('paymentStatus').innerHTML = '<div class="alert alert-danger py-2 small mb-0">Network error during payment verification.</div>';
+    });
+  }
+
+  document.getElementById('rzpPayBtn').addEventListener('click', function () {
+    if (isMock || !options.key) {
+      verifyPayment("{{ razorpay_order_id }}", "pay_mock_" + Date.now(), "sig_mock_" + Date.now());
+    } else {
+      const rzp = new Razorpay(options);
+      rzp.open();
+    }
+  });
+
+  setTimeout(function () {
+    document.getElementById('rzpPayBtn').click();
+  }, 600);
+});
+</script>
+{% endblock %}
+{% endblock %}

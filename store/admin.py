@@ -1,7 +1,11 @@
 from django.contrib import admin
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
-from .models import Category, Product, Cart, CartItem, Coupon, DeliverySlot, Order, OrderItem, Recipe
+from .models import (
+    Category, Product, Cart, CartItem, Coupon, DeliverySlot,
+    Order, OrderItem, Recipe, DeliveryArea, VendorProfile,
+    VendorOrder, OrderStatusHistory, CustomerAddress, Wishlist
+)
 
 # ── Admin site branding ────────────────────────────────────────
 admin.site.site_header  = "🛒 FoodBasket Admin"
@@ -24,23 +28,24 @@ class CategoryAdmin(admin.ModelAdmin):
 
 # ── Product ───────────────────────────────────────────────────
 class ProductAdmin(admin.ModelAdmin):
-    list_display  = ('name', 'category', 'price_display', 'discount_display', 'stock', 'featured_badge', 'recipe_tags')
-    list_filter   = ('category', 'is_featured', 'unit')
-    search_fields = ('name', 'description')
-    list_editable = ('stock',)
+    list_display  = ('name', 'vendor', 'category', 'price_display', 'discount_display', 'stock', 'is_active', 'featured_badge')
+    list_filter   = ('is_active', 'is_featured', 'category', 'unit')
+    search_fields = ('name', 'description', 'vendor__username')
+    list_editable = ('stock', 'is_active')
     prepopulated_fields = {'slug': ('name',)}
     fieldsets = (
         ('Basic Info', {
-            'fields': ('category', 'name', 'slug', 'description', 'image')
+            'fields': ('vendor', 'category', 'name', 'slug', 'description', 'image', 'is_active')
         }),
         ('Pricing & Stock', {
-            'fields': ('price', 'discount_price', 'stock', 'unit')
+            'fields': ('price', 'discount_price', 'stock', 'low_stock_threshold', 'unit')
         }),
         ('Display & Recipes', {
             'fields': ('is_featured', 'recipe_tags'),
             'description': 'Tick "Is Featured" to show on homepage. Recipe tags are comma-separated keywords (e.g. salad,smoothie,curry).'
         }),
     )
+
 
     def price_display(self, obj):
         return format_html('<span style="color:#1e7e4a;font-weight:700">₹{}</span>', obj.price)
@@ -132,37 +137,53 @@ class DeliverySlotAdmin(admin.ModelAdmin):
 
 # ── Order ─────────────────────────────────────────────────────
 class OrderItemInline(admin.TabularInline):
-    model  = OrderItem
-    extra  = 0
-    readonly_fields = ('product', 'product_name', 'quantity', 'price')
+    model = OrderItem
+    extra = 0
+    readonly_fields = ('product', 'vendor', 'vendor_order', 'product_name', 'quantity', 'price')
+
+
+class VendorOrderInline(admin.TabularInline):
+    model = VendorOrder
+    extra = 0
+    readonly_fields = ('vendor', 'subtotal', 'status', 'created_at')
+
+
+class OrderStatusHistoryInline(admin.TabularInline):
+    model = OrderStatusHistory
+    extra = 0
+    readonly_fields = ('vendor_order', 'status', 'changed_by', 'timestamp', 'note')
+
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display  = ('id', 'user', 'status_badge', 'total_display', 'delivery_slot', 'created_at')
-    list_filter   = ('status',)
-    search_fields = ('user__username', 'address', 'phone')
-    readonly_fields = ('user', 'subtotal', 'discount_amount', 'delivery_fee', 'total', 'created_at')
-    inlines  = [OrderItemInline]
+    list_display = ('id', 'user', 'status_badge', 'payment_status_badge', 'total_display', 'delivery_slot', 'created_at')
+    list_filter = ('status', 'payment_status', 'payment_method')
+    search_fields = ('user__username', 'address', 'phone', 'delivery_pincode', 'razorpay_order_id', 'payment_id')
+    readonly_fields = ('user', 'subtotal', 'discount_amount', 'delivery_fee', 'total', 'created_at', 'razorpay_order_id', 'payment_id', 'paid_at')
+    inlines = [VendorOrderInline, OrderItemInline, OrderStatusHistoryInline]
     ordering = ('-created_at',)
     fieldsets = (
         ('Order Info', {
             'fields': ('user', 'status', 'delivery_slot', 'coupon', 'notes')
         }),
-        ('Delivery Address', {
-            'fields': ('address', 'phone')
+        ('Payment', {
+            'fields': ('payment_method', 'payment_status', 'payment_id', 'razorpay_order_id', 'paid_at')
         }),
-        ('Pricing', {
-            'fields': ('subtotal', 'discount_amount', 'delivery_fee', 'total', 'created_at')
+        ('Delivery Address', {
+            'fields': ('delivery_address', 'delivery_pincode', 'delivery_city', 'delivery_phone', 'address', 'phone')
+        }),
+        ('Pricing & Timestamps', {
+            'fields': ('subtotal', 'discount_amount', 'delivery_fee', 'total', 'created_at', 'confirmed_at', 'out_for_delivery_at', 'delivered_at', 'cancelled_at')
         }),
     )
 
     def status_badge(self, obj):
         colors = {
-            'pending':          ('#fef3c7', '#d97706'),
-            'confirmed':        ('#e8f8ee', '#1e7e4a'),
+            'pending': ('#fef3c7', '#d97706'),
+            'confirmed': ('#e8f8ee', '#1e7e4a'),
             'out_for_delivery': ('#dbeafe', '#1d4ed8'),
-            'delivered':        ('#e8f8ee', '#1e7e4a'),
-            'cancelled':        ('#fee2e2', '#dc2626'),
+            'delivered': ('#e8f8ee', '#1e7e4a'),
+            'cancelled': ('#fee2e2', '#dc2626'),
         }
         bg, fg = colors.get(obj.status, ('#f3f4f6', '#374151'))
         return format_html(
@@ -171,15 +192,110 @@ class OrderAdmin(admin.ModelAdmin):
         )
     status_badge.short_description = 'Status'
 
+    def payment_status_badge(self, obj):
+        colors = {
+            'pending': ('#fef3c7', '#d97706'),
+            'paid': ('#e8f8ee', '#1e7e4a'),
+            'failed': ('#fee2e2', '#dc2626'),
+            'refunded': ('#e0e7ff', '#4338ca'),
+        }
+        bg, fg = colors.get(obj.payment_status, ('#f3f4f6', '#374151'))
+        return format_html(
+            '<span style="background:{};color:{};padding:2px 8px;border-radius:20px;font-size:.8rem;font-weight:700">{} ({})</span>',
+            bg, fg, obj.get_payment_status_display(), obj.payment_method
+        )
+    payment_status_badge.short_description = 'Payment'
+
     def total_display(self, obj):
         return format_html('<strong style="color:#1e7e4a">₹{}</strong>', obj.total)
     total_display.short_description = 'Total'
 
 
+# ── Vendor Order ──────────────────────────────────────────────
+@admin.register(VendorOrder)
+class VendorOrderAdmin(admin.ModelAdmin):
+    list_display = ('id', 'order', 'vendor', 'subtotal', 'status_badge', 'created_at')
+    list_filter = ('status', 'vendor')
+    search_fields = ('order__id', 'vendor__username', 'vendor__vendor_profile__shop_name')
+
+    def status_badge(self, obj):
+        colors = {
+            'pending': ('#fef3c7', '#d97706'),
+            'confirmed': ('#e8f8ee', '#1e7e4a'),
+            'out_for_delivery': ('#dbeafe', '#1d4ed8'),
+            'delivered': ('#e8f8ee', '#1e7e4a'),
+            'cancelled': ('#fee2e2', '#dc2626'),
+        }
+        bg, fg = colors.get(obj.status, ('#f3f4f6', '#374151'))
+        return format_html(
+            '<span style="background:{};color:{};padding:2px 8px;border-radius:20px;font-size:.8rem;font-weight:700">{}</span>',
+            bg, fg, obj.get_status_display()
+        )
+    status_badge.short_description = 'Status'
+
+
+# ── Vendor Profile ────────────────────────────────────────────
+@admin.register(VendorProfile)
+class VendorProfileAdmin(admin.ModelAdmin):
+    list_display = ('shop_name', 'user', 'status_badge', 'pincode', 'service_areas_count', 'created_at')
+    list_filter = ('status',)
+    search_fields = ('shop_name', 'user__username', 'pincode', 'assigned_area')
+    filter_horizontal = ('service_areas',)
+
+    def status_badge(self, obj):
+        colors = {
+            'pending': ('#fef3c7', '#d97706'),
+            'approved': ('#e8f8ee', '#1e7e4a'),
+            'rejected': ('#fee2e2', '#dc2626'),
+        }
+        bg, fg = colors.get(obj.status, ('#f3f4f6', '#374151'))
+        return format_html(
+            '<span style="background:{};color:{};padding:2px 8px;border-radius:20px;font-size:.8rem;font-weight:700">{}</span>',
+            bg, fg, obj.get_status_display()
+        )
+    status_badge.short_description = 'Status'
+
+    def service_areas_count(self, obj):
+        return obj.service_areas.count()
+    service_areas_count.short_description = 'Service Areas'
+
+
+# ── Delivery Area ─────────────────────────────────────────────
+@admin.register(DeliveryArea)
+class DeliveryAreaAdmin(admin.ModelAdmin):
+    list_display = ('pincode', 'area_name', 'city', 'state', 'is_active')
+    list_filter = ('city', 'state', 'is_active')
+    search_fields = ('pincode', 'area_name', 'city')
+    list_editable = ('is_active',)
+
+
+# ── Customer Address ──────────────────────────────────────────
+@admin.register(CustomerAddress)
+class CustomerAddressAdmin(admin.ModelAdmin):
+    list_display = ('user', 'label', 'full_address', 'pincode', 'city', 'phone', 'is_default')
+    list_filter = ('city', 'is_default')
+    search_fields = ('user__username', 'pincode', 'phone')
+
+
+# ── Order Status History ──────────────────────────────────────
+@admin.register(OrderStatusHistory)
+class OrderStatusHistoryAdmin(admin.ModelAdmin):
+    list_display = ('order', 'vendor_order', 'status', 'changed_by', 'timestamp', 'note')
+    list_filter = ('status', 'timestamp')
+    search_fields = ('order__id', 'changed_by__username', 'note')
+
+
+# ── Wishlist ──────────────────────────────────────────────────
+@admin.register(Wishlist)
+class WishlistAdmin(admin.ModelAdmin):
+    list_display = ('user', 'product', 'created_at')
+    search_fields = ('user__username', 'product__name')
+
+
 # ── Recipe ────────────────────────────────────────────────────
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
-    list_display  = ('emoji', 'name', 'prep_time', 'servings', 'ingredients')
+    list_display = ('emoji', 'name', 'prep_time', 'servings', 'ingredients')
     search_fields = ('name', 'ingredients')
     fieldsets = (
         ('Recipe Details', {
@@ -190,6 +306,7 @@ class RecipeAdmin(admin.ModelAdmin):
         }),
         ('Ingredient Tags', {
             'fields': ('ingredients',),
-            'description': 'Enter comma-separated ingredient tags that match product recipe_tags (e.g. smoothie,banana,milk). The cart page uses these tags to suggest recipes.'
+            'description': 'Enter comma-separated ingredient tags that match product recipe_tags (e.g. smoothie,banana,milk).'
         }),
     )
+

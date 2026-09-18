@@ -24,6 +24,45 @@ class UserProfile(models.Model):
         return f"{self.user.username} ({self.role})"
 
 
+class CustomerAddress(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='addresses')
+    label = models.CharField(max_length=50, default='Home')
+    full_address = models.TextField()
+    pincode = models.CharField(max_length=10)
+    city = models.CharField(max_length=100)
+    state = models.CharField(max_length=100, default='Tamil Nadu')
+    phone = models.CharField(max_length=15)
+    is_default = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-is_default', '-created_at']
+
+    def __str__(self):
+        return f"{self.label}: {self.full_address[:30]} ({self.pincode})"
+
+    def save(self, *args, **kwargs):
+        if self.is_default:
+            CustomerAddress.objects.filter(user=self.user, is_default=True).exclude(pk=self.pk).update(is_default=False)
+        super().save(*args, **kwargs)
+
+
+class DeliveryArea(models.Model):
+    pincode = models.CharField(max_length=10, unique=True, db_index=True)
+    area_name = models.CharField(max_length=100)
+    city = models.CharField(max_length=100)
+    state = models.CharField(max_length=100)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['pincode']
+
+    def __str__(self):
+        return f"{self.area_name} ({self.pincode}), {self.city}"
+
+
 class VendorProfile(models.Model):
     STATUS_CHOICES = [
         ('pending', '⏳ Pending Approval'),
@@ -35,7 +74,8 @@ class VendorProfile(models.Model):
     shop_address = models.TextField()
     pincode = models.CharField(max_length=10)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
-    assigned_area = models.CharField(max_length=255, blank=True, null=True, help_text="Pincodes or delivery areas assigned to this vendor")
+    assigned_area = models.CharField(max_length=255, blank=True, null=True, help_text="Legacy text field for delivery areas")
+    service_areas = models.ManyToManyField(DeliveryArea, related_name='vendors', blank=True, help_text="Areas/pincodes this vendor services")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -89,8 +129,10 @@ class Product(models.Model):
     image = models.ImageField(upload_to='products/', blank=True, null=True)
     unit = models.CharField(max_length=20, choices=UNIT_CHOICES, default='piece')
     is_featured = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True, db_index=True)
     recipe_tags = models.CharField(max_length=300, blank=True, help_text='Comma-separated tags e.g. salad,smoothie')
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ['-is_featured', 'name']
@@ -103,9 +145,19 @@ class Product(models.Model):
             self.slug = slugify(self.name)
         super().save(*args, **kwargs)
 
+    def archive(self):
+        """Soft delete/archive product without breaking historical order references."""
+        self.is_active = False
+        self.save(update_fields=['is_active', 'updated_at'])
+
     @property
     def effective_price(self):
         return self.discount_price if self.discount_price else self.price
+
+    @property
+    def savings(self):
+        """Calculate actual savings (original price - effective price)."""
+        return max(0, self.price - self.effective_price)
 
     @property
     def discount_percent(self):
@@ -160,12 +212,17 @@ class Cart(models.Model):
         return 0 if self.subtotal >= 500 else 40
 
     @property
+    def amount_for_free_delivery(self):
+        return max(0, 500 - self.subtotal)
+
+    @property
     def total(self):
         return max(0, self.subtotal - self.discount_amount + self.delivery_fee)
 
     @property
     def item_count(self):
         return sum(item.quantity for item in self.items.all())
+
 
 
 class CartItem(models.Model):
@@ -248,17 +305,47 @@ class Order(models.Model):
         ('delivered', '📦 Delivered'),
         ('cancelled', '❌ Cancelled'),
     ]
+    PAYMENT_METHOD_CHOICES = [
+        ('COD', 'Cash on Delivery'),
+        ('RAZORPAY', 'Razorpay Online'),
+    ]
+    PAYMENT_STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('paid', 'Paid'),
+        ('failed', 'Failed'),
+        ('refunded', 'Refunded'),
+    ]
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
-    delivery_slot = models.ForeignKey(DeliverySlot, on_delete=models.SET_NULL, null=True)
+    delivery_slot = models.ForeignKey(DeliverySlot, on_delete=models.SET_NULL, null=True, blank=True)
     coupon = models.ForeignKey(Coupon, on_delete=models.SET_NULL, null=True, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+
+    # Address snapshot
     address = models.TextField()
     phone = models.CharField(max_length=15)
+    delivery_pincode = models.CharField(max_length=10, blank=True)
+    delivery_city = models.CharField(max_length=100, blank=True)
+
+    # Payment details
+    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD_CHOICES, default='COD')
+    payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='pending')
+    payment_id = models.CharField(max_length=100, blank=True, null=True)
+    razorpay_order_id = models.CharField(max_length=100, blank=True, null=True)
+    paid_at = models.DateTimeField(null=True, blank=True)
+
+    # Financials
     subtotal = models.DecimalField(max_digits=10, decimal_places=2)
     discount_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     delivery_fee = models.DecimalField(max_digits=6, decimal_places=2, default=40)
     total = models.DecimalField(max_digits=10, decimal_places=2)
+
+    # Lifecycle Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
+    confirmed_at = models.DateTimeField(null=True, blank=True)
+    out_for_delivery_at = models.DateTimeField(null=True, blank=True)
+    delivered_at = models.DateTimeField(null=True, blank=True)
+    cancelled_at = models.DateTimeField(null=True, blank=True)
+
     notes = models.TextField(blank=True)
 
     class Meta:
@@ -267,9 +354,60 @@ class Order(models.Model):
     def __str__(self):
         return f"Order #{self.id} – {self.user.username}"
 
+    @property
+    def delivery_address(self):
+        return self.address
+
+    @property
+    def delivery_phone(self):
+        return self.phone
+
+
+class VendorOrder(models.Model):
+    STATUS_CHOICES = [
+        ('pending', '⏳ Pending'),
+        ('confirmed', '✅ Confirmed'),
+        ('preparing', '👨‍🍳 Preparing'),
+        ('out_for_delivery', '🚚 Out for Delivery'),
+        ('delivered', '📦 Delivered'),
+        ('cancelled', '❌ Cancelled'),
+    ]
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='vendor_orders')
+    vendor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='vendor_fulfillments')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+    confirmed_at = models.DateTimeField(null=True, blank=True)
+    out_for_delivery_at = models.DateTimeField(null=True, blank=True)
+    delivered_at = models.DateTimeField(null=True, blank=True)
+    cancelled_at = models.DateTimeField(null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Fulfillment #{self.id} for Order #{self.order.id} ({self.vendor.username})"
+
+    VALID_TRANSITIONS = {
+        'pending': ['confirmed', 'cancelled'],
+        'confirmed': ['preparing', 'out_for_delivery', 'cancelled'],
+        'preparing': ['out_for_delivery', 'cancelled'],
+        'out_for_delivery': ['delivered'],
+        'delivered': [],
+        'cancelled': [],
+    }
+
+    def can_transition_to(self, new_status):
+        return new_status in self.VALID_TRANSITIONS.get(self.status, [])
+
 
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
+    vendor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='order_items')
+    vendor_order = models.ForeignKey(VendorOrder, on_delete=models.CASCADE, null=True, blank=True, related_name='items')
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
     product_name = models.CharField(max_length=200)
     quantity = models.PositiveIntegerField()
@@ -281,6 +419,21 @@ class OrderItem(models.Model):
     @property
     def subtotal(self):
         return self.price * self.quantity
+
+
+class OrderStatusHistory(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='status_history')
+    vendor_order = models.ForeignKey(VendorOrder, on_delete=models.CASCADE, null=True, blank=True, related_name='status_history')
+    status = models.CharField(max_length=20)
+    changed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    note = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ['timestamp']
+
+    def __str__(self):
+        return f"Order #{self.order.id} -> {self.status} at {self.timestamp}"
 
 
 class Recipe(models.Model):

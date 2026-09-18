@@ -5,9 +5,11 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.contrib import messages
 from django.db.models import Sum, F
+from django.db import transaction
+from django.utils import timezone
 
-from .models import UserProfile, VendorProfile, Product, Order, OrderItem
-from .forms import VendorRegisterForm, ProductForm
+from .models import UserProfile, VendorProfile, Product, Order, OrderItem, VendorOrder, OrderStatusHistory
+from .forms import VendorRegisterForm, VendorProductForm
 from .views import get_or_create_profile
 from functools import wraps
 
@@ -105,13 +107,16 @@ def vendor_pending(request):
 
 @vendor_required
 def vendor_dashboard(request):
-    products = Product.objects.filter(vendor=request.user).order_by('-created_at')
+    products = Product.objects.filter(vendor=request.user, is_active=True).order_by('-created_at')
     low_stock_products = [p for p in products if p.is_low_stock]
     
-    # Calculate vendor statistics
-    order_items = OrderItem.objects.filter(product__vendor=request.user)
-    total_sales = order_items.aggregate(total=Sum(F('price') * F('quantity')))['total'] or 0
-    total_orders = Order.objects.filter(items__in=order_items).distinct().count()
+    # Calculate vendor statistics excluding cancelled orders
+    vendor_orders_active = VendorOrder.objects.filter(
+        vendor=request.user,
+        status__in=['confirmed', 'out_for_delivery', 'delivered']
+    )
+    total_sales = vendor_orders_active.aggregate(total=Sum('subtotal'))['total'] or 0
+    total_orders = vendor_orders_active.count()
     avg_order_value = float(total_sales) / total_orders if total_orders > 0 else 0.0
     
     return render(request, 'store/vendor_dashboard.html', {
@@ -129,12 +134,13 @@ def vendor_product_form(request, product_id=None):
         messages.error(request, 'You do not have permission to edit this product.')
         return redirect('vendor_dashboard')
 
-    form = ProductForm(request.POST or None, request.FILES or None, instance=product)
+    form = VendorProductForm(request.POST or None, request.FILES or None, instance=product)
     if request.method == 'POST' and form.is_valid():
         obj = form.save(commit=False)
         obj.vendor = request.user
+        obj.is_active = True
         obj.save()
-        messages.success(request, 'Product saved successfully.')
+        messages.success(request, f'Product "{obj.name}" saved successfully.')
         return redirect('vendor_dashboard')
 
     return render(request, 'store/vendor_product_form.html', {'form': form, 'product': product})
@@ -146,25 +152,77 @@ def vendor_product_delete(request, product_id):
     if product.vendor != request.user:
         messages.error(request, 'You do not have permission to delete this product.')
         return redirect('vendor_dashboard')
-    product.delete()
-    messages.success(request, 'Product deleted successfully.')
+    
+    # Soft archive instead of hard delete to preserve historical order references
+    product.archive()
+    messages.success(request, f'Product "{product.name}" archived successfully.')
     return redirect('vendor_dashboard')
 
 @vendor_required
 def vendor_orders(request):
-    order_items = OrderItem.objects.filter(product__vendor=request.user)
-    orders = Order.objects.filter(items__in=order_items).distinct().order_by('-created_at')
+    orders = VendorOrder.objects.filter(
+        vendor=request.user
+    ).select_related('order', 'order__user').prefetch_related('items', 'items__product').order_by('-created_at')
     return render(request, 'store/vendor_orders.html', {'orders': orders})
 
 @vendor_required
 @require_POST
 def vendor_order_status_update(request, order_id):
-    order = get_object_or_404(Order, id=order_id)
+    vendor_order = get_object_or_404(VendorOrder, id=order_id, vendor=request.user)
     new_status = request.POST.get('status')
-    if new_status in [choice[0] for choice in Order.STATUS_CHOICES]:
-        order.status = new_status
-        order.save()
-        messages.success(request, f'Order #{order.id} status updated to {order.get_status_display()}.')
-    else:
-        messages.error(request, 'Invalid status selection.')
+    
+    if not vendor_order.can_transition_to(new_status):
+        messages.error(request, f'Cannot transition fulfillment #{vendor_order.id} from {vendor_order.get_status_display()} to {new_status}.')
+        return redirect('vendor_orders')
+
+    with transaction.atomic():
+        vendor_order.status = new_status
+        now = timezone.now()
+        if new_status == 'confirmed':
+            vendor_order.confirmed_at = now
+        elif new_status == 'out_for_delivery':
+            vendor_order.out_for_delivery_at = now
+        elif new_status == 'delivered':
+            vendor_order.delivered_at = now
+        elif new_status == 'cancelled':
+            vendor_order.cancelled_at = now
+        vendor_order.save()
+
+        OrderStatusHistory.objects.create(
+            order=vendor_order.order,
+            vendor_order=vendor_order,
+            status=new_status,
+            changed_by=request.user,
+            note=f"Vendor '{request.user.username}' updated fulfillment status to {vendor_order.get_status_display()}."
+        )
+
+        # Sync parent order status based on all child fulfillments
+        siblings = vendor_order.order.vendor_orders.all()
+        statuses = set(siblings.values_list('status', flat=True))
+        parent_order = vendor_order.order
+
+        if statuses == {'delivered'}:
+            parent_order.status = 'delivered'
+            parent_order.delivered_at = now
+            parent_order.save()
+            OrderStatusHistory.objects.create(
+                order=parent_order,
+                status='delivered',
+                changed_by=request.user,
+                note="All vendor fulfillments delivered. Order fulfilled."
+            )
+        elif statuses == {'cancelled'}:
+            parent_order.status = 'cancelled'
+            parent_order.cancelled_at = now
+            parent_order.save()
+        elif 'out_for_delivery' in statuses and parent_order.status not in ['out_for_delivery', 'delivered']:
+            parent_order.status = 'out_for_delivery'
+            parent_order.out_for_delivery_at = now
+            parent_order.save()
+        elif all(s in ['confirmed', 'out_for_delivery', 'delivered'] for s in statuses) and parent_order.status == 'pending':
+            parent_order.status = 'confirmed'
+            parent_order.confirmed_at = now
+            parent_order.save()
+
+    messages.success(request, f'Fulfillment #{vendor_order.id} updated to {vendor_order.get_status_display()}.')
     return redirect('vendor_orders')

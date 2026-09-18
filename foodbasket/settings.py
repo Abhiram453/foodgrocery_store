@@ -3,11 +3,15 @@ import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-foodbasket-secret-key-change-in-production'
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-foodbasket-secret-key-change-in-production')
 
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1')
 
-ALLOWED_HOSTS = ['*']
+allowed = os.environ.get('ALLOWED_HOSTS')
+if allowed:
+    ALLOWED_HOSTS = [h.strip() for h in allowed.split(',') if h.strip()]
+else:
+    ALLOWED_HOSTS = ['*'] if DEBUG else ['localhost', '127.0.0.1', '.onrender.com']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -64,20 +68,14 @@ WSGI_APPLICATION = 'foodbasket.wsgi.application'
 import socket
 import urllib.parse
 
+from django.core.exceptions import ImproperlyConfigured
+
 db_url = os.environ.get('DATABASE_URL')
-postgres_ready = False
 
-if db_url:
-    try:
-        url = urllib.parse.urlparse(db_url)
-        if url.hostname:
-            socket.getaddrinfo(url.hostname, url.port or 5432)
-            postgres_ready = True
-    except Exception as e:
-        print(f"[Warning] DATABASE_URL host could not be resolved ({e}). Falling back to SQLite.")
-        postgres_ready = False
-
-if postgres_ready and db_url:
+if not DEBUG:
+    # Production strictly requires PostgreSQL via DATABASE_URL
+    if not db_url:
+        raise ImproperlyConfigured("DATABASE_URL environment variable is required in production.")
     url = urllib.parse.urlparse(db_url)
     DATABASES = {
         'default': {
@@ -90,12 +88,52 @@ if postgres_ready and db_url:
         }
     }
 else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
+    # Local development: use PostgreSQL if configured and reachable, otherwise SQLite
+    postgres_ready = False
+    if db_url:
+        try:
+            url = urllib.parse.urlparse(db_url)
+            if url.hostname:
+                socket.getaddrinfo(url.hostname, url.port or 5432)
+                postgres_ready = True
+        except Exception:
+            postgres_ready = False
+
+    if postgres_ready and db_url:
+        url = urllib.parse.urlparse(db_url)
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.postgresql',
+                'NAME': url.path[1:],
+                'USER': url.username,
+                'PASSWORD': url.password,
+                'HOST': url.hostname,
+                'PORT': url.port or 5432,
+            }
         }
-    }
+    else:
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': BASE_DIR / 'db.sqlite3',
+            }
+        }
+
+# Razorpay credentials
+RAZORPAY_KEY_ID = os.environ.get('RAZORPAY_KEY_ID', 'rzp_test_placeholder')
+RAZORPAY_KEY_SECRET = os.environ.get('RAZORPAY_KEY_SECRET', 'secret_placeholder')
+
+# Production Security
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT = os.environ.get('SECURE_SSL_REDIRECT', 'True').lower() in ('true', '1')
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = int(os.environ.get('SECURE_HSTS_SECONDS', 31536000))
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = 'DENY'
 
 # Logging configuration
 os.makedirs(BASE_DIR / 'logs', exist_ok=True)
@@ -190,3 +228,8 @@ if os.environ.get('PRODUCTION') or os.environ.get('SENDGRID_API_KEY') or os.envi
 else:
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
     DEFAULT_FROM_EMAIL = 'noreply@foodbasket.com'
+
+# Razorpay Payment Gateway Settings
+RAZORPAY_KEY_ID = os.environ.get('RAZORPAY_KEY_ID', '')
+RAZORPAY_KEY_SECRET = os.environ.get('RAZORPAY_KEY_SECRET', '')
+

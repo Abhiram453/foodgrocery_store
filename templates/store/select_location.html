@@ -39,6 +39,14 @@
 
     <!-- Quick Select Zones Grid -->
     <div class="row g-2 mb-2" id="quickSelectGrid">
+      {% for area in delivery_areas %}
+      <div class="col-6">
+        <button type="button" class="btn btn-light w-100 text-start p-3 border rounded-3 d-flex flex-column gap-1 zone-btn" onclick="quickSelectLocation('{{ area.pincode }}')" style="background-color: #fafafa; border-color: #eee;">
+          <span class="fw-bold text-dark" style="font-size: .85rem;">{{ area.area_name }}</span>
+          <span class="text-success small fw-semibold" style="font-size: .75rem;"><i class="bi bi-pin-map-fill"></i> {{ area.pincode }}</span>
+        </button>
+      </div>
+      {% empty %}
       <div class="col-6">
         <button type="button" class="btn btn-light w-100 text-start p-3 border rounded-3 d-flex flex-column gap-1 zone-btn" onclick="quickSelectLocation('625001')" style="background-color: #fafafa; border-color: #eee;">
           <span class="fw-bold text-dark" style="font-size: .85rem;">Madurai Main</span>
@@ -51,18 +59,7 @@
           <span class="text-success small fw-semibold" style="font-size: .75rem;"><i class="bi bi-pin-map-fill"></i> 625020</span>
         </button>
       </div>
-      <div class="col-6">
-        <button type="button" class="btn btn-light w-100 text-start p-3 border rounded-3 d-flex flex-column gap-1 zone-btn" onclick="quickSelectLocation('625009')" style="background-color: #fafafa; border-color: #eee;">
-          <span class="fw-bold text-dark" style="font-size: .85rem;">Anna Nagar</span>
-          <span class="text-success small fw-semibold" style="font-size: .75rem;"><i class="bi bi-pin-map-fill"></i> 625009</span>
-        </button>
-      </div>
-      <div class="col-6">
-        <button type="button" class="btn btn-light w-100 text-start p-3 border rounded-3 d-flex flex-column gap-1 zone-btn" onclick="quickSelectLocation('625003')" style="background-color: #fafafa; border-color: #eee;">
-          <span class="fw-bold text-dark" style="font-size: .85rem;">Tallakulam</span>
-          <span class="text-success small fw-semibold" style="font-size: .75rem;"><i class="bi bi-pin-map-fill"></i> 625003</span>
-        </button>
-      </div>
+      {% endfor %}
     </div>
 
     <div class="text-center mt-4 border-top pt-3">

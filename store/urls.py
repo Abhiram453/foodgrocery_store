@@ -22,12 +22,16 @@ urlpatterns = [
 
     # Checkout, Account & Orders
     path('checkout/', views.checkout, name='checkout'),
+    path('payment/verify/', views.verify_razorpay_payment_view, name='verify_razorpay_payment'),
     path('order/confirm/<int:order_id>/', views.order_confirm, name='order_confirm'),
     path('order/invoice/<int:order_id>/', views.order_invoice, name='order_invoice'),
     path('orders/', views.order_history, name='order_history'),
     path('orders/cancel/<int:order_id>/', views.cancel_order, name='cancel_order'),
     path('account/', views.account_view, name='account'),
+    path('account/address/add/', views.account_address_add, name='account_address_add'),
+    path('account/address/<int:address_id>/delete/', views.account_address_delete, name='account_address_delete'),
     path('select-location/', views.select_location, name='select_location'),
+
 
     # Vendor portal routes
     path('vendor/login/', vendor_views.vendor_login, name='vendor_login'),

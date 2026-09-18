@@ -96,6 +96,23 @@ class Command(BaseCommand):
         admin_profile.save()
         self.stdout.write(self.style.SUCCESS('  OK: Super Admin created (admin / adminpass)'))
 
+        # Seed Delivery Areas
+        from store.models import DeliveryArea
+        areas_data = [
+            {'pincode': '625001', 'area_name': 'Madurai Main', 'city': 'Madurai', 'state': 'Tamil Nadu'},
+            {'pincode': '625020', 'area_name': 'K.Pudur', 'city': 'Madurai', 'state': 'Tamil Nadu'},
+            {'pincode': '625009', 'area_name': 'Anna Nagar', 'city': 'Madurai', 'state': 'Tamil Nadu'},
+            {'pincode': '625003', 'area_name': 'Tallakulam', 'city': 'Madurai', 'state': 'Tamil Nadu'},
+        ]
+        created_areas = []
+        for a in areas_data:
+            area_obj, _ = DeliveryArea.objects.get_or_create(
+                pincode=a['pincode'],
+                defaults={'area_name': a['area_name'], 'city': a['city'], 'state': a['state'], 'is_active': True}
+            )
+            created_areas.append(area_obj)
+        self.stdout.write(self.style.SUCCESS(f'  OK: {len(created_areas)} delivery areas created'))
+
         # Seed Vendors in Madurai area
         vendors_data = [
             {
@@ -144,9 +161,14 @@ class Command(BaseCommand):
                     'status': 'approved'
                 }
             )
+            # Associate vendors with all created delivery areas
+            vendor_profile.service_areas.set(created_areas)
+            vendor_profile.status = 'approved'
+            vendor_profile.save()
             seeded_vendors.append(user)
             
-        self.stdout.write(self.style.SUCCESS(f'  OK: {len(seeded_vendors)} vendors created (password: vendorpass)'))
+        self.stdout.write(self.style.SUCCESS(f'  OK: {len(seeded_vendors)} vendors created & linked to service areas (password: vendorpass)'))
+
 
         # Categories
         cat_map = {}

@@ -6,7 +6,7 @@ from django.views.decorators.http import require_POST
 from django.contrib import messages
 from django.db.models import Sum
 
-from .models import UserProfile, VendorProfile, Product, Order
+from .models import UserProfile, VendorProfile, Product, Order, DeliveryArea
 from .views import get_or_create_profile
 from functools import wraps
 
@@ -49,9 +49,10 @@ def superadmin_login(request):
 
 @superadmin_required
 def superadmin_dashboard(request):
-    pending_vendors = VendorProfile.objects.filter(status='pending').select_related('user')
-    approved_vendors = VendorProfile.objects.filter(status='approved').select_related('user')
-    rejected_vendors = VendorProfile.objects.filter(status='rejected').select_related('user')
+    pending_vendors = VendorProfile.objects.filter(status='pending').select_related('user').prefetch_related('service_areas')
+    approved_vendors = VendorProfile.objects.filter(status='approved').select_related('user').prefetch_related('service_areas')
+    rejected_vendors = VendorProfile.objects.filter(status='rejected').select_related('user').prefetch_related('service_areas')
+    delivery_areas = DeliveryArea.objects.all().order_by('city', 'area_name')
     
     recent_orders = Order.objects.all().order_by('-created_at')[:10]
     total_sales = Order.objects.filter(status='delivered').aggregate(total=Sum('total'))['total'] or 0
@@ -63,6 +64,7 @@ def superadmin_dashboard(request):
         'pending_vendors': pending_vendors,
         'approved_vendors': approved_vendors,
         'rejected_vendors': rejected_vendors,
+        'delivery_areas': delivery_areas,
         'recent_orders': recent_orders,
         'total_sales': total_sales,
         'total_orders': total_orders,
@@ -93,7 +95,12 @@ def superadmin_reject_vendor(request, vendor_id):
 def superadmin_assign_area(request, vendor_id):
     vendor_profile = get_object_or_404(VendorProfile, id=vendor_id)
     area = request.POST.get('assigned_area', '').strip()
-    vendor_profile.assigned_area = area
+    if area:
+        vendor_profile.assigned_area = area
+    area_ids = request.POST.getlist('service_area_ids')
+    if area_ids:
+        vendor_profile.service_areas.set(area_ids)
     vendor_profile.save()
-    messages.success(request, f'Assigned delivery area to "{vendor_profile.shop_name}". 📍')
+    messages.success(request, f'Assigned delivery areas to "{vendor_profile.shop_name}". 📍')
     return redirect('superadmin_dashboard')
+

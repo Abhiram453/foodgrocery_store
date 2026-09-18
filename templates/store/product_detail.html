@@ -51,11 +51,18 @@
         <span class="detail-main-price">₹{{ product.effective_price }}</span>
         {% if product.discount_price %}
         <span class="detail-original-price">₹{{ product.price }}</span>
-        <span class="detail-savings-pill">Save ₹{% widthratio product.price|add:"0" 1 1 %}</span>
+        <span class="detail-savings-pill">Save ₹{{ product.savings }}</span>
         {% endif %}
       </div>
 
+      {% if product.vendor %}
+      <div class="mt-2 text-muted small">
+        <i class="bi bi-shop text-success me-1"></i>Sold by: <strong>{{ product.vendor.vendor_profile.shop_name|default:product.vendor.username }}</strong>
+      </div>
+      {% endif %}
+
       <p class="detail-description mt-3">{{ product.description }}</p>
+
 
       <!-- Stock badge -->
       <div class="detail-stock mt-2">
