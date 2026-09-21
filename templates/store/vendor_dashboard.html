@@ -30,22 +30,30 @@
             <i class="bi bi-speedometer2"></i>
             <span>Dashboard</span>
           </a>
+          <a href="{% url 'vendor_products' %}" class="account-sidebar-link">
+            <i class="bi bi-box-seam"></i>
+            <span>Products</span>
+          </a>
           <a href="{% url 'vendor_orders' %}" class="account-sidebar-link">
             <i class="bi bi-receipt"></i>
             <span>Orders</span>
           </a>
-          <a href="#" class="account-sidebar-link">
+          <a href="{% url 'vendor_products' %}" class="account-sidebar-link">
+            <i class="bi bi-stack"></i>
+            <span>Inventory</span>
+          </a>
+          <a href="#analyticsSection" class="account-sidebar-link">
             <i class="bi bi-bar-chart-line"></i>
             <span>Analytics</span>
           </a>
-          <a href="#" class="account-sidebar-link">
-            <i class="bi bi-gear"></i>
-            <span>Settings</span>
+          <a href="{% url 'account' %}" class="account-sidebar-link">
+            <i class="bi bi-person-circle"></i>
+            <span>Profile</span>
           </a>
         </div>
 
         <!-- Add Product Button at Bottom -->
-        <a href="{% url 'vendor_product_new' %}" class="btn btn-success w-100 rounded-pill py-2.5 fw-bold text-white border-0 mt-auto" style="background-color: var(--g700); font-size: 0.9rem;">
+        <a href="{% url 'vendor_product_new' %}" class="btn btn-success w-100 rounded-pill py-2.5 fw-bold text-white border-0 mt-auto" style="background-color: var(--fb-green-600); font-size: 0.9rem;">
           <i class="bi bi-plus-lg me-1"></i>Add Product
         </a>
       </div>

@@ -1,56 +1,80 @@
 {% extends 'base.html' %}
-{% block title %}Recipes | FoodBasket{% endblock %}
+{% load static %}
+{% block title %}Chef's Recipe Collection | FoodBasket{% endblock %}
 
 {% block content %}
 <div class="container py-4 py-md-5">
-  <!-- Top Back Nav -->
+
+  <!-- Top Breadcrumb / Nav -->
   <div class="d-flex align-items-center justify-content-between mb-4">
-    <button onclick="history.back()" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 fw-bold shadow-sm d-inline-flex align-items-center gap-1" style="font-size: .82rem;">
-      <i class="bi bi-arrow-left"></i> Back
-    </button>
-    <a href="{% url 'home' %}" class="text-muted small text-decoration-none d-inline-flex align-items-center gap-1">
-      <i class="bi bi-house-door"></i> Dashboard
+    <a href="{% url 'home' %}" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 fw-bold shadow-sm d-inline-flex align-items-center gap-1" style="font-size: .82rem;">
+      <i class="bi bi-arrow-left"></i> Home
     </a>
+    <span class="text-muted small">
+      <i class="bi bi-egg-fried text-warning me-1"></i>Cook Fresh with Farm Groceries
+    </span>
   </div>
 
-  <div class="text-center mb-5">
-    <span class="section-eyebrow">Cook at Home</span>
-    <h1 class="section-title mt-1">Recipe Collection</h1>
-    <p class="section-body-text" style="max-width:520px;margin:0 auto">
-      Add ingredients to your cart and we'll suggest the perfect recipes for you!
-    </p>
+  <div class="text-center max-w-600 mx-auto mb-5">
+    <span class="text-success fw-bold small text-uppercase letter-spacing d-block mb-1">Kitchen Inspiration</span>
+    <h1 class="fw-bold text-dark" style="font-size: 2.2rem;">Chef's Recipe Collection</h1>
+    <p class="text-muted small">Discover wholesome, delicious recipes you can prepare at home using fresh ingredients from FoodBasket.</p>
   </div>
 
   <div class="row g-4">
     {% for recipe in recipes %}
-    <div class="col-12 col-sm-6 col-lg-4">
-      <div class="recipe-card">
-        <div class="recipe-card-top">{{ recipe.emoji }}</div>
-        <div class="recipe-card-body">
-          <h2 class="recipe-card-name">{{ recipe.name }}</h2>
-          <p class="recipe-card-desc">{{ recipe.description }}</p>
-          <div class="recipe-card-meta">
-            <span class="recipe-meta-chip"><i class="bi bi-clock me-1"></i>{{ recipe.prep_time }} min</span>
-            <span class="recipe-meta-chip"><i class="bi bi-people me-1"></i>{{ recipe.servings }} servings</span>
+    <div class="col-12 col-md-6 col-lg-4 reveal-on-scroll">
+      <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100 bg-white" style="border: 1px solid var(--fb-border) !important; transition: transform var(--fb-trans), box-shadow var(--fb-trans);">
+        
+        <!-- Recipe Header Showcase -->
+        <div class="p-4 d-flex align-items-center justify-content-between bg-light bg-opacity-75 border-bottom">
+          <div class="d-flex align-items-center gap-3">
+            <span style="font-size: 3rem; line-height: 1;">{{ recipe.emoji }}</span>
+            <div>
+              <span class="badge bg-success bg-opacity-10 text-success fw-bold px-2 py-0.5 rounded-pill" style="font-size: 0.7rem;">Quick & Fresh</span>
+              <div class="text-muted small mt-1" style="font-size: 0.75rem;">Easy Prep</div>
+            </div>
           </div>
-          <div class="recipe-ingredients mt-3">
-            <div class="ingredient-label">Key Ingredients</div>
-            {% for tag in recipe.get_ingredient_tags %}
-            <span class="ingredient-chip">{{ tag }}</span>
-            {% endfor %}
+          <div class="text-end">
+            <span class="badge bg-white text-dark border px-2.5 py-1 rounded-pill small d-block mb-1">
+              <i class="bi bi-clock me-1 text-muted"></i>{{ recipe.prep_time }} mins
+            </span>
+            <span class="badge bg-white text-dark border px-2.5 py-1 rounded-pill small">
+              <i class="bi bi-people me-1 text-muted"></i>{{ recipe.servings }} Servings
+            </span>
           </div>
-          <a href="{% url 'product_list' %}" class="recipe-shop-btn">
-            <i class="bi bi-cart-plus-fill"></i> Shop Ingredients
+        </div>
+
+        <!-- Recipe Content -->
+        <div class="p-4 d-flex flex-column flex-grow-1">
+          <h3 class="fw-bold text-dark mb-2" style="font-size: 1.25rem;">{{ recipe.name }}</h3>
+          <p class="text-muted small mb-3 flex-grow-1" style="line-height: 1.6; font-size: 0.88rem;">
+            {{ recipe.description }}
+          </p>
+
+          <div class="mb-4">
+            <span class="text-muted small fw-bold d-block mb-2">Key Fresh Ingredients:</span>
+            <div class="d-flex flex-wrap gap-1">
+              {% for tag in recipe.get_ingredient_tags %}
+              <span class="badge bg-light text-dark border px-2.5 py-1 rounded-pill small" style="font-size: 0.72rem;">{{ tag }}</span>
+              {% endfor %}
+            </div>
+          </div>
+
+          <a href="{% url 'product_list' %}?q={{ recipe.get_ingredient_tags.0 }}" class="btn btn-success rounded-pill fw-bold py-2 w-100 border-0 mt-auto" style="background-color: var(--fb-green-600); font-size: 0.88rem;">
+            <i class="bi bi-cart-plus me-1"></i> Shop Recipe Ingredients
           </a>
         </div>
+
       </div>
     </div>
     {% empty %}
     <div class="col-12 text-center py-5">
-      <div style="font-size:3.5rem">🍽️</div>
-      <h3 class="mt-3">No recipes yet</h3>
+      <div style="font-size: 3.5rem;">🍽️</div>
+      <h3 class="fw-bold text-dark mt-2">No recipes published yet</h3>
     </div>
     {% endfor %}
   </div>
+
 </div>
 {% endblock %}

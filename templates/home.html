@@ -1,308 +1,554 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block title %}FoodBasket – Fresh Groceries Delivered to Your Door{% endblock %}
+{% block title %}FoodBasket – Good Food. Brighter Days.{% endblock %}
 
 {% block content %}
 
-{% if user.is_authenticated %}
-  <!-- ══════════════════════════════════════════
-       AUTHENTICATED USER SHOPPING DASHBOARD
-       ══════════════════════════════════════════ -->
-
-  <!-- Hero Grid Banner Section (Figma Style) -->
-  <section class="py-4">
-    <div class="container">
-      <div class="row g-3">
-        <!-- Main Banner (Left, Large) -->
-        <div class="col-lg-8 col-12">
-          <div class="position-relative rounded-4 overflow-hidden text-white d-flex align-items-center" style="height: 320px; background: linear-gradient(rgba(0,0,0,0.15), rgba(0,0,0,0.15)), url('https://images.unsplash.com/photo-1601004890684-d8cbf643f5f2?auto=format&fit=crop&q=80&w=1000') center/cover no-repeat;">
-            <div class="p-4 p-md-5">
-              <span class="badge bg-white text-success fw-bold px-3 py-1.5 rounded-pill mb-2 text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.05em; font-family: 'Inter', sans-serif;">Seasonal Offer</span>
-              <h2 class="display-6 fw-bold mb-3" style="font-family: 'Inter', sans-serif; line-height: 1.15; font-weight: 800;">20% off<br>Organic Berries</h2>
-              <a href="{% url 'product_list' %}" class="btn btn-light rounded-pill px-4 py-2 fw-bold text-success" style="background: white; border: none; font-size: 0.85rem; font-family: 'Inter', sans-serif;">Shop Now</a>
-            </div>
-          </div>
+<!-- ══════════════════════════════════════════════════════════════
+     1. EDITORIAL HERO SECTION
+     ══════════════════════════════════════════════════════════════ -->
+<section class="hero-editorial">
+  <div class="container position-relative" style="z-index: 1;">
+    <div class="row align-items-center g-4 g-lg-5">
+      
+      <!-- Left Column: Editorial Headline & Actions -->
+      <div class="col-12 col-lg-6 reveal-on-scroll">
+        <div class="hero-pill-tag">
+          <i class="bi bi-patch-check-fill text-success"></i> 100% Farm Fresh &bull; Same-Day Delivery
         </div>
-        <!-- Side Banners (Right, Column) -->
-        <div class="col-lg-4 col-12 d-flex flex-column gap-3">
-          <!-- Top Side Banner -->
-          <div class="position-relative rounded-4 overflow-hidden text-white d-flex align-items-center flex-fill" style="min-height: 152px; background: linear-gradient(rgba(0,0,0,0.25), rgba(0,0,0,0.25)), url('https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&q=80&w=600') center/cover no-repeat;">
-            <div class="p-4">
-              <h4 class="fw-bold mb-1" style="font-family: 'Inter', sans-serif; font-size: 1.25rem;">Freshly Baked Daily</h4>
-              <p class="small text-white-50 mb-2" style="font-size: 0.8rem;">Explore Bakery</p>
-              <a href="{% url 'product_list' %}" class="text-white fw-bold text-decoration-none small" style="font-size: 0.8rem;">Explore <i class="bi bi-arrow-right"></i></a>
-            </div>
-          </div>
-          <!-- Bottom Side Banner (Free Delivery Promo) -->
-          <div class="bg-light rounded-4 border p-4 d-flex flex-column justify-content-center flex-fill" style="min-height: 152px; border-color: #e9ecef !important; background-color: #f8f9fa !important;">
-            <div class="d-flex align-items-center gap-3">
-              <div class="rounded-circle bg-white shadow-sm d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; flex-shrink: 0; border: 1px solid #e9ecef;">
-                <i class="bi bi-truck text-success" style="font-size: 1.4rem;"></i>
-              </div>
-              <div>
-                <h5 class="fw-bold mb-1 text-dark" style="font-family: 'Inter', sans-serif; font-size: 1.1rem; font-weight: 700;">Free Delivery</h5>
-                <p class="text-muted small mb-0" style="font-size: 0.8rem;">On orders over ₹500</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
 
-  <!-- Categories Grid (Figma Style) -->
-  <section class="home-section py-4">
-    <div class="container">
-      <div class="section-head mb-3">
-        <div>
-          <span class="section-eyebrow">Quick Categories</span>
-          <h2 class="section-title" style="font-size: 1.3rem;">Shop by Category</h2>
-        </div>
-        <a href="{% url 'product_list' %}" class="view-all-link">All Products <i class="bi bi-arrow-right"></i></a>
-      </div>
+        <h1 class="hero-editorial-title">
+          Everything you need.<br>
+          <span class="highlight-text">Exactly when you need it.</span>
+        </h1>
 
-      {% if categories %}
-      <div class="row g-3 g-md-4">
-        {% for cat in categories %}
-        <div class="col-4 col-sm-4 col-md-2">
-          <a href="{% url 'category_products' cat.slug %}" class="cat-card">
-            <div class="cat-card-icon-wrap">{{ cat.icon }}</div>
-            <div class="cat-card-name">{{ cat.name }}</div>
+        <p class="hero-editorial-subtext">
+          Fresh organic fruits, crisp farm vegetables, pure dairy, and pantry staples — sourced directly from local partner vendors and delivered to your doorstep in minutes.
+        </p>
+
+        <div class="d-flex align-items-center gap-3 flex-wrap">
+          <a href="{% url 'product_list' %}" class="btn-fb-primary">
+            <i class="bi bi-cart3"></i> Shop Now
+          </a>
+          <a href="#categoriesSection" class="btn-fb-outline">
+            <i class="bi bi-grid"></i> Explore Categories
           </a>
         </div>
-        {% endfor %}
-      </div>
-      {% endif %}
-    </div>
-  </section>
 
-  <!-- Featured Products Grid -->
-  <section class="home-section bg-soft py-4">
-    <div class="container">
-      <div class="section-head mb-3">
-        <div>
-          <span class="section-eyebrow">Fresh Picks</span>
-          <h2 class="section-title" style="font-size: 1.3rem;">Popular Grocery Items</h2>
+        <!-- Social Proof Pill Row -->
+        <div class="d-flex align-items-center gap-4 mt-4 pt-2 border-top border-light">
+          <div class="d-flex align-items-center gap-2">
+            <span class="fs-4">🚚</span>
+            <div>
+              <div class="fw-bold text-dark small">Under 60 Mins</div>
+              <div class="text-muted" style="font-size: 0.75rem;">Express Local Delivery</div>
+            </div>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <span class="fs-4">🌱</span>
+            <div>
+              <div class="fw-bold text-dark small">Local Vendors</div>
+              <div class="text-muted" style="font-size: 0.75rem;">Direct from Neighborhood Shops</div>
+            </div>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <span class="fs-4">🏷️</span>
+            <div>
+              <div class="fw-bold text-dark small">Zero Markup</div>
+              <div class="text-muted" style="font-size: 0.75rem;">Real Store Pricing</div>
+            </div>
+          </div>
         </div>
-        <a href="{% url 'product_list' %}" class="view-all-link">Browse All <i class="bi bi-arrow-right"></i></a>
       </div>
 
-      {% if featured_products %}
-      <div class="row g-3">
-        {% for product in featured_products %}
-        <div class="col-6 col-md-4 col-lg-3">
-          <div class="pcard position-relative">
-            {% if product.discount_price %}
-            <div class="pcard-badge">{{ product.discount_percent }}% OFF</div>
+      <!-- Right Column: 3D Hero Grocery Basket -->
+      <div class="col-12 col-lg-6 reveal-on-scroll">
+        <div class="hero-3d-wrapper">
+          <img src="{% static 'images/hero/hero_grocery_basket.jpg' %}" 
+               alt="FoodBasket 3D Fresh Grocery Basket" 
+               class="hero-3d-img shadow-lg"
+               loading="eager"
+               style="max-height: 440px; width: 100%; object-fit: cover;">
+          
+          <!-- Floating 3D Accent: Apple -->
+          <div class="floating-accent d-none d-md-flex align-items-center gap-2" style="top: 15px; left: -15px;">
+            <img src="{% static 'images/3d/apple.jpg' %}" alt="Apple" style="width: 38px; height: 38px; border-radius: 50%; object-fit: cover;">
+            <div class="pe-2">
+              <span class="d-block fw-bold text-dark" style="font-size: 0.78rem;">Fresh Picked</span>
+              <span class="text-success fw-bold" style="font-size: 0.7rem;">Orchard Apples</span>
+            </div>
+          </div>
+
+          <!-- Floating 3D Accent: Avocado -->
+          <div class="floating-accent d-none d-md-flex align-items-center gap-2" style="bottom: 20px; right: -15px; animation-delay: 2s;">
+            <img src="{% static 'images/3d/avocado.jpg' %}" alt="Avocado" style="width: 38px; height: 38px; border-radius: 50%; object-fit: cover;">
+            <div class="pe-2">
+              <span class="d-block fw-bold text-dark" style="font-size: 0.78rem;">100% Organic</span>
+              <span class="text-muted" style="font-size: 0.7rem;">Ripe Hass Avocado</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     2. TRUST & BENEFITS STRIP
+     ══════════════════════════════════════════════════════════════ -->
+<section class="py-4 border-bottom bg-white">
+  <div class="container">
+    <div class="row g-3 text-center">
+      <div class="col-6 col-md-3">
+        <div class="p-2 d-flex flex-column align-items-center">
+          <div class="mb-2 p-2 rounded-circle bg-success bg-opacity-10 text-success" style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">🌱</div>
+          <h6 class="fw-bold mb-0 text-dark" style="font-size: 0.95rem;">100% Farm Fresh</h6>
+          <p class="text-muted small mb-0" style="font-size: 0.78rem;">Hand-picked from certified farms</p>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="p-2 d-flex flex-column align-items-center">
+          <div class="mb-2 p-2 rounded-circle bg-warning bg-opacity-10 text-warning" style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">⚡</div>
+          <h6 class="fw-bold mb-0 text-dark" style="font-size: 0.95rem;">Same-Day Delivery</h6>
+          <p class="text-muted small mb-0" style="font-size: 0.78rem;">3 convenient daily time windows</p>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="p-2 d-flex flex-column align-items-center">
+          <div class="mb-2 p-2 rounded-circle bg-primary bg-opacity-10 text-primary" style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">🏪</div>
+          <h6 class="fw-bold mb-0 text-dark" style="font-size: 0.95rem;">Approved Local Vendors</h6>
+          <p class="text-muted small mb-0" style="font-size: 0.78rem;">Support your neighborhood market</p>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="p-2 d-flex flex-column align-items-center">
+          <div class="mb-2 p-2 rounded-circle bg-danger bg-opacity-10 text-danger" style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">🔒</div>
+          <h6 class="fw-bold mb-0 text-dark" style="font-size: 0.95rem;">Secure & Verified</h6>
+          <p class="text-muted small mb-0" style="font-size: 0.78rem;">Safe payments & zero hidden fees</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     3. SHOP BY CATEGORY
+     ══════════════════════════════════════════════════════════════ -->
+<section class="py-5" id="categoriesSection">
+  <div class="container">
+    <div class="d-flex align-items-end justify-content-between mb-4">
+      <div>
+        <span class="text-success fw-bold small text-uppercase letter-spacing d-block mb-1">Aisles & Departments</span>
+        <h2 class="fw-bold mb-0 text-dark" style="font-size: 1.75rem;">Shop by Category</h2>
+      </div>
+      <a href="{% url 'product_list' %}" class="btn btn-sm btn-outline-success rounded-pill px-3 fw-bold">
+        All Categories <i class="bi bi-arrow-right ms-1"></i>
+      </a>
+    </div>
+
+    <div class="row g-3 g-md-4">
+      {% for cat in all_categories %}
+      <div class="col-6 col-sm-4 col-md-3 col-lg-2 reveal-on-scroll">
+        <a href="{% url 'category_products' cat.slug %}" class="cat-card-premium">
+          <div class="cat-icon-container" style="background: {% cycle '#FDF3E7' '#EBF5EE' '#EFF6FF' '#FFFBEB' '#FEF3C7' '#FFF1F2' %};">
+            {% if cat.slug == 'fruits' %}
+              <img src="{% static 'images/categories/fruits.svg' %}" alt="{{ cat.name }}" style="width: 46px; height: 46px;">
+            {% elif cat.slug == 'vegetables' %}
+              <img src="{% static 'images/categories/vegetables.svg' %}" alt="{{ cat.name }}" style="width: 46px; height: 46px;">
+            {% elif cat.slug == 'dairy' %}
+              <img src="{% static 'images/categories/dairy.svg' %}" alt="{{ cat.name }}" style="width: 46px; height: 46px;">
+            {% elif cat.slug == 'bakery' %}
+              <img src="{% static 'images/categories/bakery.svg' %}" alt="{{ cat.name }}" style="width: 46px; height: 46px;">
+            {% elif cat.slug == 'beverages' %}
+              <img src="{% static 'images/categories/beverages.svg' %}" alt="{{ cat.name }}" style="width: 46px; height: 46px;">
+            {% elif cat.slug == 'snacks' %}
+              <img src="{% static 'images/categories/snacks.svg' %}" alt="{{ cat.name }}" style="width: 46px; height: 46px;">
+            {% else %}
+              <span style="font-size: 2rem;">{{ cat.icon }}</span>
             {% endif %}
-            
-            {% if user.is_authenticated %}
-            <div class="position-absolute top-0 end-0 m-2" style="z-index: 10;">
-              <form action="{% url 'toggle_wishlist' product.id %}" method="post" class="m-0 p-0">
-                {% csrf_token %}
-                <input type="hidden" name="next" value="{{ request.path }}">
-                <button type="submit" class="btn btn-sm btn-light rounded-circle shadow-sm border" style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center; background: white;">
-                  <i class="bi bi-heart{% if product.id in wishlist_ids %}-fill text-danger{% else %} text-muted{% endif %}"></i>
-                </button>
-              </form>
+          </div>
+          <div class="cat-title">{{ cat.name }}</div>
+          <div class="cat-arrow">Browse <i class="bi bi-arrow-right"></i></div>
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     4. FRESH TODAY & DEALS SECTION
+     ══════════════════════════════════════════════════════════════ -->
+{% if deals_products %}
+<section class="py-5 bg-white border-top border-bottom">
+  <div class="container">
+    <div class="d-flex align-items-end justify-content-between mb-4">
+      <div>
+        <span class="badge bg-warning text-dark fw-bold px-2 py-1 rounded-pill mb-1">🔥 Limited Time Deals</span>
+        <h2 class="fw-bold mb-0 text-dark" style="font-size: 1.75rem;">Daily Savings & Specials</h2>
+      </div>
+      <a href="{% url 'product_list' %}" class="btn btn-sm btn-outline-success rounded-pill px-3 fw-bold">
+        View All Deals <i class="bi bi-arrow-right ms-1"></i>
+      </a>
+    </div>
+
+    <div class="row g-3 g-md-4">
+      {% for product in deals_products %}
+      <div class="col-6 col-md-4 col-lg-3 reveal-on-scroll">
+        <div class="pcard">
+          {% if product.discount_price %}
+          <div class="pcard-badge-discount">{{ product.discount_percent }}% OFF</div>
+          {% endif %}
+
+          {% if user.is_authenticated %}
+          <form action="{% url 'toggle_wishlist' product.id %}" method="post" class="m-0 p-0">
+            {% csrf_token %}
+            <button type="submit" class="pcard-wishlist-btn {% if product.id in wishlist_ids %}active{% endif %}" title="Save to wishlist">
+              <i class="bi bi-heart{% if product.id in wishlist_ids %}-fill text-danger{% endif %}"></i>
+            </button>
+          </form>
+          {% endif %}
+
+          <a href="{% url 'product_detail' product.slug %}" class="pcard-img-wrap">
+            {% if product.image %}
+              <img src="{{ product.image.url }}" alt="{{ product.name }}" loading="lazy">
+            {% else %}
+              <div style="font-size: 3.5rem;">{{ product.category.icon }}</div>
+            {% endif %}
+          </a>
+
+          <div class="pcard-body">
+            <span class="pcard-category">{{ product.category.name }}</span>
+            <h3 class="pcard-title">
+              <a href="{% url 'product_detail' product.slug %}">{{ product.name }}</a>
+            </h3>
+            <span class="pcard-unit">{{ product.get_unit_display }}</span>
+
+            {% if product.vendor %}
+            <div class="pcard-vendor-tag">
+              <i class="bi bi-shop text-success"></i>
+              <span>{{ product.vendor.vendor_profile.shop_name|default:product.vendor.username }}</span>
             </div>
             {% endif %}
-            
-            <a href="{% url 'product_detail' product.slug %}" class="pcard-img-link">
-              <div class="pcard-img">
-                {% if product.image %}
-                  <img src="{{ product.image.url }}" alt="{{ product.name }}" loading="lazy">
-                {% else %}
-                  <div class="pcard-emoji">{{ product.category.icon }}</div>
+
+            <div class="pcard-footer-row">
+              <div class="pcard-price-group">
+                <span class="pcard-price">₹{{ product.effective_price }}</span>
+                {% if product.discount_price %}
+                <span class="pcard-old-price">₹{{ product.price }}</span>
                 {% endif %}
               </div>
-            </a>
-            <div class="pcard-body">
-              <span class="pcard-cat">{{ product.category.name }}</span>
-              <h3 class="pcard-name">
-                <a href="{% url 'product_detail' product.slug %}">{{ product.name }}</a>
-              </h3>
-              <span class="pcard-unit">{{ product.get_unit_display }}</span>
-              <div class="pcard-footer">
-                <div class="pcard-price-row">
-                  <span class="pcard-price">₹{{ product.effective_price }}</span>
-                  {% if product.discount_price %}<span class="pcard-old">₹{{ product.price }}</span>{% endif %}
-                </div>
-                <form action="{% url 'add_to_cart' product.id %}" method="post">
-                  {% csrf_token %}
-                  <input type="hidden" name="quantity" value="1">
-                  <input type="hidden" name="next" value="{{ request.path }}">
-                  <button type="submit" class="pcard-add-btn" title="Add to cart">
-                    <i class="bi bi-plus-lg"></i>
-                  </button>
-                </form>
-              </div>
+
+              {% if user.is_authenticated %}
+              <form action="{% url 'add_to_cart' product.id %}" method="post" class="m-0 p-0">
+                {% csrf_token %}
+                <input type="hidden" name="quantity" value="1">
+                <button type="submit" class="pcard-add-btn" title="Add to cart">
+                  <i class="bi bi-plus-lg"></i>
+                </button>
+              </form>
+              {% else %}
+              <a href="{% url 'login' %}?next={{ request.path }}" class="pcard-add-btn" title="Login to buy">
+                <i class="bi bi-plus-lg"></i>
+              </a>
+              {% endif %}
             </div>
           </div>
         </div>
-        {% endfor %}
       </div>
-      {% endif %}
-    </div>
-  </section>
-
-  <!-- Recipe Teaser Section -->
-  {% if featured_recipes %}
-  <section class="home-section recipe-teaser-section py-4">
-    <div class="container">
-      <div class="row align-items-center g-4">
-        <div class="col-lg-5 col-12">
-          <span class="section-eyebrow">Cook Smarter</span>
-          <h2 class="section-title" style="font-size: 1.3rem;">Suggested Recipes</h2>
-          <p class="section-body-text" style="font-size: .88rem; margin: .5rem 0 1rem;">
-            Add items to your cart and we'll suggest recipes you can cook at home.
-          </p>
-          <a href="{% url 'recipes' %}" class="btn btn-success btn-sm rounded-pill px-3 fw-bold" style="background-color: var(--g700); border: none;">
-            <i class="bi bi-journal-richtext me-1"></i>View All Recipes
-          </a>
-        </div>
-        <div class="col-lg-7 col-12">
-          <div class="recipe-chip-grid">
-            {% for recipe in featured_recipes %}
-            <a href="{% url 'recipes' %}" class="recipe-chip-item">
-              <span>{{ recipe.emoji }} {{ recipe.name }}</span>
-              <small class="text-muted">{{ recipe.prep_time }} min</small>
-            </a>
-            {% endfor %}
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-  {% endif %}
-
-  <!-- Coupons Marquee Ticker -->
-  {% if active_coupons %}
-  <div class="ticker-wrap border-top">
-    <div class="ticker-track">
-      {% for coupon in active_coupons %}
-      <span class="ticker-item"><i class="bi bi-tag-fill"></i> <strong>{{ coupon.code }}</strong> — {{ coupon.description }}</span>
-      <span class="ticker-sep">•</span>
-      {% endfor %}
-      {% for coupon in active_coupons %}
-      <span class="ticker-item"><i class="bi bi-tag-fill"></i> <strong>{{ coupon.code }}</strong> — {{ coupon.description }}</span>
-      <span class="ticker-sep">•</span>
       {% endfor %}
     </div>
   </div>
-  {% endif %}
-
-{% else %}
-  <!-- ══════════════════════════════════════════
-       GUEST MARKETING LANDING PAGE
-       ══════════════════════════════════════════ -->
-
-  <!-- Hero Marketing Section -->
-  <section class="hero">
-    <div class="hero-inner container">
-      <div class="row align-items-center">
-        <div class="col-lg-6 col-12 hero-text-col">
-          <div class="hero-pill mb-3">
-            <i class="bi bi-lightning-charge-fill"></i> Same-Day Delivery Available
-          </div>
-          <h1 class="hero-headline">
-            Fresh Groceries,<br>
-            <span class="hero-highlight">Right at Your Door</span>
-          </h1>
-          <p class="hero-sub">
-            Shop farm-fresh vegetables, organic dairy, seasonal fruits, bakery items and more. Log in to fill your basket!
-          </p>
-          <div class="hero-cta-row">
-            <a href="{% url 'login' %}" class="btn-primary-pill">
-              <i class="bi bi-box-arrow-in-right me-2"></i>Login to Shop
-            </a>
-            <a href="{% url 'register' %}" class="btn-outline-pill">
-              <i class="bi bi-person-plus me-2"></i>Register Now
-            </a>
-          </div>
-        </div>
-
-        <div class="col-lg-6 col-12 hero-visual-col d-none d-lg-flex">
-          <div class="hero-visual">
-            <div class="hero-blob-bg"></div>
-            <div class="hero-float-grid">
-              <div class="hf-item hf-1"><span>🍎</span><small>Fruits</small></div>
-              <div class="hf-item hf-2"><span>🥦</span><small>Veggies</small></div>
-              <div class="hf-item hf-3"><span>🥛</span><small>Dairy</small></div>
-              <div class="hf-item hf-4"><span>🍞</span><small>Bakery</small></div>
-              <div class="hf-item hf-5"><span>🧃</span><small>Drinks</small></div>
-              <div class="hf-item hf-6"><span>🍿</span><small>Snacks</small></div>
-            </div>
-            <div class="hero-delivery-card">
-              <div class="hdc-icon">🚚</div>
-              <div>
-                <div class="hdc-title">Express Delivery</div>
-                <div class="hdc-sub">Free on orders ₹500+</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="hero-wave-bottom">
-      <svg viewBox="0 0 1440 60" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
-        <path d="M0,30 C360,60 1080,0 1440,30 L1440,60 L0,60Z" fill="#faf9f7"/>
-      </svg>
-    </div>
-  </section>
-
-  <!-- Coupons Marquee Ticker -->
-  {% if active_coupons %}
-  <div class="ticker-wrap">
-    <div class="ticker-track">
-      {% for coupon in active_coupons %}
-      <span class="ticker-item"><i class="bi bi-tag-fill"></i> <strong>{{ coupon.code }}</strong> — {{ coupon.description }}</span>
-      <span class="ticker-sep">•</span>
-      {% endfor %}
-      {% for coupon in active_coupons %}
-      <span class="ticker-item"><i class="bi bi-tag-fill"></i> <strong>{{ coupon.code }}</strong> — {{ coupon.description }}</span>
-      <span class="ticker-sep">•</span>
-      {% endfor %}
-    </div>
-  </div>
-  {% endif %}
-
-  <!-- Trust Value Props Section -->
-  <section class="trust-strip">
-    <div class="container">
-      <div class="row g-3 text-center">
-        <div class="col-6 col-md-3">
-          <div class="trust-item">
-            <div class="trust-icon">🌱</div>
-            <div class="trust-label">100% Farm Fresh</div>
-            <div class="trust-sub">Direct from local farms</div>
-          </div>
-        </div>
-        <div class="col-6 col-md-3">
-          <div class="trust-item">
-            <div class="trust-icon">⚡</div>
-            <div class="trust-label">Same-Day Delivery</div>
-            <div class="trust-sub">3 time slots daily</div>
-          </div>
-        </div>
-        <div class="col-6 col-md-3">
-          <div class="trust-item">
-            <div class="trust-icon">🏷️</div>
-            <div class="trust-label">Best Prices</div>
-            <div class="trust-sub">Coupons + daily deals</div>
-          </div>
-        </div>
-        <div class="col-6 col-md-3">
-          <div class="trust-item">
-            <div class="trust-icon">🔒</div>
-            <div class="trust-label">Safe Checkout</div>
-            <div class="trust-sub">Encrypted payments</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
+</section>
 {% endif %}
+
+<!-- ══════════════════════════════════════════════════════════════
+     5. POPULAR GROCERY PICKS
+     ══════════════════════════════════════════════════════════════ -->
+<section class="py-5">
+  <div class="container">
+    <div class="d-flex align-items-end justify-content-between mb-4">
+      <div>
+        <span class="text-success fw-bold small text-uppercase letter-spacing d-block mb-1">Customer Favorites</span>
+        <h2 class="fw-bold mb-0 text-dark" style="font-size: 1.75rem;">Popular Groceries</h2>
+      </div>
+      <a href="{% url 'product_list' %}" class="btn btn-sm btn-outline-success rounded-pill px-3 fw-bold">
+        Explore Catalog <i class="bi bi-arrow-right ms-1"></i>
+      </a>
+    </div>
+
+    <div class="row g-3 g-md-4">
+      {% for product in featured_products %}
+      <div class="col-6 col-md-4 col-lg-3 reveal-on-scroll">
+        <div class="pcard">
+          {% if product.discount_price %}
+          <div class="pcard-badge-discount">{{ product.discount_percent }}% OFF</div>
+          {% endif %}
+
+          {% if user.is_authenticated %}
+          <form action="{% url 'toggle_wishlist' product.id %}" method="post" class="m-0 p-0">
+            {% csrf_token %}
+            <button type="submit" class="pcard-wishlist-btn {% if product.id in wishlist_ids %}active{% endif %}" title="Save to wishlist">
+              <i class="bi bi-heart{% if product.id in wishlist_ids %}-fill text-danger{% endif %}"></i>
+            </button>
+          </form>
+          {% endif %}
+
+          <a href="{% url 'product_detail' product.slug %}" class="pcard-img-wrap">
+            {% if product.image %}
+              <img src="{{ product.image.url }}" alt="{{ product.name }}" loading="lazy">
+            {% else %}
+              <div style="font-size: 3.5rem;">{{ product.category.icon }}</div>
+            {% endif %}
+          </a>
+
+          <div class="pcard-body">
+            <span class="pcard-category">{{ product.category.name }}</span>
+            <h3 class="pcard-title">
+              <a href="{% url 'product_detail' product.slug %}">{{ product.name }}</a>
+            </h3>
+            <span class="pcard-unit">{{ product.get_unit_display }}</span>
+
+            {% if product.vendor %}
+            <div class="pcard-vendor-tag">
+              <i class="bi bi-shop text-success"></i>
+              <span>{{ product.vendor.vendor_profile.shop_name|default:product.vendor.username }}</span>
+            </div>
+            {% endif %}
+
+            <div class="pcard-footer-row">
+              <div class="pcard-price-group">
+                <span class="pcard-price">₹{{ product.effective_price }}</span>
+                {% if product.discount_price %}
+                <span class="pcard-old-price">₹{{ product.price }}</span>
+                {% endif %}
+              </div>
+
+              {% if user.is_authenticated %}
+              <form action="{% url 'add_to_cart' product.id %}" method="post" class="m-0 p-0">
+                {% csrf_token %}
+                <input type="hidden" name="quantity" value="1">
+                <button type="submit" class="pcard-add-btn" title="Add to cart">
+                  <i class="bi bi-plus-lg"></i>
+                </button>
+              </form>
+              {% else %}
+              <a href="{% url 'login' %}?next={{ request.path }}" class="pcard-add-btn" title="Login to buy">
+                <i class="bi bi-plus-lg"></i>
+              </a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     6. HOW FOODBASKET WORKS
+     ══════════════════════════════════════════════════════════════ -->
+<section class="py-5 bg-white border-top border-bottom">
+  <div class="container">
+    <div class="text-center max-w-600 mx-auto mb-5">
+      <span class="text-success fw-bold small text-uppercase letter-spacing d-block mb-1">Simple & Reliable</span>
+      <h2 class="fw-bold text-dark" style="font-size: 2rem;">How FoodBasket Works</h2>
+      <p class="text-muted small">Your favorite local groceries, delivered directly to your doorstep in four easy steps.</p>
+    </div>
+
+    <div class="row g-4 text-center">
+      <!-- Step 1 -->
+      <div class="col-6 col-lg-3 reveal-on-scroll">
+        <div class="p-3">
+          <div class="mb-3 mx-auto rounded-circle d-flex align-items-center justify-content-center bg-success bg-opacity-10 text-success fw-bold fs-3" style="width: 72px; height: 72px;">
+            1
+          </div>
+          <h5 class="fw-bold text-dark mb-1">Fill Your Basket</h5>
+          <p class="text-muted small mb-0">Browse farm fresh produce, milk, and bakery items from multiple vendors in one cart.</p>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="col-6 col-lg-3 reveal-on-scroll">
+        <div class="p-3">
+          <div class="mb-3 mx-auto rounded-circle d-flex align-items-center justify-content-center bg-warning bg-opacity-10 text-warning fw-bold fs-3" style="width: 72px; height: 72px;">
+            2
+          </div>
+          <h5 class="fw-bold text-dark mb-1">Choose Delivery Slot</h5>
+          <p class="text-muted small mb-0">Pick express local delivery or schedule convenient morning, afternoon, or evening windows.</p>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="col-6 col-lg-3 reveal-on-scroll">
+        <div class="p-3">
+          <div class="mb-3 mx-auto rounded-circle d-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary fw-bold fs-3" style="width: 72px; height: 72px;">
+            3
+          </div>
+          <h5 class="fw-bold text-dark mb-1">Packed by Local Shops</h5>
+          <p class="text-muted small mb-0">Each approved neighborhood vendor carefully inspects and packs your items.</p>
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="col-6 col-lg-3 reveal-on-scroll">
+        <div class="p-3">
+          <div class="mb-3 mx-auto rounded-circle d-flex align-items-center justify-content-center bg-danger bg-opacity-10 text-danger fw-bold fs-3" style="width: 72px; height: 72px;">
+            4
+          </div>
+          <h5 class="fw-bold text-dark mb-1">Fresh at Your Door</h5>
+          <p class="text-muted small mb-0">Delivered right to your door with live tracking and zero delivery hassles.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     7. LOCAL VENDORS SPOTLIGHT
+     ══════════════════════════════════════════════════════════════ -->
+{% if local_vendors %}
+<section class="py-5">
+  <div class="container">
+    <div class="d-flex align-items-end justify-content-between mb-4">
+      <div>
+        <span class="text-success fw-bold small text-uppercase letter-spacing d-block mb-1">Community Partners</span>
+        <h2 class="fw-bold mb-0 text-dark" style="font-size: 1.75rem;">Verified Local Vendors</h2>
+      </div>
+      <span class="badge bg-light text-muted border px-3 py-1.5 rounded-pill small">Active in your zone</span>
+    </div>
+
+    <div class="row g-3 g-md-4">
+      {% for vendor in local_vendors %}
+      <div class="col-12 col-md-6 col-lg-4 reveal-on-scroll">
+        <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100" style="border: 1px solid var(--fb-border) !important;">
+          <div class="d-flex align-items-center gap-3">
+            <div class="rounded-3 bg-success bg-opacity-10 text-success d-flex align-items-center justify-content-center flex-shrink-0" style="width: 54px; height: 54px; font-size: 1.5rem;">
+              🏪
+            </div>
+            <div>
+              <h5 class="fw-bold mb-0 text-dark" style="font-size: 1.05rem;">{{ vendor.shop_name }}</h5>
+              <p class="text-muted small mb-1" style="font-size: 0.8rem;">
+                <i class="bi bi-geo-alt text-success me-1"></i>{{ vendor.shop_address|truncatechars:35 }} ({{ vendor.pincode }})
+              </p>
+              <span class="badge bg-success-subtle text-success fw-bold px-2 py-0.5 rounded-pill" style="font-size: 0.68rem;">
+                <i class="bi bi-check-circle-fill me-1"></i>Verified Partner
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- ══════════════════════════════════════════════════════════════
+     8. SUGGESTED RECIPES (EDITORIAL STYLE)
+     ══════════════════════════════════════════════════════════════ -->
+{% if featured_recipes %}
+<section class="py-5 bg-white border-top border-bottom">
+  <div class="container">
+    <div class="d-flex align-items-end justify-content-between mb-4">
+      <div>
+        <span class="text-success fw-bold small text-uppercase letter-spacing d-block mb-1">Kitchen Inspiration</span>
+        <h2 class="fw-bold mb-0 text-dark" style="font-size: 1.75rem;">Cook with Fresh Groceries</h2>
+      </div>
+      <a href="{% url 'recipes' %}" class="btn btn-sm btn-outline-success rounded-pill px-3 fw-bold">
+        All Recipes <i class="bi bi-arrow-right ms-1"></i>
+      </a>
+    </div>
+
+    <div class="row g-4">
+      {% for recipe in featured_recipes %}
+      <div class="col-12 col-md-6 col-lg-4 reveal-on-scroll">
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100 bg-light bg-opacity-50" style="border: 1px solid var(--fb-border) !important;">
+          <div class="p-4 d-flex align-items-center justify-content-between border-bottom bg-white">
+            <span style="font-size: 2.8rem; line-height: 1;">{{ recipe.emoji }}</span>
+            <div class="text-end">
+              <span class="badge bg-light text-dark border px-2 py-1 rounded-pill small">
+                <i class="bi bi-clock me-1 text-muted"></i>{{ recipe.prep_time }} mins
+              </span>
+              <span class="badge bg-light text-dark border px-2 py-1 rounded-pill small ms-1">
+                <i class="bi bi-people me-1 text-muted"></i>{{ recipe.servings }} Servings
+              </span>
+            </div>
+          </div>
+          <div class="p-4 d-flex flex-column flex-grow-1">
+            <h4 class="fw-bold text-dark mb-2" style="font-size: 1.2rem;">{{ recipe.name }}</h4>
+            <p class="text-muted small mb-3 flex-grow-1" style="font-size: 0.85rem; line-height: 1.5;">
+              {{ recipe.description }}
+            </p>
+            <div class="d-flex flex-wrap gap-1 mb-3">
+              {% for tag in recipe.get_ingredient_tags %}
+              <span class="badge bg-white text-muted border px-2 py-1 rounded-pill" style="font-size: 0.72rem;">{{ tag }}</span>
+              {% endfor %}
+            </div>
+            <a href="{% url 'product_list' %}" class="btn btn-success btn-sm rounded-pill fw-bold py-2 w-100 mt-auto border-0" style="background-color: var(--fb-green-600);">
+              <i class="bi bi-cart-plus me-1"></i>Shop Ingredients
+            </a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- ══════════════════════════════════════════════════════════════
+     9. ACTIVE COUPONS MARQUEE TICKER
+     ══════════════════════════════════════════════════════════════ -->
+{% if active_coupons %}
+<div class="ticker-wrap border-bottom bg-white py-2">
+  <div class="ticker-track">
+    {% for coupon in active_coupons %}
+    <span class="ticker-item"><i class="bi bi-tag-fill text-warning me-1"></i> Use <strong>{{ coupon.code }}</strong> &bull; {{ coupon.description }}</span>
+    <span class="ticker-sep">&bull;</span>
+    {% endfor %}
+    {% for coupon in active_coupons %}
+    <span class="ticker-item"><i class="bi bi-tag-fill text-warning me-1"></i> Use <strong>{{ coupon.code }}</strong> &bull; {{ coupon.description }}</span>
+    <span class="ticker-sep">&bull;</span>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- ══════════════════════════════════════════════════════════════
+     10. DELIVERY REASSURANCE CTA
+     ══════════════════════════════════════════════════════════════ -->
+<section class="py-5">
+  <div class="container">
+    <div class="card border-0 rounded-4 overflow-hidden text-white p-4 p-md-5" style="background: linear-gradient(135deg, var(--fb-forest-950) 0%, var(--fb-forest-800) 100%);">
+      <div class="row align-items-center g-4">
+        <div class="col-12 col-lg-8">
+          <span class="badge bg-success bg-opacity-25 text-success fw-bold px-3 py-1 rounded-pill mb-3" style="font-size: 0.75rem; letter-spacing: 0.05em;">
+            EXPERIENCE BETTER GROCERY SHOPPING
+          </span>
+          <h2 class="display-6 fw-bold mb-2 text-white">Fresh Food. Directly Delivered.</h2>
+          <p class="text-white-50 mb-4" style="max-width: 540px; font-size: 1rem;">
+            Join thousands of happy households enjoying pristine produce, artisan bread, and dairy from local vendors with transparent pricing.
+          </p>
+          <div class="d-flex align-items-center gap-3 flex-wrap">
+            <a href="{% url 'product_list' %}" class="btn btn-light rounded-pill px-4 py-2.5 fw-bold text-success" style="font-size: 0.9rem;">
+              Start Shopping Now
+            </a>
+            {% if not user.is_authenticated %}
+            <a href="{% url 'register' %}" class="btn btn-outline-light rounded-pill px-4 py-2.5 fw-bold" style="font-size: 0.9rem;">
+              Create Free Account
+            </a>
+            {% endif %}
+          </div>
+        </div>
+        <div class="col-12 col-lg-4 text-center text-lg-end d-none d-lg-block">
+          <img src="{% static 'images/illustrations/delivery_truck.svg' %}" alt="Fast Delivery" style="width: 220px; height: auto;">
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
 {% endblock %}

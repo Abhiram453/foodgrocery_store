@@ -1,261 +1,256 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block title %}My Account | FoodBasket{% endblock %}
+{% block title %}My Account Dashboard | FoodBasket{% endblock %}
 
 {% block content %}
 <div class="container py-4 py-md-5">
-  <div class="row g-4">
-    <!-- ── LEFT COLUMN: MY ACCOUNT SIDEBAR ── -->
+  <div class="row g-4 g-lg-5">
+    
+    <!-- ── LEFT COLUMN: DASHBOARD SIDEBAR ── -->
     <div class="col-12 col-lg-3">
-      <div class="pe-lg-3">
-        <h2 class="fw-bold mb-1 text-dark" style="font-family: 'Inter', sans-serif; font-size: 1.5rem; letter-spacing: -0.02em;">My Account</h2>
-        <p class="text-muted small mb-4">Manage your profile & orders</p>
+      <div class="card border-0 shadow-sm rounded-4 p-3 bg-white" style="border: 1px solid var(--fb-border) !important;">
         
+        <!-- User Avatar Strip -->
+        <div class="d-flex align-items-center gap-3 p-2 mb-3 border-bottom pb-3">
+          <div class="rounded-circle bg-success bg-opacity-10 text-success d-flex align-items-center justify-content-center fw-bold fs-4 flex-shrink-0" style="width: 52px; height: 52px;">
+            {{ user.username|make_list|first|upper }}
+          </div>
+          <div class="text-truncate">
+            <h6 class="fw-bold mb-0 text-dark text-truncate">{{ user.get_full_name|default:user.username }}</h6>
+            <span class="text-muted small" style="font-size: 0.75rem;">Verified Customer</span>
+          </div>
+        </div>
+
         <div class="d-flex flex-column gap-1">
           <a href="{% url 'account' %}" class="account-sidebar-link active">
             <i class="bi bi-person-circle"></i>
-            <span>Profile Dashboard</span>
+            <span>Overview</span>
           </a>
           <a href="{% url 'order_history' %}" class="account-sidebar-link">
-            <i class="bi bi-clock-history"></i>
-            <span>My Orders</span>
+            <i class="bi bi-bag"></i>
+            <span>My Orders ({{ order_count }})</span>
+          </a>
+          <a href="#addressesSection" class="account-sidebar-link">
+            <i class="bi bi-geo-alt"></i>
+            <span>My Addresses ({{ addresses.count }})</span>
           </a>
           <a href="{% url 'wishlist' %}" class="account-sidebar-link">
             <i class="bi bi-heart"></i>
             <span>Wishlist</span>
           </a>
+          <a href="{% url 'recipes' %}" class="account-sidebar-link">
+            <i class="bi bi-journal-richtext"></i>
+            <span>Saved Recipes</span>
+          </a>
           <a href="{% url 'cart' %}" class="account-sidebar-link">
             <i class="bi bi-cart3"></i>
-            <span>My Cart ({{ cart_item_count }})</span>
+            <span>Cart ({{ cart_item_count }})</span>
           </a>
+          <hr class="my-2 border-light">
+          <form action="{% url 'logout' %}" method="post" id="logoutFormAccount">
+            {% csrf_token %}
+            <button type="button" class="account-sidebar-link text-danger w-100 text-start border-0 bg-transparent" onclick="confirmLogout(document.getElementById('logoutFormAccount'))">
+              <i class="bi bi-box-arrow-right"></i>
+              <span>Log Out</span>
+            </button>
+          </form>
         </div>
+
       </div>
     </div>
 
-    <!-- ── RIGHT COLUMN: DASHBOARD CONTENT ── -->
+    <!-- ── RIGHT COLUMN: OVERVIEW CARDS & ADDRESS BOOK ── -->
     <div class="col-12 col-lg-9">
-      <!-- 1. Welcome Banner Card -->
-      <div class="card border-0 rounded-4 overflow-hidden mb-4 shadow-sm" style="background-color: var(--g700); color: white;">
-        <div class="card-body p-4">
-          <div class="d-flex align-items-center gap-3">
-            <div class="rounded-circle bg-white text-success d-flex align-items-center justify-content-center fw-bold fs-3 shadow-sm" style="width: 64px; height: 64px;">
-              {{ user.username|make_list|first|upper }}
-            </div>
-            <div>
-              <h2 class="fw-bold mb-1" style="font-family: 'Inter', sans-serif; font-size: 1.5rem; letter-spacing: -0.01em;">
-                Welcome, {{ user.get_full_name|default:user.username }}
-              </h2>
-              <p class="mb-0 text-white-50 small">Customer Account &bull; Joined {{ user.date_joined|date:"M Y" }}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 2. Profile Details Grid -->
-      <div class="row g-4 mb-4">
-        <!-- Personal Information Card -->
-        <div class="col-12 col-md-8">
-          <div class="card border-0 shadow-sm rounded-4 p-4 bg-white" style="height: 100%;">
-            <div class="d-flex align-items-center justify-content-between mb-4">
-              <h3 class="fw-bold text-dark mb-0" style="font-family: 'Inter', sans-serif; font-size: 1.2rem; letter-spacing: -0.01em;">Account Overview</h3>
-            </div>
-            
-            <div class="row g-3">
-              <div class="col-6">
-                <label class="text-muted small fw-bold mb-1 d-block" style="font-size: 0.72rem;">Username</label>
-                <div class="bg-light px-3 py-2.5 rounded-3 text-dark fw-medium" style="font-size: 0.9rem;">
-                  {{ user.username }}
-                </div>
-              </div>
-              <div class="col-6">
-                <label class="text-muted small fw-bold mb-1 d-block" style="font-size: 0.72rem;">Email Address</label>
-                <div class="bg-light px-3 py-2.5 rounded-3 text-dark fw-medium" style="font-size: 0.9rem; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
-                  {{ user.email|default:"Not set" }}
-                </div>
-              </div>
-              <div class="col-6">
-                <label class="text-muted small fw-bold mb-1 d-block" style="font-size: 0.72rem;">Total Orders Placed</label>
-                <div class="bg-light px-3 py-2.5 rounded-3 text-dark fw-medium" style="font-size: 0.9rem;">
-                  {{ order_count }} orders
-                </div>
-              </div>
-              <div class="col-6">
-                <label class="text-muted small fw-bold mb-1 d-block" style="font-size: 0.72rem;">Total Spent (Delivered)</label>
-                <div class="px-3 py-2.5 rounded-3 text-success fw-bold d-flex align-items-center justify-content-between" style="font-size: 0.9rem; background-color: #e6f7ed;">
-                  <span>₹{{ total_spent }}</span>
-                  <i class="bi bi-wallet2 text-success"></i>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Recent Order Card -->
-        <div class="col-12 col-md-4">
-          <div class="card border-0 shadow-sm rounded-4 p-4 bg-white" style="height: 100%;">
-            <div class="d-flex align-items-center justify-content-between mb-3">
-              <h3 class="fw-bold text-dark mb-0" style="font-family: 'Inter', sans-serif; font-size: 1.15rem; letter-spacing: -0.01em;">Latest Order</h3>
-              <a href="{% url 'order_history' %}" class="text-muted text-decoration-none small fw-bold">View All</a>
-            </div>
-
-            {% if recent_orders %}
-              {% with order=recent_orders.0 %}
-              <div class="d-flex align-items-start gap-3 mb-3">
-                <div class="rounded-3 bg-light d-flex align-items-center justify-content-center text-success flex-shrink-0" style="width: 44px; height: 44px; border: 1px solid #e9ecef;">
-                  <i class="bi bi-truck fs-5"></i>
-                </div>
-                <div>
-                  <h6 class="fw-bold mb-0 text-dark" style="font-size: 0.92rem;">Order #{{ order.id }}</h6>
-                  <p class="text-muted small mb-0">{{ order.created_at|date:"d M Y" }} &bull; ₹{{ order.total }}</p>
-                </div>
-              </div>
-
-              <div class="mb-3">
-                <div class="d-flex justify-content-between align-items-center mb-1">
-                  <span class="text-muted small">Status</span>
-                  <span class="order-status-pill s-{{ order.status }}" style="font-size: .75rem;">{{ order.get_status_display }}</span>
-                </div>
-              </div>
-
-              <a href="{% url 'order_confirm' order.id %}" class="btn btn-outline-success w-100 rounded-pill fw-bold btn-sm py-2">Track Order</a>
-              {% endwith %}
-            {% else %}
-              <div class="text-center py-4 my-auto">
-                <div class="mb-2" style="font-size: 2rem;">🛍️</div>
-                <p class="text-muted small mb-0">No orders placed yet.</p>
-              </div>
-            {% endif %}
-          </div>
-        </div>
-      </div>
-
-      <!-- 3. Saved Addresses Card -->
-      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
-        <div class="d-flex align-items-center justify-content-between mb-3">
+      
+      <!-- Welcome Header Banner -->
+      <div class="card border-0 rounded-4 overflow-hidden mb-4 shadow-sm text-white p-4" style="background: linear-gradient(135deg, var(--fb-forest-950) 0%, var(--fb-forest-800) 100%);">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
           <div>
-            <h3 class="fw-bold text-dark mb-0" style="font-family: 'Inter', sans-serif; font-size: 1.2rem; letter-spacing: -0.01em;">Saved Delivery Addresses</h3>
-            <p class="text-muted small mb-0">Addresses stored for seamless one-click checkout</p>
+            <span class="badge bg-success bg-opacity-25 text-success fw-bold px-3 py-1 rounded-pill mb-2 small">CUSTOMER PORTAL</span>
+            <h2 class="fw-bold mb-1" style="font-size: 1.65rem;">Welcome Back, {{ user.first_name|default:user.username }}!</h2>
+            <p class="mb-0 text-white-50 small">Manage your delivery preferences, track orders in real-time, and view receipts.</p>
           </div>
-          <button class="btn btn-success btn-sm rounded-pill px-3 fw-bold border-0" style="background-color: var(--g700);" data-bs-toggle="collapse" data-bs-target="#addAddressCollapse">
-            <i class="bi bi-plus-lg me-1"></i>Add New Address
+          <a href="{% url 'product_list' %}" class="btn btn-light rounded-pill px-4 py-2 fw-bold text-success small">
+            <i class="bi bi-cart3 me-1"></i> Order Groceries
+          </a>
+        </div>
+      </div>
+
+      <!-- Real Metrics Row -->
+      <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+          <div class="card border-0 shadow-sm rounded-4 p-3 bg-white text-center" style="border: 1px solid var(--fb-border) !important;">
+            <div class="fs-4 text-success mb-1">🛍️</div>
+            <h3 class="fw-bold mb-0 text-dark fs-4">{{ order_count }}</h3>
+            <span class="text-muted small" style="font-size: 0.75rem;">Total Orders</span>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="card border-0 shadow-sm rounded-4 p-3 bg-white text-center" style="border: 1px solid var(--fb-border) !important;">
+            <div class="fs-4 text-warning mb-1">💳</div>
+            <h3 class="fw-bold mb-0 text-dark fs-4">₹{{ total_spent }}</h3>
+            <span class="text-muted small" style="font-size: 0.75rem;">Total Spent</span>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="card border-0 shadow-sm rounded-4 p-3 bg-white text-center" style="border: 1px solid var(--fb-border) !important;">
+            <div class="fs-4 text-primary mb-1">📍</div>
+            <h3 class="fw-bold mb-0 text-dark fs-4">{{ addresses.count }}</h3>
+            <span class="text-muted small" style="font-size: 0.75rem;">Saved Addresses</span>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="card border-0 shadow-sm rounded-4 p-3 bg-white text-center" style="border: 1px solid var(--fb-border) !important;">
+            <div class="fs-4 text-danger mb-1">🛒</div>
+            <h3 class="fw-bold mb-0 text-dark fs-4">{{ cart_item_count }}</h3>
+            <span class="text-muted small" style="font-size: 0.75rem;">Items in Cart</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Orders Card -->
+      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4" style="border: 1px solid var(--fb-border) !important;">
+        <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+          <h4 class="fw-bold text-dark mb-0" style="font-size: 1.15rem;">
+            <i class="bi bi-clock-history text-success me-2"></i>Recent Orders
+          </h4>
+          <a href="{% url 'order_history' %}" class="btn btn-sm btn-outline-success rounded-pill px-3 fw-bold">
+            View All Orders
+          </a>
+        </div>
+
+        {% if recent_orders %}
+        <div class="table-responsive">
+          <table class="table align-middle table-hover mb-0">
+            <thead class="table-light">
+              <tr>
+                <th class="small">Order ID</th>
+                <th class="small">Date</th>
+                <th class="small">Total</th>
+                <th class="small">Status</th>
+                <th class="small text-end">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for order in recent_orders %}
+              <tr>
+                <td><strong>#{{ order.id }}</strong></td>
+                <td class="small text-muted">{{ order.created_at|date:"d M Y" }}</td>
+                <td class="fw-bold text-dark">₹{{ order.total }}</td>
+                <td>
+                  <span class="badge {% if order.status == 'delivered' %}bg-success{% elif order.status == 'cancelled' %}bg-danger{% else %}bg-warning text-dark{% endif %} rounded-pill small">
+                    {{ order.get_status_display }}
+                  </span>
+                </td>
+                <td class="text-end">
+                  <a href="{% url 'order_confirm' order.id %}" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-bold" style="font-size: 0.78rem;">
+                    Track
+                  </a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4 text-muted small">
+          No orders placed yet.
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Saved Addresses Book -->
+      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4" id="addressesSection" style="border: 1px solid var(--fb-border) !important;">
+        <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+          <div>
+            <h4 class="fw-bold text-dark mb-0" style="font-size: 1.15rem;">
+              <i class="bi bi-geo-alt-fill text-success me-2"></i>Saved Delivery Locations
+            </h4>
+            <span class="text-muted small">Pre-saved addresses for 1-click checkout</span>
+          </div>
+          <button class="btn btn-sm btn-success rounded-pill px-3 fw-bold border-0" style="background-color: var(--fb-green-600);" data-bs-toggle="collapse" data-bs-target="#addAddressCollapse">
+            <i class="bi bi-plus-lg me-1"></i> Add Address
           </button>
         </div>
 
-        <!-- Add Address Collapse Form -->
+        <!-- Add Address Form (Collapse) -->
         <div class="collapse mb-4" id="addAddressCollapse">
-          <div class="card card-body bg-light border-0 rounded-4 p-4">
-            <h6 class="fw-bold mb-3 text-dark"><i class="bi bi-geo-alt-fill text-success me-2"></i>Add New Address</h6>
+          <div class="card card-body bg-light rounded-4 border-0 p-4">
+            <h6 class="fw-bold text-dark mb-3"><i class="bi bi-pin-map text-success me-1"></i>New Address Details</h6>
             <form method="post" action="{% url 'account_address_add' %}">
               {% csrf_token %}
               <div class="row g-3">
-                <div class="col-12 col-sm-6">
-                  <label class="fb-label">Label <span class="required">*</span></label>
-                  <input type="text" name="label" class="form-control" placeholder="e.g. Home, Work, Parents" required>
-                </div>
-                <div class="col-12 col-sm-6">
-                  <label class="fb-label">Phone Number <span class="required">*</span></label>
-                  <input type="tel" name="phone" class="form-control" placeholder="10-digit mobile number" maxlength="10" required>
-                </div>
                 <div class="col-12">
-                  <label class="fb-label">Street Address <span class="required">*</span></label>
-                  <textarea name="full_address" class="form-control" rows="2" placeholder="House/Flat No, Apartment, Street name, Landmark" required></textarea>
+                  <label class="form-label small fw-bold text-dark">Full Street Address</label>
+                  <textarea name="full_address" class="form-control rounded-3" rows="2" placeholder="Door/Flat No, Apartment, Street name" required></textarea>
                 </div>
                 <div class="col-12 col-sm-4">
-                  <label class="fb-label">Pincode <span class="required">*</span></label>
-                  <input type="text" name="pincode" class="form-control" placeholder="6-digit pincode" maxlength="6" required>
+                  <label class="form-label small fw-bold text-dark">Pincode</label>
+                  <input type="text" name="pincode" class="form-control rounded-3" placeholder="e.g. 625001" maxlength="6" required>
                 </div>
                 <div class="col-12 col-sm-4">
-                  <label class="fb-label">City <span class="required">*</span></label>
-                  <input type="text" name="city" class="form-control" placeholder="City" required>
+                  <label class="form-label small fw-bold text-dark">City</label>
+                  <input type="text" name="city" class="form-control rounded-3" placeholder="City" required>
                 </div>
                 <div class="col-12 col-sm-4">
-                  <label class="fb-label">State <span class="required">*</span></label>
-                  <input type="text" name="state" class="form-control" placeholder="State" value="Tamil Nadu" required>
+                  <label class="form-label small fw-bold text-dark">State</label>
+                  <input type="text" name="state" class="form-control rounded-3" placeholder="State" value="Tamil Nadu">
+                </div>
+                <div class="col-12 col-sm-6">
+                  <label class="form-label small fw-bold text-dark">Phone Number</label>
+                  <input type="tel" name="phone" class="form-control rounded-3" placeholder="Contact number" maxlength="15" required>
+                </div>
+                <div class="col-12 col-sm-6">
+                  <label class="form-label small fw-bold text-dark">Address Label</label>
+                  <input type="text" name="label" class="form-control rounded-3" placeholder="e.g. Home, Office, Parents">
                 </div>
                 <div class="col-12">
                   <div class="form-check">
-                    <input class="form-check-input" type="checkbox" name="is_default" value="1" id="isDefaultCheck">
-                    <label class="form-check-label text-muted small" for="isDefaultCheck">
-                      Set as default delivery address
-                    </label>
+                    <input class="form-check-input" type="checkbox" name="is_default" value="1" id="defaultAddressCheck">
+                    <label class="form-check-label small text-muted" for="defaultAddressCheck">Set as my default shipping address</label>
                   </div>
                 </div>
-                <div class="col-12">
-                  <button type="submit" class="btn btn-success rounded-pill px-4 fw-bold">Save Address</button>
-                  <button type="button" class="btn btn-outline-secondary rounded-pill px-3 ms-2" data-bs-toggle="collapse" data-bs-target="#addAddressCollapse">Cancel</button>
+                <div class="col-12 text-end">
+                  <button type="submit" class="btn btn-success rounded-pill px-4 fw-bold border-0" style="background-color: var(--fb-green-600);">Save Address</button>
                 </div>
               </div>
             </form>
           </div>
         </div>
 
+        <!-- Address Cards Grid -->
         <div class="row g-3">
           {% for addr in addresses %}
-          <div class="col-12 col-md-6">
-            <div class="p-3 rounded-4 border bg-white position-relative h-100" style="border-color: #e9ecef !important;">
-              {% if addr.is_default %}
-              <span class="badge position-absolute top-0 end-0 m-3 px-2 py-1 bg-success bg-opacity-10 text-success rounded-3" style="font-size: 0.68rem;">DEFAULT</span>
-              {% endif %}
-              
-              <div class="d-flex align-items-center gap-2 mb-2">
-                <i class="bi bi-geo-alt text-success fs-5"></i>
-                <h6 class="fw-bold mb-0 text-dark">{{ addr.label }}</h6>
-              </div>
-              
-              <p class="text-muted small mb-2" style="line-height: 1.4;">
-                {{ addr.full_address }}<br>
-                {{ addr.city }}, {{ addr.state }} - <strong>{{ addr.pincode }}</strong>
-              </p>
-              
-              <div class="d-flex justify-content-between align-items-center pt-2 border-top">
-                <span class="text-muted small"><i class="bi bi-telephone me-1"></i>{{ addr.phone }}</span>
-                <form method="post" action="{% url 'account_address_delete' addr.id %}" onsubmit="return confirm('Delete this saved address?');" class="m-0 p-0">
+          <div class="col-12 col-sm-6">
+            <div class="card h-100 p-3 rounded-4 border position-relative bg-light bg-opacity-25">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <div>
+                  <span class="badge bg-white text-dark border fw-bold small">{{ addr.label|default:"Address" }}</span>
+                  {% if addr.is_default %}<span class="badge bg-success text-white fw-bold small ms-1">Default</span>{% endif %}
+                </div>
+                <form action="{% url 'account_address_delete' addr.id %}" method="post" onsubmit="return confirm('Remove this address?');" class="m-0 p-0">
                   {% csrf_token %}
-                  <button type="submit" class="btn btn-link text-danger p-0 small text-decoration-none" title="Delete address">
-                    <i class="bi bi-trash3 me-1"></i>Delete
+                  <button type="submit" class="btn btn-sm btn-link text-danger p-0 text-decoration-none" title="Delete address">
+                    <i class="bi bi-trash3"></i>
                   </button>
                 </form>
               </div>
+              <div class="fw-semibold text-dark small mb-1">{{ addr.full_address }}</div>
+              <div class="text-muted small" style="font-size: 0.78rem;">{{ addr.city }}, {{ addr.state }} - <strong>{{ addr.pincode }}</strong></div>
+              <div class="text-muted small mt-1" style="font-size: 0.78rem;"><i class="bi bi-telephone me-1"></i>{{ addr.phone }}</div>
             </div>
           </div>
           {% empty %}
-          <div class="col-12">
-            <div class="text-center py-4 bg-light rounded-4">
-              <i class="bi bi-geo-alt text-muted fs-3 mb-2 d-block"></i>
-              <p class="text-muted small mb-2">No saved addresses yet.</p>
-              <button class="btn btn-sm btn-outline-success rounded-pill px-3" data-bs-toggle="collapse" data-bs-target="#addAddressCollapse">
-                Add your first address
-              </button>
-            </div>
+          <div class="col-12 text-center py-4 text-muted small">
+            No saved addresses. Click "Add Address" above to save one.
           </div>
           {% endfor %}
         </div>
+
       </div>
+
     </div>
+
   </div>
 </div>
-
-<style>
-.account-sidebar-link {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 1rem;
-  border-radius: 12px;
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: #4b5563;
-  text-decoration: none;
-  transition: all 0.2s;
-}
-.account-sidebar-link:hover {
-  background-color: #f1f3f5;
-  color: var(--g700);
-}
-.account-sidebar-link.active {
-  background-color: #f1f3f5;
-  color: var(--g700);
-  font-weight: 600;
-}
-</style>
 {% endblock %}

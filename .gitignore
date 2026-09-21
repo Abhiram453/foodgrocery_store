@@ -28,3 +28,6 @@ ENV/
 # Logs
 logs/
 *.log
+
+# Scratch scripts
+scratch/

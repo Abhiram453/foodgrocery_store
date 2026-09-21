@@ -4,62 +4,156 @@
 
 {% block content %}
 <div class="container py-4 py-md-5">
+
   <!-- Top Breadcrumb / Nav -->
   <div class="d-flex align-items-center justify-content-between mb-4">
-    <a href="{% url 'home' %}" class="text-decoration-none text-muted small d-inline-flex align-items-center gap-1">
-      <i class="bi bi-house-door"></i> Home
+    <a href="{% url 'home' %}" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 fw-bold shadow-sm d-inline-flex align-items-center gap-1" style="font-size: .82rem;">
+      <i class="bi bi-arrow-left"></i> Home
     </a>
-    <span class="text-muted small">/</span>
-    <span class="text-dark small fw-bold">Order #{{ order.id }} Tracking</span>
+    <div class="d-flex gap-2">
+      <a href="{% url 'order_history' %}" class="btn btn-sm btn-outline-success rounded-pill px-3 py-1 fw-bold">
+        <i class="bi bi-bag me-1"></i> View All Orders
+      </a>
+      <a href="{% url 'order_invoice' order.id %}" target="_blank" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 fw-bold">
+        <i class="bi bi-receipt me-1"></i> Invoice
+      </a>
+    </div>
   </div>
 
-  <!-- Header Banner -->
-  <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
-      <div>
-        <div class="d-flex align-items-center gap-2 mb-2">
-          <span class="badge bg-success-subtle text-success fw-bold px-3 py-1 rounded-pill">
-            <i class="bi bi-check-circle-fill me-1"></i>Order Confirmed
+  <!-- Success Hero Banner with Custom Illustration -->
+  <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white mb-4" style="border: 1px solid var(--fb-border) !important;">
+    <div class="row align-items-center g-4">
+      <div class="col-12 col-md-4 text-center">
+        <img src="{% static 'images/illustrations/order_success.jpg' %}" alt="Order Placed Successfully" class="rounded-4 shadow-sm img-fluid" style="max-height: 240px; object-fit: contain;">
+      </div>
+      <div class="col-12 col-md-8">
+        <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+          <span class="badge bg-success text-white fw-bold px-3 py-1 rounded-pill">
+            <i class="bi bi-check-circle-fill me-1"></i> Order Confirmed
           </span>
           <span class="badge {% if order.payment_status == 'paid' %}bg-primary-subtle text-primary{% else %}bg-warning-subtle text-dark{% endif %} fw-bold px-3 py-1 rounded-pill">
             {{ order.get_payment_method_display }} &bull; {{ order.get_payment_status_display }}
           </span>
         </div>
-        <h1 class="h3 fw-bold text-dark mb-1">Thank you for your order! 🎉</h1>
-        <p class="text-muted small mb-0">Order Reference: <strong>#{{ order.id }}</strong> &bull; Placed on {{ order.created_at|date:"d M Y, g:i A" }}</p>
-      </div>
+        <h1 class="fw-bold text-dark mb-1" style="font-size: 2rem;">
+          Thank you for your order! 🎉
+        </h1>
+        <p class="text-muted small mb-3">
+          Order Reference: <strong class="text-dark">#{{ order.id }}</strong> &bull; Placed on {{ order.created_at|date:"d M Y, g:i A" }}
+        </p>
 
-      <div class="d-flex align-items-center gap-2">
-        <a href="{% url 'order_invoice' order.id %}" target="_blank" class="btn btn-outline-secondary rounded-pill px-3 py-2 fw-semibold small">
-          <i class="bi bi-receipt me-1"></i>View Invoice
-        </a>
-        {% if order.status == 'pending' or order.status == 'confirmed' %}
-        <form method="post" action="{% url 'cancel_order' order.id %}" onsubmit="return confirm('Are you sure you want to cancel Order #{{ order.id }}? Items will be restored to inventory.');">
-          {% csrf_token %}
-          <input type="hidden" name="next" value="{% url 'order_confirm' order.id %}">
-          <button type="submit" class="btn btn-outline-danger rounded-pill px-3 py-2 fw-semibold small">
-            <i class="bi bi-x-circle me-1"></i>Cancel Order
-          </button>
-        </form>
-        {% endif %}
+        <div class="p-3 rounded-3 bg-light border d-flex align-items-center justify-content-between flex-wrap gap-2">
+          <div>
+            <div class="text-muted small" style="font-size: 0.75rem;">Delivery Destination</div>
+            <strong class="text-dark small">{{ order.delivery_address|default:order.address }} ({{ order.delivery_pincode }})</strong>
+          </div>
+          <div class="text-md-end">
+            <div class="text-muted small" style="font-size: 0.75rem;">Total Paid / Due</div>
+            <strong class="text-success fs-5">₹{{ order.total }}</strong>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
-  <div class="row g-4">
-    <!-- LEFT COLUMN: MULTI-VENDOR FULFILLMENTS & TIMELINE -->
-    <div class="col-12 col-lg-7">
+  <div class="row g-4 g-lg-5">
 
-      <!-- Multi-Vendor Fulfillment Breakdown -->
-      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h2 class="h5 fw-bold text-dark mb-0">
-            <i class="bi bi-shop text-success me-2"></i>Vendor Fulfillments ({{ order.vendor_orders.count }})
-          </h2>
-          <span class="badge bg-light text-muted small fw-normal border">Independent status per shop</span>
+    <!-- ── LEFT COLUMN: REAL ORDER STATUS TIMELINE ── -->
+    <div class="col-12 col-lg-6">
+      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4" style="border: 1px solid var(--fb-border) !important;">
+        <h3 class="fw-bold text-dark mb-3 pb-2 border-bottom" style="font-size: 1.2rem;">
+          <i class="bi bi-clock-history text-success me-2"></i>Live Order Status
+        </h3>
+
+        <!-- Real Dynamic Vertical Timeline based on order.status -->
+        <div class="pt-2 ps-2">
+          <!-- Step 1: Placed -->
+          <div class="order-timeline-node completed">
+            <div class="timeline-dot"></div>
+            <h6 class="fw-bold text-dark mb-0">Order Placed</h6>
+            <p class="text-muted small mb-0">{{ order.created_at|date:"d M Y, g:i A" }}</p>
+          </div>
+
+          <!-- Step 2: Confirmed -->
+          <div class="order-timeline-node {% if order.status != 'pending' %}completed{% else %}active{% endif %}">
+            <div class="timeline-dot"></div>
+            <h6 class="fw-bold text-dark mb-0">Order Confirmed</h6>
+            <p class="text-muted small mb-0">
+              {% if order.confirmed_at %}
+                Confirmed on {{ order.confirmed_at|date:"d M Y, g:i A" }}
+              {% elif order.status != 'pending' %}
+                Confirmed by store & vendors.
+              {% else %}
+                Awaiting payment / vendor acceptance.
+              {% endif %}
+            </p>
+          </div>
+
+          <!-- Step 3: Preparing -->
+          <div class="order-timeline-node {% if order.status in 'out_for_delivery delivered' %}completed{% elif order.status == 'confirmed' %}active{% endif %}">
+            <div class="timeline-dot"></div>
+            <h6 class="fw-bold text-dark mb-0">Preparing & Packing</h6>
+            <p class="text-muted small mb-0">
+              {% if order.status in 'out_for_delivery delivered' %}
+                Items packed and quality checked.
+              {% elif order.status == 'confirmed' %}
+                Local vendors are currently gathering and inspecting your items.
+              {% else %}
+                Pending step.
+              {% endif %}
+            </p>
+          </div>
+
+          <!-- Step 4: Out for Delivery -->
+          <div class="order-timeline-node {% if order.status == 'delivered' %}completed{% elif order.status == 'out_for_delivery' %}active{% endif %}">
+            <div class="timeline-dot"></div>
+            <h6 class="fw-bold text-dark mb-0">Out for Delivery</h6>
+            <p class="text-muted small mb-0">
+              {% if order.out_for_delivery_at %}
+                Dispatched at {{ order.out_for_delivery_at|date:"g:i A" }}
+              {% elif order.status == 'out_for_delivery' %}
+                Dispatched with our local delivery courier.
+              {% else %}
+                Pending fulfillment dispatch.
+              {% endif %}
+            </p>
+          </div>
+
+          <!-- Step 5: Delivered -->
+          <div class="order-timeline-node {% if order.status == 'delivered' %}active completed{% endif %}">
+            <div class="timeline-dot"></div>
+            <h6 class="fw-bold text-dark mb-0">Delivered</h6>
+            <p class="text-muted small mb-0">
+              {% if order.delivered_at %}
+                Delivered on {{ order.delivered_at|date:"d M Y, g:i A" }}
+              {% else %}
+                Awaiting delivery confirmation.
+              {% endif %}
+            </p>
+          </div>
         </div>
-        <p class="text-muted small mb-4">
-          Each approved vendor fulfills their portion of your order independently. You can monitor their progress below:
+
+        {% if order.status == 'pending' or order.status == 'confirmed' %}
+        <div class="pt-3 border-top mt-3">
+          <form action="{% url 'cancel_order' order.id %}" method="post" onsubmit="return confirm('Are you sure you want to cancel Order #{{ order.id }}? All items will be restored to store stock.');">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold">
+              <i class="bi bi-x-circle me-1"></i> Cancel Order
+            </button>
+          </form>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- ── RIGHT COLUMN: VENDOR FULFILLMENTS BREAKDOWN ── -->
+    <div class="col-12 col-lg-6">
+      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4" style="border: 1px solid var(--fb-border) !important;">
+        <h3 class="fw-bold text-dark mb-3 pb-2 border-bottom" style="font-size: 1.2rem;">
+          <i class="bi bi-shop text-success me-2"></i>Vendor Fulfillments ({{ order.vendor_orders.count }})
+        </h3>
+        <p class="text-muted small mb-3">
+          Because FoodBasket connects you with local neighborhood shops, each vendor independently packs their portion of your order:
         </p>
 
         <div class="d-flex flex-column gap-3">
@@ -67,214 +161,34 @@
           <div class="card border rounded-3 p-3 bg-light bg-opacity-50">
             <div class="d-flex justify-content-between align-items-start mb-2">
               <div>
-                <div class="fw-bold text-dark" style="font-size: .95rem;">
+                <strong class="text-dark small">
                   <i class="bi bi-building me-1 text-success"></i>
-                  {% if vo.vendor and vo.vendor.vendor_profile %}
-                    {{ vo.vendor.vendor_profile.shop_name }}
-                  {% elif vo.vendor %}
-                    {{ vo.vendor.username }}'s Shop
-                  {% else %}
-                    FoodBasket Direct Store
-                  {% endif %}
-                </div>
-                <div class="text-muted small">
-                  Fulfillment Ref: #VO-{{ vo.id }} &bull; Subtotal: <strong>₹{{ vo.subtotal }}</strong>
-                </div>
+                  {{ vo.vendor.vendor_profile.shop_name|default:vo.vendor.username }}
+                </strong>
+                <div class="text-muted small" style="font-size: 0.75rem;">Fulfillment Ref: #VO-{{ vo.id }} &bull; Subtotal: ₹{{ vo.subtotal }}</div>
               </div>
-
-              <div>
-                {% if vo.status == 'pending' %}
-                  <span class="badge bg-warning-subtle text-dark fw-bold px-2 py-1 rounded-pill">Pending Confirmation</span>
-                {% elif vo.status == 'confirmed' %}
-                  <span class="badge bg-info-subtle text-dark fw-bold px-2 py-1 rounded-pill">Packing & Confirmed</span>
-                {% elif vo.status == 'out_for_delivery' %}
-                  <span class="badge bg-primary-subtle text-primary fw-bold px-2 py-1 rounded-pill">Out for Delivery</span>
-                {% elif vo.status == 'delivered' %}
-                  <span class="badge bg-success-subtle text-success fw-bold px-2 py-1 rounded-pill">Delivered</span>
-                {% elif vo.status == 'cancelled' %}
-                  <span class="badge bg-danger-subtle text-danger fw-bold px-2 py-1 rounded-pill">Cancelled</span>
-                {% endif %}
-              </div>
+              <span class="badge {% if vo.status == 'delivered' %}bg-success text-white{% elif vo.status == 'cancelled' %}bg-danger text-white{% elif vo.status == 'out_for_delivery' %}bg-primary text-white{% else %}bg-secondary text-white{% endif %} small rounded-pill">
+                {{ vo.get_status_display }}
+              </span>
             </div>
 
-            <!-- Items from this vendor -->
-            <div class="bg-white rounded-2 p-2 border mt-2">
-              {% for item in vo.items.all %}
-              <div class="d-flex justify-content-between align-items-center py-1 border-bottom last-border-0">
-                <span class="small fw-medium text-dark">{{ item.product_name }} &times; {{ item.quantity }}</span>
-                <span class="small text-muted">₹{{ item.subtotal }}</span>
+            <!-- Items -->
+            <div class="bg-white rounded-2 p-2 border mt-1">
+              {% for it in vo.items.all %}
+              <div class="d-flex justify-content-between align-items-center py-1 small {% if not forloop.last %}border-bottom{% endif %}">
+                <span>{{ it.product_name }} &times; {{ it.quantity }}</span>
+                <span class="fw-bold text-dark">₹{{ it.price }}</span>
               </div>
-              {% empty %}
-              <div class="text-muted small">Items included in package</div>
               {% endfor %}
             </div>
           </div>
-          {% empty %}
-          <div class="alert alert-light border small">
-            Standard order fulfillment in progress.
-          </div>
-          {% endfor %}
-        </div>
-      </div>
-
-      <!-- Real Order Status Timeline -->
-      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
-        <h2 class="h5 fw-bold text-dark mb-3">
-          <i class="bi bi-clock-history text-success me-2"></i>Order Timeline
-        </h2>
-        
-        <div class="position-relative ps-4 mt-4" style="border-left: 2px solid #e9ecef; margin-left: 10px;">
-          <!-- 1. Placed -->
-          <div class="mb-4 position-relative">
-            <div class="position-absolute d-flex align-items-center justify-content-center rounded-circle text-white bg-success" style="left: -31px; top: 0px; width: 22px; height: 22px; font-size: 0.75rem; z-index: 10;">
-              <i class="bi bi-check"></i>
-            </div>
-            <h6 class="fw-bold text-dark mb-0" style="font-size: 0.95rem;">Order Placed</h6>
-            <p class="text-muted small mb-0">{{ order.created_at|date:"d M Y, g:i A" }}</p>
-          </div>
-
-          <!-- 2. Confirmed / Payment -->
-          <div class="mb-4 position-relative">
-            <div class="position-absolute d-flex align-items-center justify-content-center rounded-circle text-white {% if order.status != 'pending' %}bg-success{% else %}bg-secondary{% endif %}" style="left: -31px; top: 0px; width: 22px; height: 22px; font-size: 0.75rem; z-index: 10;">
-              {% if order.status != 'pending' %}<i class="bi bi-check"></i>{% else %}<span style="font-size: 0.55rem;">●</span>{% endif %}
-            </div>
-            <h6 class="fw-bold {% if order.status != 'pending' %}text-dark{% else %}text-muted{% endif %} mb-0" style="font-size: 0.95rem;">Order Confirmed</h6>
-            <p class="text-muted small mb-0">
-              {% if order.confirmed_at %}
-                Confirmed on {{ order.confirmed_at|date:"d M Y, g:i A" }}
-              {% elif order.status != 'pending' %}
-                Confirmed by store & vendors.
-              {% else %}
-                Awaiting payment / confirmation.
-              {% endif %}
-            </p>
-          </div>
-
-          <!-- 3. Out for Delivery -->
-          <div class="mb-4 position-relative">
-            <div class="position-absolute d-flex align-items-center justify-content-center rounded-circle {% if order.status == 'out_for_delivery' or order.status == 'delivered' %}bg-success text-white{% else %}bg-white border text-secondary{% endif %}" style="left: -31px; top: 0px; width: 22px; height: 22px; font-size: 0.75rem; z-index: 10;">
-              {% if order.status == 'delivered' %}<i class="bi bi-check"></i>{% elif order.status == 'out_for_delivery' %}<span class="spinner-grow spinner-grow-sm text-success" style="width: 8px; height: 8px;"></span>{% else %}<span style="font-size: 0.55rem;">●</span>{% endif %}
-            </div>
-            <h6 class="fw-bold {% if order.status == 'out_for_delivery' or order.status == 'delivered' %}text-dark{% else %}text-muted{% endif %} mb-0" style="font-size: 0.95rem;">Out for Delivery</h6>
-            <p class="text-muted small mb-0">
-              {% if order.out_for_delivery_at %}
-                Dispatched on {{ order.out_for_delivery_at|date:"d M Y, g:i A" }}
-              {% elif order.status == 'out_for_delivery' %}
-                Package is on its way to your destination.
-              {% else %}
-                Preparing for local delivery.
-              {% endif %}
-            </p>
-          </div>
-
-          <!-- 4. Delivered -->
-          <div class="position-relative">
-            <div class="position-absolute d-flex align-items-center justify-content-center rounded-circle {% if order.status == 'delivered' %}bg-success text-white{% else %}bg-white border text-secondary{% endif %}" style="left: -31px; top: 0px; width: 22px; height: 22px; font-size: 0.75rem; z-index: 10;">
-              {% if order.status == 'delivered' %}<i class="bi bi-check"></i>{% else %}<span style="font-size: 0.55rem;">●</span>{% endif %}
-            </div>
-            <h6 class="fw-bold {% if order.status == 'delivered' %}text-dark{% else %}text-muted{% endif %} mb-0" style="font-size: 0.95rem;">Delivered</h6>
-            <p class="text-muted small mb-0">
-              {% if order.delivered_at %}
-                Delivered on {{ order.delivered_at|date:"d M Y, g:i A" }}
-              {% elif order.status == 'delivered' %}
-                Order completed successfully.
-              {% else %}
-                Expected during selected delivery slot.
-              {% endif %}
-            </p>
-          </div>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- RIGHT COLUMN: DELIVERY DETAILS & ORDER SUMMARY -->
-    <div class="col-12 col-lg-5">
-      <!-- 1. Delivery Details Card -->
-      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
-        <h3 class="h6 text-muted fw-bold mb-3" style="letter-spacing: 0.05em;">DELIVERY DETAILS</h3>
-        
-        <div class="d-flex align-items-start gap-3 mb-3">
-          <div class="rounded-circle bg-light d-flex align-items-center justify-content-center text-success flex-shrink-0" style="width: 42px; height: 42px; border: 1px solid #e9ecef;">
-            <i class="bi bi-geo-alt fs-5"></i>
-          </div>
-          <div>
-            <h6 class="fw-bold mb-1 text-dark">Destination Address</h6>
-            <p class="text-muted small mb-1">{{ order.delivery_address|default:order.address }}</p>
-            {% if order.delivery_pincode %}
-            <span class="badge bg-secondary-subtle text-dark fw-bold">Pincode: {{ order.delivery_pincode }}</span>
-            {% endif %}
-          </div>
-        </div>
-
-        <div class="border-top pt-3 d-flex align-items-center justify-content-between">
-          <div>
-            <div class="text-muted small">Recipient Contact:</div>
-            <div class="fw-bold text-dark"><i class="bi bi-telephone me-1"></i>{{ order.delivery_phone|default:order.phone }}</div>
-          </div>
-          {% if order.delivery_slot %}
-          <div class="text-end">
-            <div class="text-muted small">Delivery Slot:</div>
-            <div class="badge bg-success-subtle text-success fw-bold">{{ order.delivery_slot.get_slot_display }} ({{ order.delivery_slot.date|date:"d M" }})</div>
-          </div>
-          {% endif %}
-        </div>
-      </div>
-
-      <!-- 2. Order Summary Card -->
-      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
-        <h3 class="h6 text-muted fw-bold mb-3" style="letter-spacing: 0.05em;">ORDER ITEMS ({{ order.items.count }})</h3>
-
-        <div class="d-flex flex-column gap-3 mb-4">
-          {% for item in order.items.all %}
-          <div class="d-flex align-items-center justify-content-between">
-            <div class="d-flex align-items-center gap-3">
-              <div class="rounded-3 bg-light d-flex align-items-center justify-content-center text-success flex-shrink-0" style="width: 44px; height: 44px; border: 1px solid #e9ecef; font-size: 1.25rem;">
-                {% if item.product and item.product.image %}
-                  <img src="{{ item.product.image.url }}" alt="{{ item.product_name }}" class="w-100 h-100 rounded-3" style="object-fit: cover;">
-                {% else %}
-                  🛒
-                {% endif %}
-              </div>
-              <div>
-                <h6 class="fw-bold mb-0 text-dark" style="font-size: .88rem;">{{ item.product_name }}</h6>
-                <div class="text-muted small">Qty: {{ item.quantity }} &bull; ₹{{ item.price }}/unit</div>
-                {% if item.vendor %}
-                <span class="text-muted" style="font-size: .72rem;"><i class="bi bi-shop me-1"></i>{{ item.vendor.vendor_profile.shop_name|default:item.vendor.username }}</span>
-                {% endif %}
-              </div>
-            </div>
-            <span class="fw-bold text-dark" style="font-size: .92rem;">₹{{ item.subtotal }}</span>
-          </div>
           {% endfor %}
         </div>
 
-        <div class="border-top pt-3">
-          <div class="d-flex justify-content-between mb-2">
-            <span class="text-muted small">Subtotal</span>
-            <span class="text-dark small fw-medium">₹{{ order.subtotal }}</span>
-          </div>
-          {% if order.discount_amount %}
-          <div class="d-flex justify-content-between mb-2 text-success">
-            <span class="small">Coupon Discount</span>
-            <span class="small fw-medium">−₹{{ order.discount_amount }}</span>
-          </div>
-          {% endif %}
-          <div class="d-flex justify-content-between mb-3">
-            <span class="text-muted small">Delivery Fee</span>
-            <span class="text-dark small fw-medium">{% if order.delivery_fee == 0 %}FREE{% else %}₹{{ order.delivery_fee }}{% endif %}</span>
-          </div>
-          <div class="d-flex justify-content-between border-top pt-3">
-            <span class="fw-bold text-dark">Total Amount</span>
-            <span class="fw-bold text-success" style="font-size: 1.2rem;">₹{{ order.total }}</span>
-          </div>
-        </div>
       </div>
-
-      <a href="{% url 'product_list' %}" class="btn btn-outline-success w-100 rounded-pill py-2.5 fw-bold d-flex align-items-center justify-content-center gap-2">
-        <i class="bi bi-cart-plus"></i> Continue Shopping
-      </a>
     </div>
+
   </div>
+
 </div>
 {% endblock %}

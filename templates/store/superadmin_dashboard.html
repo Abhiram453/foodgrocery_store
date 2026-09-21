@@ -4,20 +4,35 @@
 {% block content %}
 <div class="container py-4 py-md-5">
   <!-- Admin Welcome Header -->
-  <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 bg-dark text-white">
+  <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 bg-dark text-white" style="background: linear-gradient(135deg, var(--fb-forest-950) 0%, var(--fb-forest-800) 100%) !important;">
     <div class="card-body p-4 p-md-5">
       <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
         <div>
-          <span class="badge bg-primary bg-opacity-25 text-primary mb-2 px-3 py-1 rounded-pill" style="font-size: .75rem; letter-spacing: .05em;">GLOBAL ADMINISTRATION</span>
+          <span class="badge bg-success bg-opacity-25 text-success mb-2 px-3 py-1 rounded-pill" style="font-size: .75rem; letter-spacing: .05em;">GLOBAL ADMINISTRATION</span>
           <h1 class="fw-bold mb-1 h2" style="font-family: 'Nunito', sans-serif;">Super Admin Dashboard</h1>
-          <p class="mb-0 text-white-50 small">Manage vendor approvals, assign regional pincodes, and monitor store metrics.</p>
+          <p class="mb-0 text-white-50 small">Manage vendor approvals, assign regional delivery areas, and monitor marketplace metrics.</p>
         </div>
         <div class="d-flex gap-2">
-          <a href="/admin/" class="btn btn-primary rounded-pill px-4 fw-bold btn-sm shadow-sm">
-            <i class="bi bi-shield-fill-check me-1"></i>Django Admin Panel
+          <a href="/admin/" class="btn btn-success rounded-pill px-4 fw-bold btn-sm shadow-sm" style="background-color: var(--fb-green-600); border: none;">
+            <i class="bi bi-shield-fill-check me-1"></i>Django Admin Console
           </a>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Admin Quick Navigation Bar -->
+  <div class="card border-0 shadow-sm rounded-4 p-2 bg-white mb-4" style="border: 1px solid var(--fb-border) !important;">
+    <div class="d-flex align-items-center gap-2 overflow-auto pb-1">
+      <a href="#overviewSection" class="btn btn-sm btn-success rounded-pill px-3 fw-bold border-0" style="background-color: var(--fb-green-600); font-size: 0.8rem;">Overview</a>
+      <a href="#vendorsSection" class="btn btn-sm btn-light rounded-pill px-3 fw-bold text-dark border small">Vendors</a>
+      <a href="/admin/store/product/" class="btn btn-sm btn-light rounded-pill px-3 fw-bold text-dark border small" target="_blank">Products</a>
+      <a href="/admin/store/order/" class="btn btn-sm btn-light rounded-pill px-3 fw-bold text-dark border small" target="_blank">Orders</a>
+      <a href="/admin/auth/user/" class="btn btn-sm btn-light rounded-pill px-3 fw-bold text-dark border small" target="_blank">Customers</a>
+      <a href="/admin/store/deliveryarea/" class="btn btn-sm btn-light rounded-pill px-3 fw-bold text-dark border small" target="_blank">Delivery Areas</a>
+      <a href="/admin/store/coupon/" class="btn btn-sm btn-light rounded-pill px-3 fw-bold text-dark border small" target="_blank">Coupons</a>
+      <a href="/admin/store/deliveryslot/" class="btn btn-sm btn-light rounded-pill px-3 fw-bold text-dark border small" target="_blank">Delivery Slots</a>
+      <a href="/admin/" class="btn btn-sm btn-light rounded-pill px-3 fw-bold text-dark border small" target="_blank">Settings</a>
     </div>
   </div>
 

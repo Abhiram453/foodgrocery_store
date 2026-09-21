@@ -1,157 +1,201 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block title %}{% if current_category %}{{ current_category.name }} – {% endif %}Shop Fresh Groceries | FoodBasket{% endblock %}
 
 {% block content %}
-<div class="shop-page">
-  <div class="container py-4 py-md-5">
+<div class="container py-4 py-md-5">
 
-    <!-- Top Back Nav -->
-    <div class="d-flex align-items-center justify-content-between mb-3">
-      <button onclick="history.back()" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 fw-bold border-1 shadow-sm d-inline-flex align-items-center gap-1" style="font-size: .82rem;">
-        <i class="bi bi-arrow-left"></i> Back
-      </button>
-      <a href="{% url 'home' %}" class="text-muted small text-decoration-none d-inline-flex align-items-center gap-1">
-        <i class="bi bi-house-door"></i> Dashboard
+  <!-- Top Breadcrumb / Nav -->
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div class="d-flex align-items-center gap-2">
+      <a href="{% url 'home' %}" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 fw-bold shadow-sm d-inline-flex align-items-center gap-1" style="font-size: .82rem;">
+        <i class="bi bi-arrow-left"></i> Home
       </a>
+      {% if current_category %}
+      <span class="text-muted">/</span>
+      <span class="fw-bold text-dark small">{{ current_category.name }}</span>
+      {% endif %}
     </div>
 
-    <!-- Header -->
-    <div class="shop-header mb-4">
-      <div>
-        <h1 class="shop-page-title">
-          {% if current_category %}{{ current_category.icon }} {{ current_category.name }}
-          {% elif query %}Search: "{{ query }}"
-          {% else %}All Products{% endif %}
-        </h1>
-        <p class="shop-page-count">{{ products.count }} product{% if products.count != 1 %}s{% endif %} found</p>
-      </div>
-      <!-- Sort -->
-      <form method="get" id="sortForm" class="sort-form">
-        {% if query %}<input type="hidden" name="q" value="{{ query }}">{% endif %}
-        <select class="sort-select" name="sort" onchange="sortForm.submit()">
-          <option value="" {% if not sort %}selected{% endif %}>Default</option>
-          <option value="price_asc" {% if sort == 'price_asc' %}selected{% endif %}>Price ↑</option>
-          <option value="price_desc" {% if sort == 'price_desc' %}selected{% endif %}>Price ↓</option>
-          <option value="name" {% if sort == 'name' %}selected{% endif %}>A–Z</option>
-        </select>
-      </form>
+    <!-- Mobile Filter Toggle Button -->
+    <button class="btn btn-sm btn-outline-success rounded-pill px-3 py-1 fw-bold d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#filterOffcanvas" aria-controls="filterOffcanvas">
+      <i class="bi bi-funnel me-1"></i> Filter Aisles
+    </button>
+  </div>
+
+  <!-- Page Header Row -->
+  <div class="d-flex align-items-end justify-content-between flex-wrap gap-3 mb-4 pb-2 border-bottom">
+    <div>
+      <h1 class="fw-bold mb-1 text-dark" style="font-size: 1.85rem;">
+        {% if current_category %}
+          <span class="me-2">{{ current_category.icon }}</span>{{ current_category.name }}
+        {% elif query %}
+          Search: "{{ query }}"
+        {% else %}
+          All Farm Fresh Groceries
+        {% endif %}
+      </h1>
+      <p class="text-muted small mb-0">{{ products.count }} item{% if products.count != 1 %}s{% endif %} available in your delivery area</p>
     </div>
 
-    <div class="row g-4">
+    <!-- Sort Form -->
+    <form method="get" id="sortForm" class="d-flex align-items-center gap-2">
+      {% if query %}<input type="hidden" name="q" value="{{ query }}">{% endif %}
+      <label for="sortSelect" class="text-muted small fw-bold mb-0 text-nowrap"><i class="bi bi-sort-down me-1"></i>Sort By:</label>
+      <select class="form-select form-select-sm rounded-pill px-3 py-1.5 shadow-sm border" id="sortSelect" name="sort" onchange="document.getElementById('sortForm').submit()" style="font-size: 0.85rem; max-width: 170px;">
+        <option value="" {% if not sort %}selected{% endif %}>Recommended</option>
+        <option value="price_asc" {% if sort == 'price_asc' %}selected{% endif %}>Price: Low to High</option>
+        <option value="price_desc" {% if sort == 'price_desc' %}selected{% endif %}>Price: High to Low</option>
+        <option value="name" {% if sort == 'name' %}selected{% endif %}>Name: A to Z</option>
+      </select>
+    </form>
+  </div>
 
-      <!-- Sidebar -->
-      <div class="col-lg-2 col-md-3 d-none d-md-block">
-        <div class="shop-sidebar">
-          <p class="sidebar-label">Categories</p>
-          <ul class="sidebar-list">
-            <li>
-              <a href="{% url 'product_list' %}{% if query %}?q={{ query }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}"
-                 class="sidebar-link {% if not current_category %}active{% endif %}">
-                🛍️ All Products
-              </a>
-            </li>
-            {% for cat in categories %}
-            <li>
-              <a href="{% url 'category_products' cat.slug %}{% if query %}?q={{ query }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}"
-                 class="sidebar-link {% if current_category.slug == cat.slug %}active{% endif %}">
-                {{ cat.icon }} {{ cat.name }}
-              </a>
-            </li>
-            {% endfor %}
-          </ul>
+  <div class="row g-4">
+
+    <!-- ── DESKTOP SIDEBAR FILTERS ── -->
+    <div class="col-lg-3 col-md-4 d-none d-md-block">
+      <div class="card border-0 shadow-sm rounded-4 p-3 bg-white" style="border: 1px solid var(--fb-border) !important; position: sticky; top: 90px;">
+        <h5 class="fw-bold mb-3 text-dark pb-2 border-bottom" style="font-size: 1rem;">
+          <i class="bi bi-grid-fill text-success me-2"></i>Aisles & Categories
+        </h5>
+
+        <div class="d-flex flex-column gap-1">
+          <a href="{% url 'product_list' %}{% if query %}?q={{ query }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}" 
+             class="account-sidebar-link {% if not current_category %}active{% endif %}">
+            <span style="font-size: 1.1rem; line-height: 1;">🛍️</span>
+            <span>All Products</span>
+          </a>
+
+          {% for cat in categories %}
+          <a href="{% url 'category_products' cat.slug %}{% if query %}?q={{ query }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}" 
+             class="account-sidebar-link {% if current_category.slug == cat.slug %}active{% endif %}">
+            <span style="font-size: 1.1rem; line-height: 1;">{{ cat.icon }}</span>
+            <span>{{ cat.name }}</span>
+          </a>
+          {% endfor %}
+        </div>
+
+        <div class="mt-4 p-3 rounded-3 bg-light text-center border">
+          <span class="fs-4 d-block mb-1">🚚</span>
+          <div class="fw-bold text-dark small">Free Delivery</div>
+          <div class="text-muted" style="font-size: 0.75rem;">On all orders over ₹500</div>
         </div>
       </div>
+    </div>
 
-      <!-- Mobile category strip -->
-      <div class="col-12 d-md-none">
-        <div class="mobile-cat-strip">
-          <a href="{% url 'product_list' %}{% if query %}?q={{ query }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}" class="mob-cat-pill {% if not current_category %}active{% endif %}">All</a>
+    <!-- ── MOBILE OFFCANVAS FILTER ── -->
+    <div class="offcanvas offcanvas-start rounded-end-4" tabindex="-1" id="filterOffcanvas" aria-labelledby="filterOffcanvasLabel">
+      <div class="offcanvas-header border-bottom">
+        <h5 class="offcanvas-title fw-bold" id="filterOffcanvasLabel">
+          <i class="bi bi-grid-fill text-success me-2"></i>Categories
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+      </div>
+      <div class="offcanvas-body">
+        <div class="d-flex flex-column gap-1">
+          <a href="{% url 'product_list' %}{% if query %}?q={{ query }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}" 
+             class="account-sidebar-link {% if not current_category %}active{% endif %}">
+            <span>🛍️</span> All Products
+          </a>
           {% for cat in categories %}
-          <a href="{% url 'category_products' cat.slug %}{% if query %}?q={{ query }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}" class="mob-cat-pill {% if current_category.slug == cat.slug %}active{% endif %}">
-            {{ cat.icon }} {{ cat.name }}
+          <a href="{% url 'category_products' cat.slug %}{% if query %}?q={{ query }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}" 
+             class="account-sidebar-link {% if current_category.slug == cat.slug %}active{% endif %}">
+            <span>{{ cat.icon }}</span> {{ cat.name }}
           </a>
           {% endfor %}
         </div>
       </div>
+    </div>
 
-      <!-- Products -->
-      <div class="col-lg-10 col-md-9 col-12">
-        {% if products %}
-        <div class="row g-3">
-          {% for product in products %}
-          <div class="col-6 col-sm-4 col-md-4 col-lg-3">
-            <div class="pcard position-relative">
-              {% if product.discount_price %}
-              <div class="pcard-badge">{{ product.discount_percent }}% OFF</div>
+    <!-- ── PRODUCT CATALOG GRID ── -->
+    <div class="col-lg-9 col-md-8 col-12">
+      {% if products %}
+      <div class="row g-3 g-md-4">
+        {% for product in products %}
+        <div class="col-6 col-sm-6 col-lg-4 reveal-on-scroll">
+          <div class="pcard">
+            {% if product.discount_price %}
+            <div class="pcard-badge-discount">{{ product.discount_percent }}% OFF</div>
+            {% endif %}
+
+            {% if user.is_authenticated %}
+            <form action="{% url 'toggle_wishlist' product.id %}" method="post" class="m-0 p-0">
+              {% csrf_token %}
+              <button type="submit" class="pcard-wishlist-btn {% if product.id in wishlist_ids %}active{% endif %}" title="Save to wishlist">
+                <i class="bi bi-heart{% if product.id in wishlist_ids %}-fill text-danger{% endif %}"></i>
+              </button>
+            </form>
+            {% endif %}
+
+            <a href="{% url 'product_detail' product.slug %}" class="pcard-img-wrap">
+              {% if product.image %}
+                <img src="{{ product.image.url }}" alt="{{ product.name }}" loading="lazy">
+              {% else %}
+                <div style="font-size: 3.5rem;">{{ product.category.icon }}</div>
               {% endif %}
-              
-              {% if user.is_authenticated %}
-              <div class="position-absolute top-0 end-0 m-2" style="z-index: 10;">
-                <form action="{% url 'toggle_wishlist' product.id %}" method="post" class="m-0 p-0">
-                  {% csrf_token %}
-                  <input type="hidden" name="next" value="{{ request.path }}">
-                  <button type="submit" class="btn btn-sm btn-light rounded-circle shadow-sm border" style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center; background: white;">
-                    <i class="bi bi-heart{% if product.id in wishlist_ids %}-fill text-danger{% else %} text-muted{% endif %}"></i>
-                  </button>
-                </form>
+            </a>
+
+            <div class="pcard-body">
+              <span class="pcard-category">{{ product.category.name }}</span>
+              <h3 class="pcard-title">
+                <a href="{% url 'product_detail' product.slug %}">{{ product.name }}</a>
+              </h3>
+              <span class="pcard-unit">{{ product.get_unit_display }}</span>
+
+              {% if product.vendor %}
+              <div class="pcard-vendor-tag">
+                <i class="bi bi-shop text-success"></i>
+                <span>{{ product.vendor.vendor_profile.shop_name|default:product.vendor.username }}</span>
               </div>
               {% endif %}
-              
-              <a href="{% url 'product_detail' product.slug %}" class="pcard-img-link">
-                <div class="pcard-img">
-                  {% if product.image %}
-                    <img src="{{ product.image.url }}" alt="{{ product.name }}" loading="lazy">
-                  {% else %}
-                    <div class="pcard-emoji">{{ product.category.icon }}</div>
+
+              <div class="pcard-footer-row">
+                <div class="pcard-price-group">
+                  <span class="pcard-price">₹{{ product.effective_price }}</span>
+                  {% if product.discount_price %}
+                  <span class="pcard-old-price">₹{{ product.price }}</span>
                   {% endif %}
                 </div>
-              </a>
-              <div class="pcard-body">
-                <span class="pcard-cat">{{ product.category.name }}</span>
-                <h3 class="pcard-name">
-                  <a href="{% url 'product_detail' product.slug %}">{{ product.name }}</a>
-                </h3>
-                <span class="pcard-unit">{{ product.get_unit_display }}</span>
-                <div class="pcard-footer">
-                  <div class="pcard-price-row">
-                    <span class="pcard-price">₹{{ product.effective_price }}</span>
-                    {% if product.discount_price %}<span class="pcard-old">₹{{ product.price }}</span>{% endif %}
-                  </div>
-                  {% if product.stock > 0 %}
+
+                {% if product.stock > 0 %}
                   {% if user.is_authenticated %}
-                  <form action="{% url 'add_to_cart' product.id %}" method="post">
+                  <form action="{% url 'add_to_cart' product.id %}" method="post" class="m-0 p-0">
                     {% csrf_token %}
                     <input type="hidden" name="quantity" value="1">
-                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
                     <button type="submit" class="pcard-add-btn" title="Add to cart">
                       <i class="bi bi-plus-lg"></i>
                     </button>
                   </form>
                   {% else %}
-                  <a href="{% url 'login' %}?next={{ request.get_full_path }}" class="pcard-add-btn" title="Login to add to cart">
+                  <a href="{% url 'login' %}?next={{ request.path }}" class="pcard-add-btn" title="Login to add to cart">
                     <i class="bi bi-plus-lg"></i>
                   </a>
                   {% endif %}
-                  {% else %}
-                  <span class="pcard-out">Out of Stock</span>
-                  {% endif %}
-                </div>
+                {% else %}
+                  <span class="badge bg-secondary-subtle text-secondary small py-1 px-2 rounded-pill">Out of Stock</span>
+                {% endif %}
               </div>
             </div>
           </div>
-          {% endfor %}
         </div>
-        {% else %}
-        <div class="empty-results">
-          <div class="empty-results-icon">🔍</div>
-          <h3>Nothing found</h3>
-          <p>Try searching something else or browse a category.</p>
-          <a href="{% url 'product_list' %}" class="btn-primary-pill">Browse All Products</a>
-        </div>
-        {% endif %}
+        {% endfor %}
       </div>
-
+      {% else %}
+      <!-- Empty Search / Filter State -->
+      <div class="card border-0 shadow-sm rounded-4 p-5 text-center bg-white" style="border: 1px solid var(--fb-border) !important;">
+        <img src="{% static 'images/empty-states/no_search.svg' %}" alt="No products found" class="mx-auto mb-3" style="width: 120px; height: auto;">
+        <h3 class="fw-bold text-dark mb-1">No groceries matched your search</h3>
+        <p class="text-muted small mb-4">Try checking your spelling, looking under another category aisle, or reset your filters.</p>
+        <div>
+          <a href="{% url 'product_list' %}" class="btn btn-success rounded-pill px-4 py-2 fw-bold" style="background-color: var(--fb-green-600);">
+            View All Products
+          </a>
+        </div>
+      </div>
+      {% endif %}
     </div>
+
   </div>
 </div>
 {% endblock %}

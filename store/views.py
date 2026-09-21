@@ -81,6 +81,15 @@ def home(request):
         request,
         Product.objects.filter(is_featured=True, stock__gt=0, is_active=True)
     )[:8]
+    deals_products = get_location_filtered_products(
+        request,
+        Product.objects.filter(discount_price__isnull=False, stock__gt=0, is_active=True)
+    )[:8]
+    fresh_today = get_location_filtered_products(
+        request,
+        Product.objects.filter(stock__gt=0, is_active=True).order_by('-created_at')
+    )[:8]
+    local_vendors = VendorProfile.objects.filter(status='approved').select_related('user')[:6]
     active_coupons = Coupon.objects.filter(
         is_active=True,
         valid_from__lte=now,
@@ -96,6 +105,9 @@ def home(request):
         'categories': categories,
         'all_categories': all_categories,
         'featured_products': featured_products,
+        'deals_products': deals_products,
+        'fresh_today': fresh_today,
+        'local_vendors': local_vendors,
         'active_coupons': active_coupons,
         'featured_recipes': featured_recipes,
         'wishlist_ids': wishlist_ids,
@@ -252,10 +264,15 @@ def cart_view(request):
 @require_POST
 def add_to_cart(request, product_id):
     product = get_object_or_404(Product, id=product_id, is_active=True)
+    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest' or 'application/json' in request.META.get('HTTP_ACCEPT', '')
+
     if product.vendor:
         v_profile = getattr(product.vendor, 'vendor_profile', None)
         if not v_profile or v_profile.status != 'approved':
-            messages.error(request, 'This product is from a vendor who is currently inactive.')
+            msg = 'This product is from a vendor who is currently inactive.'
+            if is_ajax:
+                return JsonResponse({'success': False, 'message': msg}, status=400)
+            messages.error(request, msg)
             return redirect(request.POST.get('next', request.META.get('HTTP_REFERER', '/')))
 
     cart = get_or_create_cart(request)
@@ -270,7 +287,10 @@ def add_to_cart(request, product_id):
     target_qty = quantity if created else item.quantity + quantity
 
     if target_qty > product.stock:
-        messages.warning(request, f'Sorry, only {product.stock} units of {product.name} are available in stock.')
+        msg = f'Sorry, only {product.stock} units of {product.name} are available in stock.'
+        if is_ajax:
+            return JsonResponse({'success': False, 'message': msg}, status=400)
+        messages.warning(request, msg)
         next_url = request.POST.get('next', request.META.get('HTTP_REFERER', '/'))
         return redirect(next_url)
 
@@ -280,7 +300,16 @@ def add_to_cart(request, product_id):
         item.quantity = quantity
     item.save()
 
-    messages.success(request, f'"{product.name}" added to cart!')
+    msg = f'"{product.name}" added to cart!'
+    if is_ajax:
+        return JsonResponse({
+            'success': True,
+            'message': msg,
+            'cart_count': cart.item_count,
+            'product_name': product.name,
+        })
+
+    messages.success(request, msg)
     next_url = request.POST.get('next', request.META.get('HTTP_REFERER', '/'))
     return redirect(next_url)
 
@@ -848,10 +877,16 @@ def account_address_delete(request, address_id):
 def toggle_wishlist(request, product_id):
     product = get_object_or_404(Product, id=product_id)
     wishlist_item, created = Wishlist.objects.get_or_create(user=request.user, product=product)
+    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest' or 'application/json' in request.META.get('HTTP_ACCEPT', '')
+
     if not created:
         wishlist_item.delete()
+        if is_ajax:
+            return JsonResponse({'success': True, 'action': 'removed', 'message': f'Removed {product.name} from wishlist.'})
         messages.info(request, f'Removed {product.name} from wishlist.')
     else:
+        if is_ajax:
+            return JsonResponse({'success': True, 'action': 'added', 'message': f'Added {product.name} to wishlist.'})
         messages.success(request, f'Added {product.name} to wishlist.')
     next_url = request.POST.get('next') or request.META.get('HTTP_REFERER') or 'home'
     return redirect(next_url)

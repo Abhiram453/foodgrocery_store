@@ -1,152 +1,219 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block title %}{{ product.name }} | FoodBasket{% endblock %}
 
 {% block content %}
 <div class="container py-4 py-md-5">
 
-  <!-- Top Back Nav -->
-  <div class="d-flex align-items-center justify-content-between mb-3">
-    <button onclick="history.back()" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 fw-bold shadow-sm d-inline-flex align-items-center gap-1" style="font-size: .82rem;">
-      <i class="bi bi-arrow-left"></i> Back
-    </button>
-    <a href="{% url 'home' %}" class="text-muted small text-decoration-none d-inline-flex align-items-center gap-1">
-      <i class="bi bi-house-door"></i> Dashboard
-    </a>
-  </div>
-
-  <!-- Breadcrumb -->
+  <!-- Top Breadcrumb -->
   <nav class="mb-4" aria-label="breadcrumb">
-    <ol class="fb-breadcrumb">
-      <li><a href="{% url 'home' %}">Home</a></li>
-      <li><i class="bi bi-chevron-right"></i></li>
-      <li><a href="{% url 'category_products' product.category.slug %}">{{ product.category.name }}</a></li>
-      <li><i class="bi bi-chevron-right"></i></li>
-      <li class="active">{{ product.name }}</li>
+    <ol class="fb-breadcrumb d-flex align-items-center gap-2 list-unstyled small">
+      <li><a href="{% url 'home' %}" class="text-muted text-decoration-none">Home</a></li>
+      <li class="text-muted">/</li>
+      <li><a href="{% url 'category_products' product.category.slug %}" class="text-muted text-decoration-none">{{ product.category.name }}</a></li>
+      <li class="text-muted">/</li>
+      <li class="active fw-bold text-dark">{{ product.name }}</li>
     </ol>
   </nav>
 
   <div class="row g-4 g-lg-5">
 
-    <!-- Image -->
-    <div class="col-12 col-md-5">
-      <div class="detail-img-box">
+    <!-- ── LEFT COLUMN: LARGE PRODUCT IMAGE SHOWCASE ── -->
+    <div class="col-12 col-md-5 reveal-on-scroll">
+      <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white p-4 text-center position-relative detail-img-box" style="border: 1px solid var(--fb-border) !important; min-height: 380px; display: flex; align-items: center; justify-content: center;">
         {% if product.discount_price %}
-        <div class="pcard-badge large">{{ product.discount_percent }}% OFF</div>
+        <div class="pcard-badge-discount fs-6 px-3 py-1">{{ product.discount_percent }}% OFF</div>
         {% endif %}
+
         {% if product.image %}
-          <img src="{{ product.image.url }}" alt="{{ product.name }}" class="detail-img">
+          <img src="{{ product.image.url }}" 
+               alt="{{ product.name }}" 
+               class="detail-img img-fluid rounded-3" 
+               style="max-height: 320px; object-fit: contain; transition: transform 0.3s ease;"
+               onmouseover="this.style.transform='scale(1.08)'"
+               onmouseout="this.style.transform='scale(1)'">
         {% else %}
-          <div class="detail-emoji">{{ product.category.icon }}</div>
+          <div style="font-size: 6rem; line-height: 1;">{{ product.category.icon }}</div>
         {% endif %}
       </div>
     </div>
 
-    <!-- Info -->
-    <div class="col-12 col-md-7">
-      <span class="detail-cat-tag">{{ product.category.icon }} {{ product.category.name }}</span>
-      <h1 class="detail-name mt-2">{{ product.name }}</h1>
-      <p class="detail-unit-text">Sold {{ product.get_unit_display }}</p>
+    <!-- ── RIGHT COLUMN: PRODUCT SPECIFICATIONS & ACTIONS ── -->
+    <div class="col-12 col-md-7 reveal-on-scroll">
+      <div class="pe-lg-4">
+        <span class="badge bg-success bg-opacity-10 text-success fw-bold px-3 py-1 rounded-pill mb-2" style="font-size: 0.78rem;">
+          {{ product.category.icon }} {{ product.category.name }}
+        </span>
 
-      <div class="detail-price-row mt-3">
-        <span class="detail-main-price">₹{{ product.effective_price }}</span>
-        {% if product.discount_price %}
-        <span class="detail-original-price">₹{{ product.price }}</span>
-        <span class="detail-savings-pill">Save ₹{{ product.savings }}</span>
-        {% endif %}
-      </div>
+        <h1 class="fw-bold text-dark mb-1" style="font-size: 2.1rem; letter-spacing: -0.02em;">
+          {{ product.name }}
+        </h1>
+        <p class="text-muted small mb-3">Sold {{ product.get_unit_display }} &bull; Farm Fresh Guaranteed</p>
 
-      {% if product.vendor %}
-      <div class="mt-2 text-muted small">
-        <i class="bi bi-shop text-success me-1"></i>Sold by: <strong>{{ product.vendor.vendor_profile.shop_name|default:product.vendor.username }}</strong>
-      </div>
-      {% endif %}
-
-      <p class="detail-description mt-3">{{ product.description }}</p>
-
-
-      <!-- Stock badge -->
-      <div class="detail-stock mt-2">
-        {% if product.stock > 10 %}
-          <span class="stock-pill green"><i class="bi bi-check-circle-fill me-1"></i>In Stock</span>
-        {% elif product.stock > 0 %}
-          <span class="stock-pill amber"><i class="bi bi-exclamation-circle-fill me-1"></i>Only {{ product.stock }} left</span>
-        {% else %}
-          <span class="stock-pill red"><i class="bi bi-x-circle-fill me-1"></i>Out of Stock</span>
-        {% endif %}
-      </div>
-
-      {% if product.stock > 0 %}
-      {% if user.is_authenticated %}
-      <form action="{% url 'add_to_cart' product.id %}" method="post" class="mt-4">
-        {% csrf_token %}
-        <div class="d-flex align-items-center gap-3 flex-wrap">
-          <div class="qty-stepper">
-            <button type="button" class="qty-btn" onclick="stepQty(-1)">−</button>
-            <input type="number" name="quantity" id="qtyInput" value="1" min="1" max="{{ product.stock }}" class="qty-field" readonly>
-            <button type="button" class="qty-btn" onclick="stepQty(1)">+</button>
-          </div>
-          <button type="submit" class="btn-primary-pill flex-grow-1 flex-lg-grow-0">
-            <i class="bi bi-cart-plus-fill me-2"></i>Add to Cart
-          </button>
+        <!-- Price Showcase -->
+        <div class="d-flex align-items-baseline gap-3 mb-3 p-3 rounded-3 bg-light bg-opacity-75 border">
+          <span class="fw-bold text-dark" style="font-size: 1.85rem; color: var(--fb-forest-950) !important;">
+            ₹{{ product.effective_price }}
+          </span>
+          {% if product.discount_price %}
+          <span class="text-muted text-decoration-line-through fs-5">
+            ₹{{ product.price }}
+          </span>
+          <span class="badge bg-danger-subtle text-danger fw-bold px-2.5 py-1 rounded-pill">
+            Save ₹{{ product.savings }}
+          </span>
+          {% endif %}
         </div>
-      </form>
-      {% else %}
-      <div class="mt-4">
-        <a href="{% url 'login' %}?next={{ request.path }}" class="btn-primary-pill w-100 text-center justify-content-center" style="display: inline-flex;">
-          <i class="bi bi-cart-plus-fill me-2"></i>Login to Add to Cart
-        </a>
-      </div>
-      {% endif %}
-      {% else %}
-      <div class="alert-out-of-stock mt-4">This product is currently out of stock. Check back soon!</div>
-      {% endif %}
 
-      <!-- Recipe tags -->
-      {% if product.recipe_tags %}
-      <div class="detail-tags mt-4">
-        <span class="tags-label">Good for:</span>
-        {% for tag in product.get_tags %}
-        <span class="tag-pill">{{ tag }}</span>
-        {% endfor %}
-      </div>
-      {% endif %}
+        <!-- Vendor Origin Info -->
+        {% if product.vendor %}
+        <div class="d-flex align-items-center gap-2 mb-3 p-2.5 rounded-3 bg-white border">
+          <div class="rounded-circle bg-success bg-opacity-10 text-success d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
+            <i class="bi bi-shop"></i>
+          </div>
+          <div>
+            <span class="text-muted small d-block" style="font-size: 0.72rem;">Sourced & Packed by</span>
+            <strong class="text-dark small">{{ product.vendor.vendor_profile.shop_name|default:product.vendor.username }}</strong>
+          </div>
+        </div>
+        {% endif %}
 
-      <!-- Delivery notice -->
-      <div class="delivery-notice mt-4">
-        <i class="bi bi-truck me-2"></i>
-        Free delivery on orders over ₹500. Choose from 3 time slots.
+        <!-- Stock Availability Status -->
+        <div class="mb-4">
+          {% if product.stock > 10 %}
+            <span class="badge bg-success-subtle text-success fw-bold px-3 py-1.5 rounded-pill">
+              <i class="bi bi-check-circle-fill me-1"></i> In Stock ({{ product.stock }} units ready)
+            </span>
+          {% elif product.stock > 0 %}
+            <span class="badge bg-warning-subtle text-dark fw-bold px-3 py-1.5 rounded-pill">
+              <i class="bi bi-exclamation-triangle-fill me-1 text-warning"></i> Only {{ product.stock }} left in stock
+            </span>
+          {% else %}
+            <span class="badge bg-danger-subtle text-danger fw-bold px-3 py-1.5 rounded-pill">
+              <i class="bi bi-x-circle-fill me-1"></i> Out of Stock
+            </span>
+          {% endif %}
+        </div>
+
+        <!-- Add to Cart / Quantity Form -->
+        {% if product.stock > 0 %}
+          {% if user.is_authenticated %}
+          <form action="{% url 'add_to_cart' product.id %}" method="post" class="mb-4">
+            {% csrf_token %}
+            <div class="d-flex align-items-center gap-3 flex-wrap">
+              <!-- Stepper -->
+              <div class="d-inline-flex align-items-center border rounded-pill bg-white shadow-sm px-2 py-1">
+                <button type="button" class="btn btn-sm btn-link text-dark text-decoration-none fw-bold px-2 py-0" onclick="stepQty(-1)">−</button>
+                <input type="number" name="quantity" id="qtyInput" value="1" min="1" max="{{ product.stock }}" class="border-0 text-center fw-bold bg-transparent" style="width: 44px; outline: none;" readonly>
+                <button type="button" class="btn btn-sm btn-link text-dark text-decoration-none fw-bold px-2 py-0" onclick="stepQty(1)">+</button>
+              </div>
+
+              <button type="submit" class="btn-fb-primary px-4 py-2.5">
+                <i class="bi bi-cart-plus-fill"></i> Add to Basket
+              </button>
+
+              <button type="submit" formaction="{% url 'toggle_wishlist' product.id %}" class="btn btn-outline-secondary rounded-circle shadow-sm d-flex align-items-center justify-content-center p-0" style="width: 44px; height: 44px;" title="Wishlist">
+                <i class="bi bi-heart fs-5"></i>
+              </button>
+            </div>
+          </form>
+          {% else %}
+          <div class="mb-4">
+            <a href="{% url 'login' %}?next={{ request.path }}" class="btn-fb-primary">
+              <i class="bi bi-box-arrow-in-right"></i> Login to Add to Basket
+            </a>
+          </div>
+          {% endif %}
+        {% else %}
+        <div class="alert alert-warning rounded-4 small mb-4">
+          This product is currently out of stock. It will be restocked as soon as our partner vendors update their inventory.
+        </div>
+        {% endif %}
+
+        <!-- Product Description -->
+        {% if product.description %}
+        <div class="mb-4">
+          <h5 class="fw-bold text-dark mb-2" style="font-size: 1.05rem;">Description & Notes</h5>
+          <p class="text-muted" style="font-size: 0.92rem; line-height: 1.6;">
+            {{ product.description }}
+          </p>
+        </div>
+        {% endif %}
+
+        <!-- Recipe / Cuisine Tags -->
+        {% if product.recipe_tags %}
+        <div class="mb-4">
+          <span class="text-muted small fw-bold d-block mb-2">Great For Cooking:</span>
+          <div class="d-flex flex-wrap gap-1">
+            {% for tag in product.get_tags %}
+            <span class="badge bg-light text-dark border px-3 py-1.5 rounded-pill small">{{ tag }}</span>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Delivery Guarantee Strip -->
+        <div class="p-3 rounded-4 bg-light border d-flex align-items-center gap-3">
+          <div class="fs-3">🚚</div>
+          <div>
+            <div class="fw-bold text-dark small">Local Delivery Promise</div>
+            <div class="text-muted" style="font-size: 0.78rem;">Free shipping on orders ₹500+. Dispatched in temperature-controlled bags.</div>
+          </div>
+        </div>
+
       </div>
     </div>
+
   </div>
 
-  <!-- Related products -->
+  <!-- ── RELATED PRODUCTS ── -->
   {% if related %}
-  <div class="related-section mt-5 pt-3">
-    <h2 class="related-title">More from {{ product.category.name }}</h2>
-    <div class="row g-3 mt-1">
+  <div class="mt-5 pt-4 border-top">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+      <h3 class="fw-bold text-dark mb-0" style="font-size: 1.4rem;">
+        More from {{ product.category.name }}
+      </h3>
+      <a href="{% url 'category_products' product.category.slug %}" class="btn btn-sm btn-outline-success rounded-pill px-3 fw-bold">
+        View Aisle <i class="bi bi-arrow-right ms-1"></i>
+      </a>
+    </div>
+
+    <div class="row g-3 g-md-4">
       {% for rp in related %}
-      <div class="col-6 col-sm-4 col-md-3">
+      <div class="col-6 col-sm-6 col-lg-3 reveal-on-scroll">
         <div class="pcard">
-          {% if rp.discount_price %}<div class="pcard-badge">{{ rp.discount_percent }}% OFF</div>{% endif %}
-          <a href="{% url 'product_detail' rp.slug %}" class="pcard-img-link">
-            <div class="pcard-img">
-              {% if rp.image %}<img src="{{ rp.image.url }}" alt="{{ rp.name }}" loading="lazy">
-              {% else %}<div class="pcard-emoji">{{ rp.category.icon }}</div>{% endif %}
-            </div>
+          {% if rp.discount_price %}
+          <div class="pcard-badge-discount">{{ rp.discount_percent }}% OFF</div>
+          {% endif %}
+
+          <a href="{% url 'product_detail' rp.slug %}" class="pcard-img-wrap">
+            {% if rp.image %}
+              <img src="{{ rp.image.url }}" alt="{{ rp.name }}" loading="lazy">
+            {% else %}
+              <div style="font-size: 3.5rem;">{{ rp.category.icon }}</div>
+            {% endif %}
           </a>
+
           <div class="pcard-body">
-            <h3 class="pcard-name"><a href="{% url 'product_detail' rp.slug %}">{{ rp.name }}</a></h3>
+            <span class="pcard-category">{{ rp.category.name }}</span>
+            <h4 class="pcard-title">
+              <a href="{% url 'product_detail' rp.slug %}">{{ rp.name }}</a>
+            </h4>
             <span class="pcard-unit">{{ rp.get_unit_display }}</span>
-            <div class="pcard-footer">
-              <div class="pcard-price-row">
+
+            <div class="pcard-footer-row">
+              <div class="pcard-price-group">
                 <span class="pcard-price">₹{{ rp.effective_price }}</span>
-                {% if rp.discount_price %}<span class="pcard-old">₹{{ rp.price }}</span>{% endif %}
+                {% if rp.discount_price %}<span class="pcard-old-price">₹{{ rp.price }}</span>{% endif %}
               </div>
+
               {% if user.is_authenticated %}
-              <form action="{% url 'add_to_cart' rp.id %}" method="post">
+              <form action="{% url 'add_to_cart' rp.id %}" method="post" class="m-0 p-0">
                 {% csrf_token %}
                 <input type="hidden" name="quantity" value="1">
-                <button type="submit" class="pcard-add-btn"><i class="bi bi-plus-lg"></i></button>
+                <button type="submit" class="pcard-add-btn" title="Add to cart">
+                  <i class="bi bi-plus-lg"></i>
+                </button>
               </form>
               {% else %}
               <a href="{% url 'login' %}?next={{ request.path }}" class="pcard-add-btn" title="Login to add to cart">
@@ -163,14 +230,4 @@
   {% endif %}
 
 </div>
-
-{% block extra_js %}
-<script>
-function stepQty(d) {
-  const el = document.getElementById('qtyInput');
-  const val = Math.max(1, Math.min({{ product.stock }}, +el.value + d));
-  el.value = val;
-}
-</script>
-{% endblock %}
 {% endblock %}

@@ -1,51 +1,80 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block title %}Checkout | FoodBasket{% endblock %}
 
 {% block content %}
 <div class="container py-4 py-md-5">
-  <!-- Top Back Nav -->
-  <div class="d-flex align-items-center justify-content-between mb-3">
-    <button onclick="history.back()" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 fw-bold shadow-sm d-inline-flex align-items-center gap-1" style="font-size: .82rem;">
-      <i class="bi bi-arrow-left"></i> Back
-    </button>
-    <a href="{% url 'cart' %}" class="text-muted small text-decoration-none d-inline-flex align-items-center gap-1">
-      <i class="bi bi-cart3"></i> Back to Cart
+
+  <!-- Top Breadcrumb / Nav -->
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <a href="{% url 'cart' %}" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 fw-bold shadow-sm d-inline-flex align-items-center gap-1" style="font-size: .82rem;">
+      <i class="bi bi-arrow-left"></i> Return to Basket
     </a>
+    <span class="text-muted small">
+      <i class="bi bi-lock-fill text-success me-1"></i>256-Bit SSL Encrypted Checkout
+    </span>
   </div>
 
-  <h1 class="page-h1 mb-4"><i class="bi bi-bag-check-fill me-2"></i>Checkout</h1>
+  <!-- Multi-Step Progress Tracker Header -->
+  <div class="card border-0 shadow-sm rounded-4 p-3 bg-white mb-4" style="border: 1px solid var(--fb-border) !important;">
+    <div class="d-flex align-items-center justify-content-around text-center flex-wrap gap-2">
+      <div class="d-flex align-items-center gap-2">
+        <span class="rounded-circle bg-success text-white fw-bold d-flex align-items-center justify-content-center" style="width: 28px; height: 28px; font-size: 0.8rem;">1</span>
+        <span class="fw-bold text-dark small">Delivery Address</span>
+      </div>
+      <i class="bi bi-chevron-right text-muted small d-none d-sm-inline"></i>
+
+      <div class="d-flex align-items-center gap-2">
+        <span class="rounded-circle bg-success text-white fw-bold d-flex align-items-center justify-content-center" style="width: 28px; height: 28px; font-size: 0.8rem;">2</span>
+        <span class="fw-bold text-dark small">Delivery Slot</span>
+      </div>
+      <i class="bi bi-chevron-right text-muted small d-none d-sm-inline"></i>
+
+      <div class="d-flex align-items-center gap-2">
+        <span class="rounded-circle bg-success text-white fw-bold d-flex align-items-center justify-content-center" style="width: 28px; height: 28px; font-size: 0.8rem;">3</span>
+        <span class="fw-bold text-dark small">Payment</span>
+      </div>
+      <i class="bi bi-chevron-right text-muted small d-none d-sm-inline"></i>
+
+      <div class="d-flex align-items-center gap-2 text-muted">
+        <span class="rounded-circle bg-light border text-muted fw-bold d-flex align-items-center justify-content-center" style="width: 28px; height: 28px; font-size: 0.8rem;">4</span>
+        <span class="small">Confirmation</span>
+      </div>
+    </div>
+  </div>
 
   <form method="post" id="checkoutForm" novalidate>
     {% csrf_token %}
     <input type="hidden" name="is_ajax" id="is_ajax_input" value="0">
-    <div class="row g-4">
 
-      <!-- LEFT: Address + Slot + Payment -->
+    <div class="row g-4 g-lg-5">
+
+      <!-- ── LEFT COLUMN: ADDRESS, DELIVERY SLOT & PAYMENT ── -->
       <div class="col-12 col-lg-8">
 
-        <!-- Address Card -->
-        <div class="checkout-card mb-4">
-          <div class="checkout-card-head d-flex justify-content-between align-items-center">
-            <div class="d-flex align-items-center gap-2">
-              <span class="cc-icon">📍</span>
-              <h2 class="cc-title mb-0">Delivery Address</h2>
-            </div>
+        <!-- 1. Address Section -->
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4" style="border: 1px solid var(--fb-border) !important;">
+          <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+            <h2 class="h5 fw-bold text-dark mb-0">
+              <span class="me-2">📍</span>1. Delivery Address
+            </h2>
+            <span class="badge bg-light text-muted border small">Recipient Details</span>
           </div>
 
           {% if saved_addresses %}
-          <p class="cc-subtitle mb-3">Select a saved delivery address or enter a new one.</p>
+          <p class="text-muted small mb-3">Choose a saved address or enter a new delivery location:</p>
           <div class="row g-2 mb-3">
             {% for addr in saved_addresses %}
             <div class="col-12 col-sm-6">
-              <label class="card h-100 p-3 address-tile {% if addr.is_default or forloop.first %}selected-address{% endif %}" style="cursor: pointer; border-radius: 12px; transition: all .2s;">
+              <label class="card h-100 p-3 address-tile {% if addr.is_default or forloop.first %}border-success bg-success bg-opacity-10{% endif %}" style="cursor: pointer; border-radius: 12px; transition: all 0.2s;">
                 <div class="d-flex align-items-start gap-2">
-                  <input type="radio" name="saved_address_id" value="{{ addr.id }}" class="form-check-input mt-1 address-radio" {% if addr.is_default or forloop.first %}checked{% endif %} onchange="toggleAddressMode('saved')">
+                  <input type="radio" name="saved_address_id" value="{{ addr.id }}" class="form-check-input mt-1" {% if addr.is_default or forloop.first %}checked{% endif %} onchange="toggleAddressMode('saved')">
                   <div>
                     <div class="d-flex align-items-center gap-2">
-                      <span class="badge bg-secondary-subtle text-dark fw-bold px-2 py-0.5 rounded" style="font-size: .75rem;">{{ addr.label|default:"Address" }}</span>
-                      {% if addr.is_default %}<span class="badge bg-success-subtle text-success fw-bold" style="font-size: .7rem;">Default</span>{% endif %}
+                      <span class="badge bg-white text-dark border fw-bold" style="font-size: 0.72rem;">{{ addr.label|default:"Address" }}</span>
+                      {% if addr.is_default %}<span class="badge bg-success text-white fw-bold" style="font-size: 0.68rem;">Default</span>{% endif %}
                     </div>
-                    <div class="fw-semibold text-dark mt-1" style="font-size: .88rem;">{{ addr.full_address }}</div>
+                    <div class="fw-semibold text-dark mt-1" style="font-size: 0.88rem;">{{ addr.full_address }}</div>
                     <div class="text-muted small">{{ addr.city }}, {{ addr.state }} - <strong>{{ addr.pincode }}</strong></div>
                     <div class="text-muted small mt-1"><i class="bi bi-telephone me-1"></i>{{ addr.phone }}</div>
                   </div>
@@ -54,9 +83,9 @@
             </div>
             {% endfor %}
             <div class="col-12 col-sm-6">
-              <label class="card h-100 p-3 address-tile d-flex align-items-center justify-content-center text-center" style="cursor: pointer; border-radius: 12px; border-style: dashed !important;">
+              <label class="card h-100 p-3 d-flex align-items-center justify-content-center text-center border-dashed" style="cursor: pointer; border-radius: 12px; border: 1.5px dashed var(--fb-green-500); background: #ffffff;">
                 <div class="d-flex align-items-center gap-2">
-                  <input type="radio" name="saved_address_id" value="" class="form-check-input address-radio" onchange="toggleAddressMode('new')">
+                  <input type="radio" name="saved_address_id" value="" class="form-check-input" onchange="toggleAddressMode('new')">
                   <span class="fw-bold text-success"><i class="bi bi-plus-circle me-1"></i>Deliver to a new address</span>
                 </div>
               </label>
@@ -64,38 +93,38 @@
           </div>
           {% endif %}
 
-          <!-- New Address Form (Always shown if no saved addresses, or if "new" chosen) -->
+          <!-- New Address Form Fields -->
           <div id="newAddressFields" class="{% if saved_addresses %}d-none{% endif %} pt-2">
-            <h6 class="fw-bold mb-3 text-dark"><i class="bi bi-pencil-square me-1 text-success"></i>Enter Delivery Details</h6>
+            <h6 class="fw-bold mb-3 text-dark"><i class="bi bi-pencil-square me-1 text-success"></i>Enter Delivery Destination</h6>
             <div class="row g-3">
               <div class="col-12">
-                <label class="fb-label">Street Address <span class="required">*</span></label>
-                <textarea name="address" class="fb-input" rows="2" placeholder="Door/Flat No, Apartment, Street name, Landmark" {% if not saved_addresses %}required{% endif %}></textarea>
+                <label class="form-label small fw-bold text-dark">Street Address <span class="text-danger">*</span></label>
+                <textarea name="address" class="form-control rounded-3" rows="2" placeholder="Door/Flat No, Apartment, Street name, Landmark" {% if not saved_addresses %}required{% endif %}></textarea>
               </div>
               <div class="col-12 col-sm-6">
-                <label class="fb-label">Pincode (6 Digits) <span class="required">*</span></label>
-                <input type="text" name="pincode" class="fb-input" placeholder="e.g. 625001" maxlength="6" {% if not saved_addresses %}required{% endif %}>
+                <label class="form-label small fw-bold text-dark">Pincode (6 Digits) <span class="text-danger">*</span></label>
+                <input type="text" name="pincode" class="form-control rounded-3" placeholder="e.g. 625001" maxlength="6" {% if not saved_addresses %}required{% endif %}>
               </div>
               <div class="col-12 col-sm-6">
-                <label class="fb-label">City <span class="required">*</span></label>
-                <input type="text" name="city" class="fb-input" placeholder="City" value="{{ request.session.user_area_name|default:'' }}">
+                <label class="form-label small fw-bold text-dark">City <span class="text-danger">*</span></label>
+                <input type="text" name="city" class="form-control rounded-3" placeholder="City" value="{{ request.session.user_area_name|default:'' }}">
               </div>
               <div class="col-12 col-sm-6">
-                <label class="fb-label">Phone Number <span class="required">*</span></label>
-                <div class="phone-input-group">
-                  <span class="phone-prefix">+91</span>
-                  <input type="tel" name="phone" class="fb-input phone-field" placeholder="98765 43210" maxlength="10" {% if not saved_addresses %}required{% endif %}>
+                <label class="form-label small fw-bold text-dark">Phone Number <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <span class="input-group-text bg-light">+91</span>
+                  <input type="tel" name="phone" class="form-control" placeholder="98765 43210" maxlength="10" {% if not saved_addresses %}required{% endif %}>
                 </div>
               </div>
               <div class="col-12 col-sm-6">
-                <label class="fb-label">Address Label <span class="optional">(optional)</span></label>
-                <input type="text" name="address_label" class="fb-input" placeholder="e.g. Home, Office, Parents">
+                <label class="form-label small fw-bold text-dark">Address Label (Optional)</label>
+                <input type="text" name="address_label" class="form-control rounded-3" placeholder="e.g. Home, Office">
               </div>
               <div class="col-12">
                 <div class="form-check">
                   <input class="form-check-input" type="checkbox" name="save_address" value="1" id="saveAddressCheck" checked>
                   <label class="form-check-label text-muted small" for="saveAddressCheck">
-                    Save this address to my profile for faster checkout next time
+                    Save this address to my profile for future checkouts
                   </label>
                 </div>
               </div>
@@ -103,68 +132,59 @@
           </div>
 
           <div class="mt-3 pt-3 border-top">
-            <label class="fb-label">Delivery Instructions <span class="optional">(optional)</span></label>
-            <input type="text" name="notes" class="fb-input" placeholder="e.g. Leave with guard / ring bell twice">
+            <label class="form-label small fw-bold text-dark">Delivery Instructions (Optional)</label>
+            <input type="text" name="notes" class="form-control rounded-pill px-3" placeholder="e.g. Leave with guard / ring bell twice">
           </div>
         </div>
 
-        <!-- Delivery Option Card -->
-        <div class="checkout-card mb-4">
-          <div class="checkout-card-head d-flex justify-content-between align-items-center">
-            <div class="d-flex align-items-center gap-2">
-              <span class="cc-icon">🚚</span>
-              <h2 class="cc-title mb-0">Delivery Slot</h2>
-            </div>
-            <span class="badge bg-success bg-opacity-10 text-success fw-bold px-3 py-1 rounded-pill" style="font-size: .78rem;">Local Fresh Delivery</span>
+        <!-- 2. Delivery Slot Section -->
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4" style="border: 1px solid var(--fb-border) !important;">
+          <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+            <h2 class="h5 fw-bold text-dark mb-0">
+              <span class="me-2">🚚</span>2. Choose Delivery Window
+            </h2>
+            <span class="badge bg-success-subtle text-success fw-bold px-3 py-1 rounded-pill small">Local Fresh Dispatch</span>
           </div>
 
           <input type="hidden" name="slot_id" id="selectedSlotId" value="express">
 
           <div class="row g-3 mb-3">
             <div class="col-12 col-sm-6">
-              <div class="slot-tile w-100 text-start p-3 selected" id="opt_express" onclick="setDeliveryMode('express')" style="cursor: pointer;">
+              <div class="card p-3 h-100 border-success bg-success bg-opacity-10 cursor-pointer slot-tile" id="opt_express" onclick="setDeliveryMode('express')">
                 <div class="d-flex align-items-center gap-2 mb-1">
-                  <span class="fs-5">⚡</span>
-                  <span class="fw-bold text-success" style="font-size: .95rem;">Standard Local Delivery</span>
+                  <span class="fs-4">⚡</span>
+                  <strong class="text-success">Express Local Delivery</strong>
                 </div>
-                <div class="text-muted" style="font-size: .8rem;">Delivered within <strong>45–60 minutes</strong></div>
+                <div class="text-muted small">Dispatched immediately within <strong>45–60 minutes</strong></div>
               </div>
             </div>
             <div class="col-12 col-sm-6">
-              <div class="slot-tile w-100 text-start p-3" id="opt_schedule" onclick="setDeliveryMode('schedule')" style="cursor: pointer;">
+              <div class="card p-3 h-100 border cursor-pointer slot-tile" id="opt_schedule" onclick="setDeliveryMode('schedule')">
                 <div class="d-flex align-items-center gap-2 mb-1">
-                  <span class="fs-5">📅</span>
-                  <span class="fw-bold" style="font-size: .95rem; color: var(--ink);">Schedule for Later</span>
+                  <span class="fs-4">📅</span>
+                  <strong class="text-dark">Schedule for Later</strong>
                 </div>
-                <div class="text-muted" style="font-size: .8rem;">Choose an upcoming time window</div>
+                <div class="text-muted small">Choose an upcoming daily delivery window</div>
               </div>
             </div>
           </div>
 
-          <!-- Specific Slot Picker (Visible when Schedule is selected) -->
+          <!-- Specific Slot Picker (when Schedule is clicked) -->
           <div id="scheduleSlotsContainer" class="d-none mt-3 pt-3 border-top">
-            <p class="cc-subtitle mb-3 fw-bold text-dark">Select a preferred delivery window:</p>
+            <p class="small fw-bold text-dark mb-2">Select a scheduled time window:</p>
             {% regroup slots by date as slots_by_date %}
             {% for date_group in slots_by_date %}
-            <div class="slot-group mb-3">
-              <div class="slot-group-date">
-                {% if forloop.first %}Today
-                {% elif forloop.counter == 2 %}Tomorrow
-                {% else %}{{ date_group.grouper|date:"D, d M" }}{% endif %}
-              </div>
+            <div class="mb-3">
+              <span class="badge bg-light text-dark border mb-2">{{ date_group.grouper|date:"D, d M Y" }}</span>
               <div class="row g-2">
-                {% for slot in date_group.list %}
+                {% for s in date_group.list %}
                 <div class="col-12 col-sm-4">
-                  <div class="slot-tile slot-time-choice {% if not slot.is_available %}slot-tile-full{% endif %}"
-                       id="slt{{ slot.id }}"
-                       onclick="{% if slot.is_available %}pickSlot({{ slot.id }}, this){% endif %}">
-                    <div class="slot-tile-time">{{ slot.get_slot_display }}</div>
-                    {% if slot.is_available %}
-                    <div class="slot-tile-avail">{{ slot.slots_remaining }} slots left</div>
-                    {% else %}
-                    <div class="slot-tile-full-text">Fully Booked</div>
-                    {% endif %}
-                  </div>
+                  <button type="button" 
+                          class="btn btn-sm w-100 border text-start p-2 rounded-3 {% if s.is_available %}btn-light{% else %}btn-secondary disabled{% endif %}"
+                          onclick="selectScheduledSlot('{{ s.id }}', this)">
+                    <div class="fw-bold small">{{ s.get_slot_display }}</div>
+                    <div class="text-muted" style="font-size: 0.7rem;">{{ s.slots_remaining }} slots left</div>
+                  </button>
                 </div>
                 {% endfor %}
               </div>
@@ -173,299 +193,252 @@
           </div>
         </div>
 
-        <!-- Payment Method Card (Real Payment Gateway: COD / Razorpay) -->
-        <div class="checkout-card mb-4">
-          <div class="checkout-card-head">
-            <span class="cc-icon">💳</span>
-            <h2 class="cc-title">Payment Method</h2>
-          </div>
-          <p class="cc-subtitle">Choose your preferred payment method. Zero card details stored on our servers.</p>
-
-          <div class="row g-3">
-            <div class="col-12 col-sm-6">
-              <div class="slot-tile w-100 text-start d-flex align-items-center gap-3 selected" id="pm_cod_label" onclick="selectPaymentMethod('COD')" style="cursor: pointer;">
-                <input type="radio" name="payment_method" id="pay_cod" value="COD" checked style="transform: scale(1.2); pointer-events: none;">
-                <div>
-                  <div class="fw-bold" style="font-size: .9rem; color: var(--ink);">Cash on Delivery (COD)</div>
-                  <div class="text-muted" style="font-size: .78rem;">Pay cash or scan QR upon delivery</div>
-                </div>
-              </div>
-            </div>
-            
-            <div class="col-12 col-sm-6">
-              <div class="slot-tile w-100 text-start d-flex align-items-center gap-3" id="pm_online_label" onclick="selectPaymentMethod('RAZORPAY')" style="cursor: pointer;">
-                <input type="radio" name="payment_method" id="pay_online" value="RAZORPAY" style="transform: scale(1.2); pointer-events: none;">
-                <div>
-                  <div class="fw-bold" style="font-size: .9rem; color: var(--ink);">Pay Online (Razorpay)</div>
-                  <div class="text-muted" style="font-size: .78rem;">UPI, GooglePay, Cards, NetBanking</div>
-                </div>
-              </div>
-            </div>
+        <!-- 3. Payment Method Section -->
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4" style="border: 1px solid var(--fb-border) !important;">
+          <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+            <h2 class="h5 fw-bold text-dark mb-0">
+              <span class="me-2">💳</span>3. Select Payment Method
+            </h2>
+            <span class="badge bg-light text-muted border small">Zero Hidden Fees</span>
           </div>
 
-          <div id="onlinePaymentNotice" class="d-none mt-3 p-3 rounded" style="background: #f0fdf4; border: 1px solid #bbf7d0;">
-            <div class="d-flex align-items-center gap-2 text-success fw-bold small mb-1">
-              <i class="bi bi-shield-check fs-5"></i> 100% Secure Checkout via Razorpay
-            </div>
-            <p class="text-muted small mb-0">
-              When you click "Confirm & Place Order", the secure Razorpay payment modal will open. You can pay using UPI apps (GPay, PhonePe, Paytm), credit/debit cards, or net banking.
-            </p>
+          <div class="d-flex flex-column gap-3">
+            <!-- COD -->
+            <label class="card p-3 border-success bg-success bg-opacity-10 cursor-pointer payment-option-tile" id="tile_cod">
+              <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-3">
+                  <input type="radio" name="payment_method" value="COD" class="form-check-input mt-0" checked onchange="selectPaymentMethod('COD')">
+                  <div>
+                    <strong class="text-dark d-block">Cash on Delivery (COD)</strong>
+                    <span class="text-muted small">Pay in cash or UPI QR scan at your doorstep</span>
+                  </div>
+                </div>
+                <span class="fs-4">💵</span>
+              </div>
+            </label>
+
+            <!-- Razorpay Online -->
+            <label class="card p-3 border cursor-pointer payment-option-tile" id="tile_razorpay">
+              <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-3">
+                  <input type="radio" name="payment_method" value="RAZORPAY" class="form-check-input mt-0" onchange="selectPaymentMethod('RAZORPAY')">
+                  <div>
+                    <strong class="text-dark d-block">Razorpay Online Payment</strong>
+                    <span class="text-muted small">Instant & secure checkout via UPI, Cards, NetBanking, and Wallets</span>
+                  </div>
+                </div>
+                <span class="fs-4">🛡️</span>
+              </div>
+            </label>
           </div>
         </div>
 
       </div>
 
-      <!-- RIGHT: Summary -->
+      <!-- ── RIGHT COLUMN: ORDER SUMMARY & PLACE ORDER ── -->
       <div class="col-12 col-lg-4">
-        <div class="order-summary-box sticky-lg-top" style="top:90px;">
-          <h2 class="summary-heading">Order Summary</h2>
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white" style="border: 1px solid var(--fb-border) !important; position: sticky; top: 90px;">
+          <h3 class="fw-bold text-dark mb-3 pb-2 border-bottom" style="font-size: 1.25rem;">
+            Order Overview
+          </h3>
 
-          <div class="checkout-items-list">
+          <!-- Items Mini List -->
+          <div class="d-flex flex-column gap-2 mb-3 max-h-200 overflow-auto">
             {% for item in cart.items.all %}
-            <div class="checkout-item-row">
-              <div class="d-flex flex-column">
-                <span class="ci-name">{{ item.product.name }}</span>
-                {% if item.product.vendor %}
-                <span class="text-muted" style="font-size: .72rem;"><i class="bi bi-shop me-1"></i>{{ item.product.vendor.vendor_profile.shop_name|default:item.product.vendor.username }}</span>
-                {% endif %}
+            <div class="d-flex justify-content-between align-items-center small">
+              <div class="text-truncate pe-2">
+                <span class="fw-semibold text-dark">{{ item.product.name }}</span>
+                <span class="text-muted">&times; {{ item.quantity }}</span>
               </div>
-              <span class="ci-qty">x{{ item.quantity }}</span>
-              <span class="ci-price">₹{{ item.subtotal }}</span>
+              <span class="text-dark fw-bold">₹{{ item.subtotal }}</span>
             </div>
             {% endfor %}
           </div>
 
-          <div class="summary-divider"></div>
+          <!-- Financials -->
+          <div class="d-flex flex-column gap-2 pt-3 border-top mb-3">
+            <div class="d-flex justify-content-between text-muted small">
+              <span>Items Subtotal</span>
+              <span class="fw-bold text-dark">₹{{ cart.subtotal }}</span>
+            </div>
 
-          <div class="summary-line">
-            <span>Subtotal</span>
-            <span>₹{{ cart.subtotal }}</span>
-          </div>
-
-          {% if cart.discount_amount %}
-          <div class="summary-line discount-line">
-            <span>Coupon Discount</span>
-            <span>-₹{{ cart.discount_amount }}</span>
-          </div>
-          {% endif %}
-
-          <div class="summary-line">
-            <span>Delivery Fee</span>
-            {% if cart.subtotal >= 500 %}
-              <span class="free-badge">FREE</span>
-            {% else %}
-              <span>₹40</span>
+            {% if cart.coupon %}
+            <div class="d-flex justify-content-between text-success small">
+              <span>Discount ({{ cart.coupon.code }})</span>
+              <span class="fw-bold">− ₹{{ cart.discount_amount }}</span>
+            </div>
             {% endif %}
+
+            <div class="d-flex justify-content-between text-muted small">
+              <span>Local Delivery Fee</span>
+              <span class="fw-bold {% if cart.delivery_fee == 0 %}text-success{% else %}text-dark{% endif %}">
+                {% if cart.delivery_fee == 0 %}FREE{% else %}₹{{ cart.delivery_fee }}{% endif %}
+              </span>
+            </div>
           </div>
 
-          <div class="summary-divider"></div>
-
-          <div class="summary-total-line">
-            <span>Total Payable</span>
-            <span style="color: var(--g700); font-size: 1.25rem;">₹{{ cart.total }}</span>
+          <!-- Grand Total -->
+          <div class="d-flex justify-content-between align-items-center pt-3 border-top mb-4">
+            <div>
+              <div class="fw-bold text-dark" style="font-size: 1.15rem;">Grand Total</div>
+              <div class="text-muted small" style="font-size: 0.72rem;">All taxes included</div>
+            </div>
+            <div class="fw-bold text-success" style="font-size: 1.6rem;">
+              ₹{{ cart.total }}
+            </div>
           </div>
 
-          <div id="checkoutFeedback" class="mt-3 d-none"></div>
-
-          <button type="submit" id="submitOrderBtn" class="checkout-btn mt-3">
-            <i class="bi bi-shield-check me-2"></i>Confirm & Place Order (₹{{ cart.total }})
+          <!-- Submit Button -->
+          <button type="submit" id="placeOrderBtn" class="btn-fb-primary w-100 py-3 text-center justify-content-center shadow-sm" style="font-size: 1.05rem;">
+            <i class="bi bi-shield-check me-1"></i> Place Order (₹{{ cart.total }})
           </button>
 
-          <p class="summary-secure-note mt-2">
-            <i class="bi bi-lock-fill me-1"></i>Safe & Encrypted Checkout
-          </p>
+          <div class="text-center mt-3 text-muted small" style="font-size: 0.78rem;">
+            <i class="bi bi-truck text-success me-1"></i>Delivered from approved neighborhood vendors
+          </div>
         </div>
       </div>
 
     </div>
   </form>
+
 </div>
 
 {% block extra_js %}
+<!-- Razorpay Checkout SDK (Official) -->
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
 function toggleAddressMode(mode) {
-  const newFields = document.getElementById('newAddressFields');
-  const cards = document.querySelectorAll('.address-tile');
-  cards.forEach(c => c.classList.remove('selected-address'));
-
+  const fields = document.getElementById('newAddressFields');
   if (mode === 'new') {
-    newFields.classList.remove('d-none');
-    document.querySelector('textarea[name="address"]').setAttribute('required', 'required');
-    document.querySelector('input[name="pincode"]').setAttribute('required', 'required');
-    document.querySelector('input[name="phone"]').setAttribute('required', 'required');
+    fields.classList.remove('d-none');
+    fields.querySelectorAll('input[name="address"], input[name="pincode"], input[name="phone"]').forEach(i => i.required = true);
   } else {
-    newFields.classList.add('d-none');
-    document.querySelector('textarea[name="address"]').removeAttribute('required');
-    document.querySelector('input[name="pincode"]').removeAttribute('required');
-    document.querySelector('input[name="phone"]').removeAttribute('required');
-    const checked = document.querySelector('.address-radio:checked');
-    if (checked) {
-      checked.closest('.address-tile').classList.add('selected-address');
-    }
+    fields.classList.add('d-none');
+    fields.querySelectorAll('input[name="address"], input[name="pincode"], input[name="phone"]').forEach(i => i.required = false);
   }
 }
 
 function setDeliveryMode(mode) {
-  const optExpress = document.getElementById('opt_express');
-  const optSchedule = document.getElementById('opt_schedule');
+  const expressTile = document.getElementById('opt_express');
+  const scheduleTile = document.getElementById('opt_schedule');
   const scheduleContainer = document.getElementById('scheduleSlotsContainer');
-  const hiddenInput = document.getElementById('selectedSlotId');
+  const slotInput = document.getElementById('selectedSlotId');
 
   if (mode === 'express') {
-    optExpress.classList.add('selected');
-    optSchedule.classList.remove('selected');
+    expressTile.className = 'card p-3 h-100 border-success bg-success bg-opacity-10 cursor-pointer slot-tile';
+    scheduleTile.className = 'card p-3 h-100 border cursor-pointer slot-tile';
     scheduleContainer.classList.add('d-none');
-    hiddenInput.value = 'express';
+    slotInput.value = 'express';
   } else {
-    optExpress.classList.remove('selected');
-    optSchedule.classList.add('selected');
+    scheduleTile.className = 'card p-3 h-100 border-success bg-success bg-opacity-10 cursor-pointer slot-tile';
+    expressTile.className = 'card p-3 h-100 border cursor-pointer slot-tile';
     scheduleContainer.classList.remove('d-none');
-    hiddenInput.value = '';
   }
 }
 
-function pickSlot(id, el) {
-  document.querySelectorAll('.slot-time-choice').forEach(t => t.classList.remove('selected'));
-  el.classList.add('selected');
-  document.getElementById('selectedSlotId').value = id;
+function selectScheduledSlot(slotId, btnEl) {
+  document.getElementById('selectedSlotId').value = slotId;
+  document.querySelectorAll('#scheduleSlotsContainer button').forEach(b => b.classList.remove('btn-success', 'text-white'));
+  btnEl.classList.add('btn-success', 'text-white');
 }
 
 function selectPaymentMethod(method) {
-  const codLabel = document.getElementById('pm_cod_label');
-  const onlineLabel = document.getElementById('pm_online_label');
-  const notice = document.getElementById('onlinePaymentNotice');
-  const radioCod = document.getElementById('pay_cod');
-  const radioOnline = document.getElementById('pay_online');
+  const tileCod = document.getElementById('tile_cod');
+  const tileRp = document.getElementById('tile_razorpay');
 
   if (method === 'COD') {
-    codLabel.classList.add('selected');
-    onlineLabel.classList.remove('selected');
-    notice.classList.add('d-none');
-    radioCod.checked = true;
-    radioOnline.checked = false;
+    tileCod.className = 'card p-3 border-success bg-success bg-opacity-10 cursor-pointer payment-option-tile';
+    tileRp.className = 'card p-3 border cursor-pointer payment-option-tile';
   } else {
-    codLabel.classList.remove('selected');
-    onlineLabel.classList.add('selected');
-    notice.classList.remove('d-none');
-    radioCod.checked = false;
-    radioOnline.checked = true;
+    tileRp.className = 'card p-3 border-success bg-success bg-opacity-10 cursor-pointer payment-option-tile';
+    tileCod.className = 'card p-3 border cursor-pointer payment-option-tile';
   }
 }
 
-// Razorpay & Form Submission
-document.getElementById('checkoutForm').addEventListener('submit', function (e) {
-  const radioOnline = document.getElementById('pay_online').checked;
-  const submitBtn = document.getElementById('submitOrderBtn');
-  const feedback = document.getElementById('checkoutFeedback');
+// Intercept checkout form for Razorpay if selected
+const checkoutForm = document.getElementById('checkoutForm');
+if (checkoutForm) {
+  checkoutForm.addEventListener('submit', function(e) {
+    const paymentMethod = document.querySelector('input[name="payment_method"]:checked')?.value || 'COD';
+    if (paymentMethod === 'RAZORPAY') {
+      e.preventDefault();
+      document.getElementById('is_ajax_input').value = '1';
+      const formData = new FormData(checkoutForm);
 
-  // If online payment (Razorpay), intercept and process via AJAX
-  if (radioOnline) {
-    e.preventDefault();
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Initiating Payment...';
+      const placeBtn = document.getElementById('placeOrderBtn');
+      placeBtn.disabled = true;
+      placeBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Initiating Secure Checkout...';
 
-    const formData = new FormData(this);
-    formData.set('is_ajax', '1');
+      fetch(checkoutForm.action || window.location.href, {
+        method: 'POST',
+        body: formData,
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (!data.success) {
+          showFbToast(data.error || 'Checkout validation failed.', 'error');
+          placeBtn.disabled = false;
+          placeBtn.innerHTML = '<i class="bi bi-shield-check me-1"></i> Place Order';
+          return;
+        }
 
-    fetch("{% url 'checkout' %}", {
-      method: "POST",
-      body: formData,
-      headers: {
-        "X-Requested-With": "XMLHttpRequest"
-      }
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (!data.success) {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = '<i class="bi bi-shield-check me-2"></i>Confirm & Place Order (₹{{ cart.total }})';
-        feedback.classList.remove('d-none');
-        feedback.innerHTML = '<div class="alert alert-danger py-2 small mb-0">' + (data.error || 'Failed to initialize order.') + '</div>';
-        return;
-      }
-
-      const isMock = data.razorpay_order_id && data.razorpay_order_id.startsWith("order_mock_");
-      if (isMock || !data.key) {
-        // Direct simulation in mock mode
-        verifyRazorpayPayment(data.order_id, data.razorpay_order_id, "pay_mock_" + Date.now(), "sig_mock_" + Date.now());
-      } else {
         const options = {
-          key: data.key,
+          key: data.razorpay_key,
           amount: data.amount,
           currency: data.currency,
-          name: "FoodBasket",
-          description: "Order #" + data.order_id,
+          name: 'FoodBasket',
+          description: 'Order #' + data.order_id,
+          image: '/static/images/logo.png',
           order_id: data.razorpay_order_id,
+          handler: function (response){
+            // Verify payment
+            fetch('/payment/verify/', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+              },
+              body: JSON.stringify({
+                order_id: data.order_id,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature
+              })
+            })
+            .then(res => res.json())
+            .then(verifyData => {
+              if (verifyData.success) {
+                window.location.href = verifyData.redirect_url;
+              } else {
+                showFbToast('Payment verification failed: ' + verifyData.error, 'error');
+                placeBtn.disabled = false;
+                placeBtn.innerHTML = '<i class="bi bi-shield-check me-1"></i> Place Order';
+              }
+            });
+          },
           prefill: {
             name: data.customer_name,
             email: data.customer_email,
             contact: data.customer_phone
           },
-          theme: { color: "#1e7e4a" },
-          handler: function (response) {
-            verifyRazorpayPayment(
-              data.order_id,
-              response.razorpay_order_id,
-              response.razorpay_payment_id,
-              response.razorpay_signature
-            );
-          },
-          modal: {
-            ondismiss: function () {
-              submitBtn.disabled = false;
-              submitBtn.innerHTML = '<i class="bi bi-shield-check me-2"></i>Confirm & Place Order (₹{{ cart.total }})';
-              feedback.classList.remove('d-none');
-              feedback.innerHTML = '<div class="alert alert-warning py-2 small mb-0">Payment cancelled. You can try again.</div>';
-            }
-          }
+          theme: { color: '#2a874f' }
         };
         const rzp = new Razorpay(options);
+        rzp.on('payment.failed', function (resp){
+          showFbToast('Payment cancelled or failed: ' + resp.error.description, 'error');
+          placeBtn.disabled = false;
+          placeBtn.innerHTML = '<i class="bi bi-shield-check me-1"></i> Place Order';
+        });
         rzp.open();
-      }
-    })
-    .catch(err => {
-      submitBtn.disabled = false;
-      submitBtn.innerHTML = '<i class="bi bi-shield-check me-2"></i>Confirm & Place Order (₹{{ cart.total }})';
-      feedback.classList.remove('d-none');
-      feedback.innerHTML = '<div class="alert alert-danger py-2 small mb-0">Error processing request. Please try again.</div>';
-    });
-  }
-});
-
-function verifyRazorpayPayment(orderId, rpOrderId, rpPaymentId, rpSignature) {
-  const feedback = document.getElementById('checkoutFeedback');
-  const submitBtn = document.getElementById('submitOrderBtn');
-  feedback.classList.remove('d-none');
-  feedback.innerHTML = '<div class="alert alert-info py-2 small mb-0"><span class="spinner-border spinner-border-sm me-2"></span>Verifying payment signature...</div>';
-
-  fetch("{% url 'verify_razorpay_payment' %}", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value
-    },
-    body: JSON.stringify({
-      order_id: orderId,
-      razorpay_order_id: rpOrderId,
-      razorpay_payment_id: rpPaymentId,
-      razorpay_signature: rpSignature
-    })
-  })
-  .then(res => res.json())
-  .then(data => {
-    if (data.success) {
-      window.location.href = data.redirect_url;
-    } else {
-      submitBtn.disabled = false;
-      submitBtn.innerHTML = '<i class="bi bi-shield-check me-2"></i>Confirm & Place Order (₹{{ cart.total }})';
-      feedback.innerHTML = '<div class="alert alert-danger py-2 small mb-0">' + (data.error || 'Payment verification failed.') + '</div>';
+      })
+      .catch(err => {
+        showFbToast('Network error during checkout.', 'error');
+        placeBtn.disabled = false;
+        placeBtn.innerHTML = '<i class="bi bi-shield-check me-1"></i> Place Order';
+      });
     }
-  })
-  .catch(err => {
-    submitBtn.disabled = false;
-    submitBtn.innerHTML = '<i class="bi bi-shield-check me-2"></i>Confirm & Place Order (₹{{ cart.total }})';
-    feedback.innerHTML = '<div class="alert alert-danger py-2 small mb-0">Network error verifying payment.</div>';
   });
 }
 </script>
