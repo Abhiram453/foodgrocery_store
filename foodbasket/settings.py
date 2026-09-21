@@ -77,54 +77,83 @@ logger = logging.getLogger(__name__)
 db_url = os.environ.get('DATABASE_URL')
 
 
-def resolve_database_host(host, port=5432):
-    """
-    Attempts to resolve database host. If host is a Render internal short hostname without a domain
-    (e.g. 'dpg-xxxxx-a'), and fails to resolve directly, tests known Render region suffixes
-    (e.g. .oregon-postgres.render.com).
-    """
-    if not host:
-        return host
+def check_postgresql_connection(host, port, db_name, user, password, options=None, timeout=2):
+    """Verifies that a PostgreSQL host is reachable and accepts SSL/TCP connections."""
     try:
-        socket.getaddrinfo(host, port)
-        return host
-    except Exception:
-        pass
-
-    # Render internal short hostname resolution
-    if host.startswith('dpg-') and '.' not in host:
-        for region in ['oregon', 'frankfurt', 'ohio', 'singapore', 'virginia']:
-            candidate = f"{host}.{region}-postgres.render.com"
-            try:
-                socket.getaddrinfo(candidate, port)
-                logger.info(f"Resolved Render internal database host '{host}' -> '{candidate}'")
-                return candidate
-            except Exception:
-                continue
-    return None
+        import psycopg2
+        conn_params = {
+            'dbname': db_name,
+            'user': user,
+            'password': password,
+            'host': host,
+            'port': port or 5432,
+            'connect_timeout': int(timeout),
+        }
+        if options and 'sslmode' in options:
+            conn_params['sslmode'] = options['sslmode']
+        conn = psycopg2.connect(**conn_params)
+        conn.close()
+        return True, None
+    except Exception as e:
+        return False, str(e)
 
 
 if db_url:
     url = urllib.parse.urlparse(db_url)
-    resolved_host = resolve_database_host(url.hostname, url.port or 5432)
+    raw_host = url.hostname
+    port = url.port or 5432
+    db_name = url.path[1:]
+    user = url.username
+    password = url.password
 
-    if resolved_host:
-        db_options = {}
-        if 'sslmode' in (url.query or ''):
-            params = urllib.parse.parse_qs(url.query)
-            if 'sslmode' in params:
-                db_options['sslmode'] = params['sslmode'][0]
-        elif not DEBUG or '.render.com' in resolved_host:
-            db_options['sslmode'] = 'require'
+    db_options = {}
+    if 'sslmode' in (url.query or ''):
+        params = urllib.parse.parse_qs(url.query)
+        if 'sslmode' in params:
+            db_options['sslmode'] = params['sslmode'][0]
+    elif not DEBUG or (raw_host and '.render.com' in raw_host):
+        db_options['sslmode'] = 'require'
 
+    candidates = []
+    if raw_host:
+        candidates.append(raw_host)
+        if raw_host.startswith('dpg-') and '.' not in raw_host:
+            candidates.append(f"{raw_host}.oregon-postgres.render.com")
+
+    connected_host = None
+    connection_error = None
+
+    for candidate in candidates:
+        try:
+            socket.getaddrinfo(candidate, port)
+        except Exception:
+            continue
+
+        is_ok, err = check_postgresql_connection(
+            host=candidate,
+            port=port,
+            db_name=db_name,
+            user=user,
+            password=password,
+            options=db_options,
+            timeout=2,
+        )
+        if is_ok:
+            connected_host = candidate
+            logger.info(f"Connected to PostgreSQL database at {connected_host}:{port}/{db_name}")
+            break
+        else:
+            connection_error = err
+
+    if connected_host:
         DATABASES = {
             'default': {
                 'ENGINE': 'django.db.backends.postgresql',
-                'NAME': url.path[1:],
-                'USER': url.username,
-                'PASSWORD': url.password,
-                'HOST': resolved_host,
-                'PORT': url.port or 5432,
+                'NAME': db_name,
+                'USER': user,
+                'PASSWORD': password,
+                'HOST': connected_host,
+                'PORT': port,
                 'OPTIONS': db_options,
             }
         }
@@ -132,9 +161,9 @@ if db_url:
         allow_fallback = os.environ.get('ALLOW_SQLITE_FALLBACK', 'true').lower() in ('true', '1')
         if allow_fallback or DEBUG:
             logger.warning(
-                f"DATABASE_URL hostname '{url.hostname}' cannot be resolved via DNS. "
+                f"PostgreSQL connection to host '{raw_host}' failed: {connection_error}. "
                 f"Falling back to SQLite at {BASE_DIR / 'db.sqlite3'}. "
-                f"To use PostgreSQL on Render, verify the database is active and use the External Database URL."
+                f"To use PostgreSQL on Render, ensure the database is active and use the External Database URL."
             )
             DATABASES = {
                 'default': {
@@ -144,7 +173,7 @@ if db_url:
             }
         else:
             raise ImproperlyConfigured(
-                f"DATABASE_URL host '{url.hostname}' could not be resolved. "
+                f"PostgreSQL connection to host '{raw_host}' failed: {connection_error}. "
                 f"Please verify your database is running or set ALLOW_SQLITE_FALLBACK=True."
             )
 else:
