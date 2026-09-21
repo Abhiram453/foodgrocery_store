@@ -120,7 +120,7 @@ img { max-width: 100%; display: block; }
 .navbar-brand strong { color: var(--g700); }
 
 /* Search (desktop) */
-.nav-search-form { width: 380px; }
+.nav-search-form { flex: 1 1 auto; max-width: 440px; min-width: 140px; }
 
 @media (max-width: 991px) { .nav-search-form { display: none !important; } }
 

@@ -10,9 +10,37 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-  <link href="{% static 'css/style.css' %}?v=1.5" rel="stylesheet" />
-  <link href="{% static 'css/foodbasket.css' %}?v=2.0" rel="stylesheet" />
+  <link href="{% static 'css/style.css' %}?v=2.5" rel="stylesheet" />
+  <link href="{% static 'css/foodbasket.css' %}?v=3.0" rel="stylesheet" />
   <style>
+    html, body {
+      max-width: 100% !important;
+      overflow-x: clip !important;
+    }
+    @supports not (overflow-x: clip) {
+      html, body {
+        overflow-x: hidden !important;
+      }
+    }
+    #mainNav {
+      overflow-x: clip;
+      width: 100%;
+    }
+    .nav-search-form {
+      flex: 1 1 auto !important;
+      min-width: 100px !important;
+      max-width: 380px !important;
+      width: auto !important;
+    }
+    .nav-search-wrap {
+      width: 100% !important;
+      min-width: 0 !important;
+    }
+    .nav-link-custom {
+      padding: 0.3rem 0.45rem !important;
+      font-size: 0.82rem !important;
+      white-space: nowrap !important;
+    }
     #navLocationWidget:hover .nav-location-btn {
       border-color: var(--fb-green-600) !important;
       background-color: #ffffff !important;
@@ -25,7 +53,7 @@
 
 <!-- ── TOP PROMO BAR ── -->
 <div class="promo-bar d-none d-md-block">
-  <div class="container">
+  <div class="container-fluid px-3 px-xl-4" style="max-width: 1440px;">
     <div class="d-flex justify-content-between align-items-center py-1">
       <span><i class="bi bi-lightning-fill me-1 text-warning"></i>Same-day delivery in under 60 mins! Use code <strong>FRESH10</strong> for 10% off</span>
       <span class="d-flex gap-3 align-items-center">
@@ -46,26 +74,26 @@
 
 <!-- ── NAVBAR ── -->
 <nav class="navbar navbar-expand-lg sticky-top" id="mainNav">
-  <div class="container-fluid px-3 px-md-5">
+  <div class="container-fluid px-3 px-xl-4" style="max-width: 1440px;">
 
-    <a class="navbar-brand" href="{% url 'home' %}">
+    <a class="navbar-brand me-2 me-xl-3" href="{% url 'home' %}" style="flex-shrink: 0;">
       <span class="brand-emoji">🛒</span>
       <span>Food<strong>Basket</strong></span>
-      <span class="brand-tagline-badge d-none d-md-inline-block">Good Food. Brighter Days.</span>
+      <span class="brand-tagline-badge d-none d-xxl-inline-block">Good Food. Brighter Days.</span>
     </a>
 
     <!-- Location Selector Widget -->
     {% if user.is_authenticated and user.profile.role == 'customer' %}
-    <a href="{% url 'select_location' %}" class="ms-lg-3 ms-2 d-inline-flex align-items-center text-decoration-none" id="navLocationWidget" style="flex-shrink: 0;">
-      <div class="d-flex align-items-center bg-white border px-3 py-1.5 shadow-sm nav-location-btn" style="border-radius: 50px; border-color: #e9ecef !important; transition: all 0.2s ease-in-out; gap: 8px; flex-shrink: 0; white-space: nowrap;">
-        <span style="font-size: 1.1rem; line-height: 1; flex-shrink: 0;">📍</span>
-        <div class="text-start d-flex flex-column" style="line-height: 1.15; flex-shrink: 0;">
-          <span style="color: #6c757d; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; white-space: nowrap;">Deliver to</span>
-          <span class="fw-bold text-dark" id="navLocationText" style="font-size: 0.85rem; letter-spacing: -0.01em; white-space: nowrap;">
+    <a href="{% url 'select_location' %}" class="me-2 me-lg-3 d-inline-flex align-items-center text-decoration-none" id="navLocationWidget" style="flex-shrink: 0;">
+      <div class="d-flex align-items-center bg-white border px-2.5 py-1 shadow-sm nav-location-btn" style="border-radius: 50px; border-color: #e5e2da !important; transition: all 0.2s ease-in-out; gap: 6px; flex-shrink: 0; white-space: nowrap;">
+        <span style="font-size: 1rem; line-height: 1; flex-shrink: 0;">📍</span>
+        <div class="text-start d-flex flex-column" style="line-height: 1.1; max-width: 110px; flex-shrink: 0;">
+          <span style="color: #6c757d; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap;">Deliver to</span>
+          <span class="fw-bold text-dark text-truncate" id="navLocationText" style="font-size: 0.8rem; letter-spacing: -0.01em; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
             {% if request.session.user_pincode %}Pincode: {{ request.session.user_pincode }}{% else %}Select Location{% endif %}
           </span>
         </div>
-        <span style="color: #6c757d; font-size: 0.75rem; margin-left: 2px; flex-shrink: 0;"><i class="bi bi-chevron-down"></i></span>
+        <span style="color: #6c757d; font-size: 0.7rem; margin-left: 2px; flex-shrink: 0;"><i class="bi bi-chevron-down"></i></span>
       </div>
     </a>
     {% endif %}
@@ -88,17 +116,17 @@
     <div class="collapse navbar-collapse" id="navbarMain">
       <!-- Search -->
       {% if user.is_authenticated %}
-      <form class="nav-search-form ms-lg-4 me-auto position-relative" action="{% url 'product_list' %}" method="get" autocomplete="off">
+      <form class="nav-search-form my-2 my-lg-0 mx-lg-2 position-relative" action="{% url 'product_list' %}" method="get" autocomplete="off" style="flex: 1 1 180px; max-width: 440px; min-width: 140px;">
         <div class="nav-search-wrap">
           <i class="bi bi-search nav-search-icon"></i>
-          <input type="search" name="q" id="navSearchInput" class="nav-search-input" placeholder="Search for fruits, vegetables, dairy…" value="{{ request.GET.q }}">
+          <input type="search" name="q" id="navSearchInput" class="nav-search-input" placeholder="Search groceries…" value="{{ request.GET.q }}">
           <button type="submit" class="nav-search-btn">Search</button>
         </div>
         <div id="autocompleteResults" class="dropdown-menu shadow-lg w-100 mt-1 border-0 rounded-3 p-2 d-none" style="position: absolute; top: 100%; left: 0; z-index: 1050; max-height: 300px; overflow-y: auto;"></div>
       </form>
       {% endif %}
 
-      <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-1">
+      <ul class="navbar-nav ms-auto align-items-lg-center gap-1">
 
         {% if user.is_authenticated %}
         <!-- Categories dropdown -->
@@ -127,31 +155,25 @@
           </ul>
         </li>
 
-        {% endif %}
-
-        {% if user.is_authenticated %}
         <li class="nav-item">
-          <a class="nav-link nav-link-custom" href="{% url 'recipes' %}">
-            <i class="bi bi-journal-richtext me-1"></i>Recipes
+          <a class="nav-link nav-link-custom" href="{% url 'recipes' %}" title="Recipes">
+            <i class="bi bi-journal-richtext"></i><span class="d-none d-xxl-inline ms-1">Recipes</span>
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link nav-link-custom" href="{% url 'wishlist' %}">
-            <i class="bi bi-heart me-1"></i>Wishlist
+          <a class="nav-link nav-link-custom" href="{% url 'wishlist' %}" title="Wishlist">
+            <i class="bi bi-heart"></i><span class="d-none d-xxl-inline ms-1">Wishlist</span>
           </a>
         </li>
-        {% endif %}
-
-        {% if user.is_authenticated %}
-        <li class="nav-item">
-          <a class="nav-link nav-link-custom" href="{% url 'order_history' %}">
-            <i class="bi bi-bag me-1"></i>My Orders
+        <li class="nav-item d-none d-xl-block">
+          <a class="nav-link nav-link-custom" href="{% url 'order_history' %}" title="Orders">
+            <i class="bi bi-bag"></i><span class="ms-1">Orders</span>
           </a>
         </li>
         <li class="nav-item dropdown">
           <a class="nav-link nav-link-custom" href="#" data-bs-toggle="dropdown">
             <i class="bi bi-person-circle me-1"></i>
-            <span>{{ user.username }}</span>
+            <span class="text-truncate d-inline-block align-middle" style="max-width: 90px;">{{ user.username }}</span>
             <i class="bi bi-chevron-down ms-1 small"></i>
           </a>
           <ul class="dropdown-menu dropdown-menu-end cat-dropdown shadow-lg">

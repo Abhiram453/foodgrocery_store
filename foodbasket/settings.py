@@ -65,59 +65,96 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'foodbasket.wsgi.application'
 
+import logging
 import socket
 import urllib.parse
 
 from django.core.exceptions import ImproperlyConfigured
 
+logger = logging.getLogger(__name__)
+
 db_url = os.environ.get('DATABASE_URL')
 
-if not DEBUG:
-    # Production strictly requires PostgreSQL via DATABASE_URL
-    if not db_url:
-        raise ImproperlyConfigured("DATABASE_URL environment variable is required in production.")
-    url = urllib.parse.urlparse(db_url)
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': url.path[1:],
-            'USER': url.username,
-            'PASSWORD': url.password,
-            'HOST': url.hostname,
-            'PORT': url.port or 5432,
-        }
-    }
-else:
-    # Local development: use PostgreSQL if configured and reachable, otherwise SQLite
-    postgres_ready = False
-    if db_url:
-        try:
-            url = urllib.parse.urlparse(db_url)
-            if url.hostname:
-                socket.getaddrinfo(url.hostname, url.port or 5432)
-                postgres_ready = True
-        except Exception:
-            postgres_ready = False
 
-    if postgres_ready and db_url:
-        url = urllib.parse.urlparse(db_url)
+def resolve_database_host(host, port=5432):
+    """
+    Attempts to resolve database host. If host is a Render internal short hostname without a domain
+    (e.g. 'dpg-xxxxx-a'), and fails to resolve directly, tests known Render region suffixes
+    (e.g. .oregon-postgres.render.com).
+    """
+    if not host:
+        return host
+    try:
+        socket.getaddrinfo(host, port)
+        return host
+    except Exception:
+        pass
+
+    # Render internal short hostname resolution
+    if host.startswith('dpg-') and '.' not in host:
+        for region in ['oregon', 'frankfurt', 'ohio', 'singapore', 'virginia']:
+            candidate = f"{host}.{region}-postgres.render.com"
+            try:
+                socket.getaddrinfo(candidate, port)
+                logger.info(f"Resolved Render internal database host '{host}' -> '{candidate}'")
+                return candidate
+            except Exception:
+                continue
+    return None
+
+
+if db_url:
+    url = urllib.parse.urlparse(db_url)
+    resolved_host = resolve_database_host(url.hostname, url.port or 5432)
+
+    if resolved_host:
+        db_options = {}
+        if 'sslmode' in (url.query or ''):
+            params = urllib.parse.parse_qs(url.query)
+            if 'sslmode' in params:
+                db_options['sslmode'] = params['sslmode'][0]
+        elif not DEBUG or '.render.com' in resolved_host:
+            db_options['sslmode'] = 'require'
+
         DATABASES = {
             'default': {
                 'ENGINE': 'django.db.backends.postgresql',
                 'NAME': url.path[1:],
                 'USER': url.username,
                 'PASSWORD': url.password,
-                'HOST': url.hostname,
+                'HOST': resolved_host,
                 'PORT': url.port or 5432,
+                'OPTIONS': db_options,
             }
         }
     else:
-        DATABASES = {
-            'default': {
-                'ENGINE': 'django.db.backends.sqlite3',
-                'NAME': BASE_DIR / 'db.sqlite3',
+        allow_fallback = os.environ.get('ALLOW_SQLITE_FALLBACK', 'true').lower() in ('true', '1')
+        if allow_fallback or DEBUG:
+            logger.warning(
+                f"DATABASE_URL hostname '{url.hostname}' cannot be resolved via DNS. "
+                f"Falling back to SQLite at {BASE_DIR / 'db.sqlite3'}. "
+                f"To use PostgreSQL on Render, verify the database is active and use the External Database URL."
+            )
+            DATABASES = {
+                'default': {
+                    'ENGINE': 'django.db.backends.sqlite3',
+                    'NAME': BASE_DIR / 'db.sqlite3',
+                }
             }
+        else:
+            raise ImproperlyConfigured(
+                f"DATABASE_URL host '{url.hostname}' could not be resolved. "
+                f"Please verify your database is running or set ALLOW_SQLITE_FALLBACK=True."
+            )
+else:
+    if not DEBUG and os.environ.get('ALLOW_SQLITE_FALLBACK', 'true').lower() not in ('true', '1'):
+        raise ImproperlyConfigured("DATABASE_URL environment variable is required in production.")
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
         }
+    }
 
 # Razorpay credentials
 RAZORPAY_KEY_ID = os.environ.get('RAZORPAY_KEY_ID', 'rzp_test_placeholder')
