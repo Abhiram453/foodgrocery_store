@@ -53,14 +53,24 @@ class DeliveryArea(models.Model):
     area_name = models.CharField(max_length=100)
     city = models.CharField(max_length=100)
     state = models.CharField(max_length=100)
-    is_active = models.BooleanField(default=True)
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    is_active = models.BooleanField(default=True, db_index=True)
+    delivery_fee = models.DecimalField(max_digits=8, decimal_places=2, default=30.00)
+    minimum_order_value = models.DecimalField(max_digits=8, decimal_places=2, default=150.00)
+    estimated_delivery_minutes = models.PositiveIntegerField(default=45, help_text="Estimated standard delivery time in minutes")
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['pincode']
+        ordering = ['city', 'area_name']
 
     def __str__(self):
         return f"{self.area_name} ({self.pincode}), {self.city}"
+
+    @property
+    def display_name(self):
+        return f"{self.area_name} • {self.pincode}"
 
 
 class VendorProfile(models.Model):
@@ -171,6 +181,43 @@ class Product(models.Model):
     @property
     def is_low_stock(self):
         return self.stock <= self.low_stock_threshold
+
+    @property
+    def image_url(self):
+        """Returns the product image URL, falling back to static product SVG, then category SVG, never an emoji."""
+        if self.image:
+            try:
+                return self.image.url
+            except Exception:
+                pass
+
+        from django.templatetags.static import static
+        from django.conf import settings
+        import os
+
+        safe_slug = self.slug.lower().strip() if self.slug else ''
+        static_dirs = getattr(settings, 'STATICFILES_DIRS', [])
+
+        for base_dir in static_dirs:
+            prod_svg = os.path.join(str(base_dir), 'images', 'products', f'{safe_slug}.svg')
+            if os.path.exists(prod_svg):
+                return static(f'images/products/{safe_slug}.svg')
+            prod_jpg = os.path.join(str(base_dir), 'images', 'products', f'{safe_slug}.jpg')
+            if os.path.exists(prod_jpg):
+                return static(f'images/products/{safe_slug}.jpg')
+            prod_png = os.path.join(str(base_dir), 'images', 'products', f'{safe_slug}.png')
+            if os.path.exists(prod_png):
+                return static(f'images/products/{safe_slug}.png')
+
+        # Fallback to category SVG
+        if hasattr(self, 'category') and self.category and self.category.slug:
+            cat_slug = self.category.slug.lower().strip()
+            for base_dir in static_dirs:
+                cat_svg = os.path.join(str(base_dir), 'images', 'categories', f'{cat_slug}.svg')
+                if os.path.exists(cat_svg):
+                    return static(f'images/categories/{cat_slug}.svg')
+
+        return static(f'images/products/{safe_slug}.svg')
 
 
 class Wishlist(models.Model):
@@ -419,6 +466,15 @@ class OrderItem(models.Model):
     @property
     def subtotal(self):
         return self.price * self.quantity
+
+    @property
+    def image_url(self):
+        if self.product:
+            return self.product.image_url
+        from django.templatetags.static import static
+        from django.utils.text import slugify
+        safe_slug = slugify(self.product_name)
+        return static(f'images/products/{safe_slug}.svg')
 
 
 class OrderStatusHistory(models.Model):

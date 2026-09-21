@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" width="100%" height="100%">
+  <defs>
+    <linearGradient id="banGrad1" x1="20%" y1="0%" x2="80%" y2="100%">
+      <stop offset="0%" stop-color="#FFF176"/>
+      <stop offset="50%" stop-color="#FDD835"/>
+      <stop offset="90%" stop-color="#FBC02D"/>
+      <stop offset="100%" stop-color="#827717"/>
+    </linearGradient>
+    <linearGradient id="banGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFEE58"/>
+      <stop offset="60%" stop-color="#FBC02D"/>
+      <stop offset="100%" stop-color="#689F38"/>
+    </linearGradient>
+    <filter id="dropB" x="-10%" y="-10%" width="125%" height="125%">
+      <feDropShadow dx="0" dy="5" stdDeviation="5" flood-opacity="0.18" flood-color="#7B6000"/>
+    </filter>
+  </defs>
+  <circle cx="80" cy="80" r="72" fill="#FEF9C3" opacity="0.65"/>
+  <!-- Banana Back -->
+  <path d="M42 42 C64 54, 98 72, 114 108 C120 122, 112 128, 102 124 C82 92, 54 70, 36 50 Z" fill="#EAB308" opacity="0.5"/>
+  <!-- Banana 1 -->
+  <path d="M40 38 C68 46, 108 72, 126 112 C130 122, 122 128, 114 126 C90 92, 58 64, 34 46 Z" fill="url(#banGrad1)" filter="url(#dropB)"/>
+  <!-- Banana 2 Front -->
+  <path d="M38 48 C66 58, 102 86, 116 122 C118 128, 110 134, 104 130 C78 100, 50 74, 30 56 Z" fill="url(#banGrad2)" filter="url(#dropB)"/>
+  <!-- Stem top -->
+  <path d="M32 42 C30 36, 36 32, 44 36 L40 46 Z" fill="#556B2F"/>
+  <!-- Tips -->
+  <circle cx="120" cy="120" r="3.5" fill="#5D4037"/>
+  <circle cx="110" cy="128" r="3" fill="#5D4037"/>
+  <!-- Highlight -->
+  <path d="M46 54 C72 68, 96 90, 106 114" stroke="#FFFDE7" stroke-width="3.5" stroke-linecap="round" fill="none" opacity="0.55"/>
+</svg>

@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" width="100%" height="100%">
+  <defs>
+    <radialGradient id="potGrad" cx="35%" cy="30%" r="65%">
+      <stop offset="0%" stop-color="#FDE68A"/>
+      <stop offset="40%" stop-color="#D97706"/>
+      <stop offset="85%" stop-color="#92400E"/>
+      <stop offset="100%" stop-color="#5C2503"/>
+    </radialGradient>
+    <filter id="potS">
+      <feDropShadow dx="0" dy="6" stdDeviation="6" flood-opacity="0.22" flood-color="#451A03"/>
+    </filter>
+  </defs>
+  <circle cx="80" cy="80" r="72" fill="#FEF3C7" opacity="0.55"/>
+  <!-- Back Potato -->
+  <path d="M90 45 C116 48, 134 68, 132 94 C130 118, 110 132, 88 128 C66 124, 62 102, 68 80 C74 58, 76 43, 90 45 Z" fill="#B45309" opacity="0.6"/>
+  <!-- Front Big Potato -->
+  <path d="M54 54 C82 46, 118 58, 120 86 C122 116, 96 136, 68 134 C40 132, 28 110, 30 84 C32 60, 40 58, 54 54 Z" fill="url(#potGrad)" filter="url(#potS)"/>
+  <!-- Eyes / Dimples -->
+  <path d="M52 74 Q56 76 60 74" stroke="#78350F" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+  <circle cx="56" cy="74" r="1.5" fill="#451A03"/>
+  <path d="M82 66 Q86 68 90 66" stroke="#78350F" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+  <circle cx="86" cy="66" r="1.5" fill="#451A03"/>
+  <path d="M72 104 Q76 106 80 104" stroke="#78350F" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+  <circle cx="76" cy="104" r="1.5" fill="#451A03"/>
+  <path d="M102 96 Q106 98 110 96" stroke="#78350F" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+  <!-- Highlight -->
+  <ellipse cx="60" cy="62" rx="16" ry="8" transform="rotate(-15 60 62)" fill="#FFFFFF" opacity="0.25"/>
+</svg>

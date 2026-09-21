@@ -34,6 +34,11 @@ from .models import (
     Wishlist,
 )
 from .payment_utils import create_razorpay_order, verify_razorpay_payment
+from .services.geocoding import (
+    clean_pincode,
+    check_pincode_serviceability,
+    reverse_geocode as service_reverse_geocode,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -159,13 +164,40 @@ def product_list(request, slug=None):
 
 
 def product_detail(request, slug):
-    if check_location(request):
-        return redirect('select_location')
     product = get_object_or_404(Product, slug=slug, is_active=True)
     related = Product.objects.filter(category=product.category, is_active=True).exclude(id=product.id)[:4]
+
+    # Check vendor delivery serviceability for user's selected location
+    pincode = request.session.get('user_pincode')
+    area_id = request.session.get('delivery_area_id')
+    selected_area = None
+    if area_id:
+        selected_area = DeliveryArea.objects.filter(id=area_id, is_active=True).first()
+    elif pincode:
+        selected_area = DeliveryArea.objects.filter(pincode=pincode, is_active=True).first()
+
+    is_serviceable = True
+    vendor_service_message = None
+    if selected_area and product.vendor:
+        vp = getattr(product.vendor, 'vendor_profile', None)
+        if vp:
+            has_area_vendors = VendorProfile.objects.filter(service_areas=selected_area, status='approved').exists()
+            serves = (
+                vp.service_areas.filter(id=selected_area.id, is_active=True).exists() or
+                vp.pincode == selected_area.pincode or
+                (vp.assigned_area and selected_area.pincode in vp.assigned_area) or
+                not has_area_vendors
+            )
+            if not serves:
+                is_serviceable = False
+                vendor_service_message = f"Vendor '{vp.shop_name}' cannot deliver to {selected_area.display_name}."
+
     return render(request, 'store/product_detail.html', {
         'product': product,
         'related': related,
+        'selected_area': selected_area,
+        'is_serviceable': is_serviceable,
+        'vendor_service_message': vendor_service_message,
     })
 
 
@@ -227,12 +259,37 @@ def check_and_send_low_stock_alert(product):
 
 @login_required
 def cart_view(request):
-    if check_location(request):
-        return redirect('select_location')
     from django.utils import timezone as tz
     now = tz.now()
     cart = get_or_create_cart(request)
-    cart_items = cart.items.select_related('product').all()
+    cart_items = cart.items.select_related('product', 'product__vendor', 'product__vendor__vendor_profile').all()
+
+    pincode = request.session.get('user_pincode')
+    area_id = request.session.get('delivery_area_id')
+    selected_area = None
+    if area_id:
+        selected_area = DeliveryArea.objects.filter(id=area_id, is_active=True).first()
+    elif pincode:
+        selected_area = DeliveryArea.objects.filter(pincode=pincode, is_active=True).first()
+
+    has_unserviceable_items = False
+    for item in cart_items:
+        item.is_serviceable = True
+        item.unserviceable_reason = None
+        if selected_area and item.product.vendor:
+            vp = getattr(item.product.vendor, 'vendor_profile', None)
+            if vp:
+                has_area_vendors = VendorProfile.objects.filter(service_areas=selected_area, status='approved').exists()
+                serves = (
+                    vp.service_areas.filter(id=selected_area.id, is_active=True).exists() or
+                    vp.pincode == selected_area.pincode or
+                    (vp.assigned_area and selected_area.pincode in vp.assigned_area) or
+                    not has_area_vendors
+                )
+                if not serves:
+                    item.is_serviceable = False
+                    item.unserviceable_reason = f"Vendor '{vp.shop_name}' cannot deliver to {selected_area.display_name}."
+                    has_unserviceable_items = True
 
     # Recipe recommendations based on cart tags
     cart_tags = set()
@@ -257,6 +314,8 @@ def cart_view(request):
         'cart_items': cart_items,
         'recipes': recipes[:3],
         'active_coupons': active_coupons,
+        'selected_area': selected_area,
+        'has_unserviceable_items': has_unserviceable_items,
     })
 
 
@@ -266,6 +325,14 @@ def add_to_cart(request, product_id):
     product = get_object_or_404(Product, id=product_id, is_active=True)
     is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest' or 'application/json' in request.META.get('HTTP_ACCEPT', '')
 
+    pincode = request.session.get('user_pincode')
+    area_id = request.session.get('delivery_area_id')
+    selected_area = None
+    if area_id:
+        selected_area = DeliveryArea.objects.filter(id=area_id, is_active=True).first()
+    elif pincode:
+        selected_area = DeliveryArea.objects.filter(pincode=pincode, is_active=True).first()
+
     if product.vendor:
         v_profile = getattr(product.vendor, 'vendor_profile', None)
         if not v_profile or v_profile.status != 'approved':
@@ -274,6 +341,21 @@ def add_to_cart(request, product_id):
                 return JsonResponse({'success': False, 'message': msg}, status=400)
             messages.error(request, msg)
             return redirect(request.POST.get('next', request.META.get('HTTP_REFERER', '/')))
+
+        if selected_area:
+            has_area_vendors = VendorProfile.objects.filter(service_areas=selected_area, status='approved').exists()
+            serves = (
+                v_profile.service_areas.filter(id=selected_area.id, is_active=True).exists() or
+                v_profile.pincode == selected_area.pincode or
+                (v_profile.assigned_area and selected_area.pincode in v_profile.assigned_area) or
+                not has_area_vendors
+            )
+            if not serves:
+                msg = f"Vendor '{v_profile.shop_name}' cannot deliver this item to {selected_area.display_name}."
+                if is_ajax:
+                    return JsonResponse({'success': False, 'message': msg}, status=400)
+                messages.error(request, msg)
+                return redirect(request.POST.get('next', request.META.get('HTTP_REFERER', '/')))
 
     cart = get_or_create_cart(request)
     try:
@@ -471,8 +553,44 @@ def checkout(request):
                 'razorpay_key_id': settings.RAZORPAY_KEY_ID,
             })
 
-        # Pre-check vendor serviceability for this pincode
+        # Validate active DeliveryArea in database
+        clean_pin = clean_pincode(pincode)
+        area = DeliveryArea.objects.filter(pincode=clean_pin, is_active=True).first() if clean_pin else None
+        if not area and clean_pin:
+            area = DeliveryArea.objects.create(
+                pincode=clean_pin,
+                area_name=f"Zone {clean_pin}",
+                city=city or 'Local Area',
+                is_active=True,
+                delivery_fee=30,
+                minimum_order_value=100,
+                estimated_delivery_minutes=45,
+            )
+        if not area:
+            messages.error(request, f'Please enter a valid 6-digit Indian delivery pincode (entered: "{pincode}").')
+            return render(request, 'store/checkout.html', {
+                'cart': cart,
+                'slots': slots,
+                'saved_addresses': saved_addresses,
+                'razorpay_key_id': settings.RAZORPAY_KEY_ID,
+            })
+
+        # Validate minimum order value for this delivery area
+        if cart.subtotal < area.minimum_order_value:
+            messages.error(
+                request,
+                f'The minimum order value for {area.area_name} is ₹{area.minimum_order_value}. '
+                f'Your current basket subtotal is ₹{cart.subtotal}. Please add more items.'
+            )
+            return redirect('cart')
+
+        # Server-side delivery fee calculation (free if subtotal >= 500)
+        from decimal import Decimal
+        actual_delivery_fee = Decimal('0.00') if cart.subtotal >= Decimal('500.00') else area.delivery_fee
+
+        # Pre-check vendor serviceability for this delivery area
         cart_items_check = cart.items.select_related('product', 'product__vendor', 'product__vendor__vendor_profile').all()
+        has_area_vendors = VendorProfile.objects.filter(service_areas=area, status='approved').exists()
         for it in cart_items_check:
             if not it.product.is_active:
                 messages.error(request, f'Item "{it.product.name}" is no longer active.')
@@ -483,14 +601,15 @@ def checkout(request):
                     messages.error(request, f'Item "{it.product.name}" is from an inactive vendor.')
                     return redirect('cart')
                 serves = (
-                    vp.service_areas.filter(pincode=pincode, is_active=True).exists() or
-                    vp.pincode == pincode or
-                    (vp.assigned_area and pincode in vp.assigned_area)
+                    vp.service_areas.filter(id=area.id, is_active=True).exists() or
+                    vp.pincode == clean_pin or
+                    (vp.assigned_area and clean_pin in vp.assigned_area) or
+                    not has_area_vendors
                 )
                 if not serves:
                     messages.error(
                         request,
-                        f'Vendor "{vp.shop_name}" does not deliver to pincode {pincode} for item "{it.product.name}".'
+                        f'Vendor "{vp.shop_name}" does not deliver to {area.display_name} for item "{it.product.name}".'
                     )
                     return render(request, 'store/checkout.html', {
                         'cart': cart,
@@ -532,22 +651,27 @@ def checkout(request):
                     slot_note_label = "Express Priority Delivery"
 
                 coupon = None
+                discount = Decimal('0.00')
                 if cart.coupon_id:
                     try:
                         coupon = Coupon.objects.select_for_update().get(id=cart.coupon_id)
                         valid, msg = coupon.is_valid(cart.subtotal)
                         if not valid or coupon.used_count >= coupon.max_uses:
                             coupon = None
+                        else:
+                            discount = Decimal(str(cart.discount_amount))
                     except Coupon.DoesNotExist:
                         coupon = None
 
-                notes = f"Payment Method: {payment_method}\nDelivery Mode: {slot_note_label}"
+                notes = f"Payment Method: {payment_method}\nDelivery Mode: {slot_note_label}\nDelivery Area: {area.display_name}"
                 if raw_notes:
                     notes += f"\nCustomer Notes: {raw_notes}"
 
                 is_cod = (payment_method == 'COD')
                 initial_status = 'confirmed' if is_cod else 'pending'
                 confirmed_time = timezone.now() if is_cod else None
+
+                order_total = max(Decimal('0.00'), cart.subtotal - discount + actual_delivery_fee)
 
                 order = Order.objects.create(
                     user=request.user,
@@ -556,11 +680,11 @@ def checkout(request):
                     address=address,
                     phone=phone,
                     delivery_pincode=pincode,
-                    delivery_city=city or 'City',
+                    delivery_city=city or area.city,
                     subtotal=cart.subtotal,
-                    discount_amount=cart.discount_amount if coupon else 0,
-                    delivery_fee=cart.delivery_fee,
-                    total=cart.total if coupon else (cart.subtotal + cart.delivery_fee),
+                    discount_amount=discount,
+                    delivery_fee=actual_delivery_fee,
+                    total=order_total,
                     payment_method=payment_method,
                     payment_status='pending',
                     status=initial_status,
@@ -954,87 +1078,189 @@ def search_autocomplete(request):
 @require_POST
 def set_location(request):
     """
-    AJAX view to set user pincode and area name in session.
+    AJAX view to set user pincode and area in session.
+    Accepts and registers any valid Indian pincode so the customer can order from anywhere.
     """
     try:
         if request.content_type == 'application/json':
             data = json.loads(request.body)
-            pincode = data.get('pincode', '').strip()
-            area_name = data.get('area_name', '').strip()
+            pincode = data.get('pincode', '')
+            area_id = data.get('area_id')
         else:
-            pincode = request.POST.get('pincode', '').strip()
-            area_name = request.POST.get('area_name', '').strip()
+            pincode = request.POST.get('pincode', '')
+            area_id = request.POST.get('area_id')
     except Exception:
-        pincode = request.POST.get('pincode', '').strip()
-        area_name = request.POST.get('area_name', '').strip()
+        pincode = request.POST.get('pincode', '')
+        area_id = request.POST.get('area_id')
 
-    if not pincode:
-        return JsonResponse({'success': False, 'error': 'Pincode is required.'}, status=400)
+    area = None
+    if area_id:
+        area = DeliveryArea.objects.filter(id=area_id).first()
 
-    area = DeliveryArea.objects.filter(pincode=pincode, is_active=True).first()
-    if area:
-        display_name = f"{area.area_name}, {area.city}"
-        request.session['user_pincode'] = pincode
-        request.session['user_area_name'] = display_name
+    clean_pin = clean_pincode(pincode) if pincode else None
+    if not area and clean_pin:
+        area = DeliveryArea.objects.filter(pincode=clean_pin).first()
+        if not area:
+            area = DeliveryArea.objects.create(
+                pincode=clean_pin,
+                area_name=f"Zone {clean_pin}",
+                city="Local Area",
+                is_active=True,
+                delivery_fee=30,
+                minimum_order_value=100,
+                estimated_delivery_minutes=45,
+            )
+
+    if not area and not clean_pin:
         return JsonResponse({
-            'success': True,
-            'pincode': pincode,
-            'area_name': display_name,
-            'is_serviceable': True,
-        })
-    else:
-        display_name = area_name or f"Pincode: {pincode}"
-        request.session['user_pincode'] = pincode
-        request.session['user_area_name'] = display_name
-        has_vendor = VendorProfile.objects.filter(
-            Q(service_areas__pincode=pincode, service_areas__is_active=True) |
-            Q(pincode=pincode) |
-            Q(assigned_area__icontains=pincode),
-            status='approved'
-        ).exists()
-        return JsonResponse({
-            'success': True,
-            'pincode': pincode,
-            'area_name': display_name,
-            'is_serviceable': has_vendor,
-            'warning': None if has_vendor else 'No approved vendors currently deliver to this area.'
-        })
+            'success': False,
+            'is_serviceable': False,
+            'error': 'Please enter a valid 6-digit Indian pincode.',
+        }, status=400)
 
+    if area and not area.is_active:
+        area.is_active = True
+        area.save()
 
-def reverse_geocode(request):
-    """
-    Reverse geocoding helper returning active delivery area.
-    """
-    default_area = DeliveryArea.objects.filter(is_active=True).first()
-    if default_area:
-        return JsonResponse({
-            'success': True,
-            'pincode': default_area.pincode,
-            'area_name': f"{default_area.area_name}, {default_area.city}"
-        })
+    # Persist in session
+    request.session['delivery_area_id'] = area.id
+    request.session['user_pincode'] = area.pincode
+    request.session['user_area_name'] = area.area_name
+    request.session['user_city'] = area.city
+    request.session['user_location_label'] = area.display_name
+
     return JsonResponse({
         'success': True,
-        'pincode': '625001',
-        'area_name': 'Madurai Main, Madurai'
+        'is_serviceable': True,
+        'area_id': area.id,
+        'pincode': area.pincode,
+        'area_name': area.area_name,
+        'city': area.city,
+        'state': area.state,
+        'display_name': area.display_name,
+        'delivery_fee': float(area.delivery_fee),
+        'minimum_order_value': float(area.minimum_order_value),
+        'estimated_delivery_minutes': area.estimated_delivery_minutes,
     })
 
 
+def detect_location_api(request):
+    """
+    Performs real reverse geocoding via configured geocoding provider,
+    registers the detected location as an active DeliveryArea,
+    and automatically selects it in the user session.
+    """
+    lat = request.GET.get('lat')
+    lng = request.GET.get('lng') or request.GET.get('lon')
+
+    if not lat or not lng:
+        return JsonResponse({
+            'success': False,
+            'error_type': 'missing_coordinates',
+            'error': 'Latitude and longitude query parameters are required.'
+        }, status=400)
+
+    geo_result = service_reverse_geocode(lat, lng)
+    if not geo_result.get('success'):
+        return JsonResponse(geo_result, status=400)
+
+    detected_pincode = geo_result.get('pincode')
+    locality = geo_result.get('locality') or ''
+    city = geo_result.get('city') or 'Local Area'
+    state = geo_result.get('state') or ''
+    area_name = locality or city or (f"Zone {detected_pincode}" if detected_pincode else "Detected Location")
+
+    # If geocoder did not extract a 6-digit postal code, fallback to existing active area or a default
+    if not detected_pincode:
+        existing_area = DeliveryArea.objects.filter(is_active=True).first()
+        detected_pincode = existing_area.pincode if existing_area else "625001"
+
+    service_result = check_pincode_serviceability(
+        detected_pincode,
+        area_name=area_name,
+        city=city,
+        state=state,
+        latitude=float(lat) if lat else None,
+        longitude=float(lng) if lng else None,
+    )
+
+    # Automatically select the detected location in the session right away!
+    area_id = service_result.get('area_id')
+    area = DeliveryArea.objects.filter(id=area_id).first() if area_id else None
+    if area:
+        request.session['delivery_area_id'] = area.id
+        request.session['user_pincode'] = area.pincode
+        request.session['user_area_name'] = area.area_name
+        request.session['user_city'] = area.city
+        request.session['user_location_label'] = area.display_name
+        request.session['detected_address'] = geo_result.get('formatted_address', area.display_name)
+
+    return JsonResponse({
+        'success': True,
+        'is_serviceable': True,
+        'selected': True,
+        'detected_location': geo_result,
+        'serviceability': service_result,
+    })
+
+
+def check_pincode_api(request):
+    """
+    API endpoint to check serviceability of a 6-digit Indian pincode against database DeliveryAreas.
+    Supports GET (?pincode=...) or POST (JSON or form-data).
+    """
+    if request.method == 'POST':
+        try:
+            if request.content_type == 'application/json':
+                data = json.loads(request.body)
+                pincode = data.get('pincode', '')
+            else:
+                pincode = request.POST.get('pincode', '')
+        except Exception:
+            pincode = request.POST.get('pincode', '')
+    else:
+        pincode = request.GET.get('pincode', '')
+
+    result = check_pincode_serviceability(pincode)
+    status_code = 200 if result.get('success') else 400
+    return JsonResponse(result, status=status_code)
+
+
 def get_location_filtered_products(request, queryset=None):
+    """
+    Filters products based on the customer's active delivery area.
+    If area-specific vendors exist, prioritizes them.
+    Otherwise, returns all approved marketplace vendors so customers can shop from anywhere.
+    """
     if queryset is None:
         queryset = Product.objects.filter(is_active=True, stock__gt=0)
     else:
         queryset = queryset.filter(is_active=True)
 
+    area_id = request.session.get('delivery_area_id')
     pincode = request.session.get('user_pincode')
-    if pincode:
-        queryset = queryset.filter(
-            Q(vendor__vendor_profile__service_areas__pincode=pincode, vendor__vendor_profile__service_areas__is_active=True) |
-            Q(vendor__vendor_profile__pincode=pincode) |
-            Q(vendor__vendor_profile__assigned_area__icontains=pincode) |
+
+    area = None
+    if area_id:
+        area = DeliveryArea.objects.filter(id=area_id, is_active=True).first()
+    elif pincode:
+        area = DeliveryArea.objects.filter(pincode=pincode, is_active=True).first()
+
+    if area:
+        location_matches = queryset.filter(
+            Q(vendor__vendor_profile__service_areas=area) |
+            Q(vendor__vendor_profile__pincode=area.pincode) |
+            Q(vendor__vendor_profile__assigned_area__icontains=area.pincode) |
             Q(vendor__isnull=True)
         ).filter(
             Q(vendor__vendor_profile__status='approved') | Q(vendor__isnull=True)
         ).distinct()
+        if location_matches.exists():
+            queryset = location_matches
+        else:
+            queryset = queryset.filter(
+                Q(vendor__vendor_profile__status='approved') | Q(vendor__isnull=True)
+            )
     else:
         queryset = queryset.filter(
             Q(vendor__vendor_profile__status='approved') | Q(vendor__isnull=True)
@@ -1043,32 +1269,51 @@ def get_location_filtered_products(request, queryset=None):
 
 
 def select_location(request):
-    if not request.user.is_authenticated:
-        return redirect('login')
-
-    profile = get_or_create_profile(request.user)
-    if profile.role != 'customer':
-        return redirect('home')
-
-    delivery_areas = DeliveryArea.objects.filter(is_active=True).order_by('city', 'area_name')
+    """
+    Page view for selecting or detecting delivery location.
+    Accessible to all users (customers and visitors).
+    """
+    selected_area = None
+    area_id = request.session.get('delivery_area_id')
+    pincode = request.session.get('user_pincode')
+    if area_id:
+        selected_area = DeliveryArea.objects.filter(id=area_id, is_active=True).first()
+    elif pincode:
+        selected_area = DeliveryArea.objects.filter(pincode=pincode, is_active=True).first()
 
     if request.method == 'POST':
-        pincode = request.POST.get('pincode', '').strip()
-        if pincode:
-            area = DeliveryArea.objects.filter(pincode=pincode, is_active=True).first()
-            if area:
-                display_name = f"{area.area_name}, {area.city}"
-            else:
-                display_name = f"Pincode: {pincode}"
+        pin_input = request.POST.get('pincode', '').strip()
+        clean_pin = clean_pincode(pin_input)
 
-            request.session['user_pincode'] = pincode
-            request.session['user_area_name'] = display_name
+        if clean_pin:
+            area = DeliveryArea.objects.filter(pincode=clean_pin).first()
+            if not area:
+                area = DeliveryArea.objects.create(
+                    pincode=clean_pin,
+                    area_name=f"Zone {clean_pin}",
+                    city="Local Area",
+                    is_active=True,
+                    delivery_fee=30,
+                    minimum_order_value=100,
+                    estimated_delivery_minutes=45,
+                )
+            elif not area.is_active:
+                area.is_active = True
+                area.save()
+
+            request.session['delivery_area_id'] = area.id
+            request.session['user_pincode'] = area.pincode
+            request.session['user_area_name'] = area.area_name
+            request.session['user_city'] = area.city
+            request.session['user_location_label'] = area.display_name
             next_url = request.GET.get('next') or 'home'
-            messages.success(request, f"Delivery location set to {display_name}! 📍")
+            messages.success(request, f"Delivery location set to {area.display_name}! 📍")
             return redirect(next_url)
+        else:
+            messages.error(request, "Please enter a valid 6-digit Indian pincode.")
 
     return render(request, 'store/select_location.html', {
-        'delivery_areas': delivery_areas,
+        'selected_area': selected_area,
     })
 
 

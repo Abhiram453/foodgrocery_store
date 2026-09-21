@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" width="100%" height="100%">
+  <defs>
+    <linearGradient id="spinach1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4ADE80"/>
+      <stop offset="60%" stop-color="#16A34A"/>
+      <stop offset="100%" stop-color="#14532D"/>
+    </linearGradient>
+    <linearGradient id="spinach2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#22C55E"/>
+      <stop offset="70%" stop-color="#15803D"/>
+      <stop offset="100%" stop-color="#052E16"/>
+    </linearGradient>
+    <filter id="spinS">
+      <feDropShadow dx="0" dy="5" stdDeviation="5" flood-opacity="0.18" flood-color="#032D14"/>
+    </filter>
+  </defs>
+  <circle cx="80" cy="80" r="72" fill="#DCFCE7" opacity="0.6"/>
+  <!-- Leaves back -->
+  <path d="M42 98 C30 50, 60 26, 80 22 C100 26, 128 50, 116 98 C108 116, 92 134, 80 144 C66 134, 50 116, 42 98 Z" fill="url(#spinach2)" filter="url(#spinS)"/>
+  <!-- Leaves Left -->
+  <path d="M32 92 C24 58, 48 38, 70 38 C76 60, 72 90, 60 114 C50 110, 36 104, 32 92 Z" fill="url(#spinach1)"/>
+  <!-- Leaves Right -->
+  <path d="M128 92 C136 58, 112 38, 90 38 C84 60, 88 90, 100 114 C110 110, 124 104, 128 92 Z" fill="url(#spinach1)"/>
+  <!-- Central Veins -->
+  <path d="M80 144 Q80 84 80 32" stroke="#86EFAC" stroke-width="2.5" fill="none"/>
+  <path d="M80 80 Q62 68 50 64" stroke="#86EFAC" stroke-width="1.8" fill="none"/>
+  <path d="M80 80 Q98 68 110 64" stroke="#86EFAC" stroke-width="1.8" fill="none"/>
+  <path d="M80 102 Q64 94 54 92" stroke="#86EFAC" stroke-width="1.8" fill="none"/>
+  <path d="M80 102 Q96 94 106 92" stroke="#86EFAC" stroke-width="1.8" fill="none"/>
+</svg>

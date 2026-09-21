@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" width="100%" height="100%">
+  <defs>
+    <linearGradient id="potGradY" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FB923C"/>
+      <stop offset="50%" stop-color="#EA580C"/>
+      <stop offset="100%" stop-color="#9A3412"/>
+    </linearGradient>
+    <radialGradient id="curdCream" cx="45%" cy="40%" r="55%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="70%" stop-color="#F8FAFC"/>
+      <stop offset="100%" stop-color="#E2E8F0"/>
+    </radialGradient>
+    <filter id="curdS">
+      <feDropShadow dx="0" dy="6" stdDeviation="5" flood-opacity="0.2" flood-color="#7C2D12"/>
+    </filter>
+  </defs>
+  <circle cx="80" cy="80" r="72" fill="#FFEDD5" opacity="0.6"/>
+  <!-- Matka / Clay Bowl Body -->
+  <path d="M28 72 C26 108, 48 138, 80 138 C112 138, 134 108, 132 72 Z" fill="url(#potGradY)" filter="url(#curdS)"/>
+  <!-- Matka Rim -->
+  <ellipse cx="80" cy="72" rx="52" ry="16" fill="#C2410C"/>
+  <!-- Creamy Curd Fill -->
+  <ellipse cx="80" cy="72" rx="46" ry="13" fill="url(#curdCream)"/>
+  <!-- Curd Swirl / Dollop -->
+  <path d="M72 68 Q80 62 88 68 Q80 74 72 68 Z" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1"/>
+  <!-- Clay pot decorative band -->
+  <path d="M38 98 Q80 114 122 98" stroke="#7C2D12" stroke-width="2.5" fill="none" opacity="0.6"/>
+  <path d="M46 112 Q80 124 114 112" stroke="#7C2D12" stroke-width="1.8" fill="none" opacity="0.5"/>
+</svg>

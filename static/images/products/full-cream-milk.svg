@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" width="100%" height="100%">
+  <defs>
+    <linearGradient id="milkBot" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#E2E8F0"/>
+      <stop offset="25%" stop-color="#FFFFFF"/>
+      <stop offset="75%" stop-color="#F8FAFC"/>
+      <stop offset="100%" stop-color="#CBD5E1"/>
+    </linearGradient>
+    <linearGradient id="blueLabel" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8"/>
+      <stop offset="100%" stop-color="#0284C7"/>
+    </linearGradient>
+    <filter id="mBotS">
+      <feDropShadow dx="0" dy="5" stdDeviation="5" flood-opacity="0.18" flood-color="#0369A1"/>
+    </filter>
+  </defs>
+  <circle cx="80" cy="80" r="72" fill="#E0F2FE" opacity="0.6"/>
+  <!-- Bottle Cap -->
+  <rect x="68" y="24" width="24" height="10" rx="3" fill="#0284C7"/>
+  <!-- Bottle Neck -->
+  <path d="M72 34 L72 46 C72 52, 54 60, 52 74 L52 134 C52 140, 56 144, 64 144 L96 144 C104 144, 108 140, 108 134 L108 74 C106 60, 88 52, 88 46 L88 34 Z" fill="url(#milkBot)" filter="url(#mBotS)"/>
+  <!-- Label -->
+  <rect x="52" y="80" width="56" height="38" rx="4" fill="url(#blueLabel)"/>
+  <!-- Label details -->
+  <text x="80" y="96" font-family="system-ui, sans-serif" font-size="9" font-weight="bold" fill="#FFFFFF" text-anchor="middle">MILK</text>
+  <text x="80" y="107" font-family="system-ui, sans-serif" font-size="6.5" font-weight="600" fill="#E0F2FE" text-anchor="middle">FULL CREAM</text>
+  <path d="M52 108 Q80 114 108 108" stroke="#BAE6FD" stroke-width="1.5" fill="none"/>
+  <!-- Glass reflection -->
+  <path d="M58 56 L58 136" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" opacity="0.6"/>
+</svg>

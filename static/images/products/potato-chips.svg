@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" width="100%" height="100%">
+  <defs>
+    <radialGradient id="chipGrad" cx="35%" cy="30%" r="65%">
+      <stop offset="0%" stop-color="#FEF08A"/>
+      <stop offset="40%" stop-color="#FACC15"/>
+      <stop offset="85%" stop-color="#EAB308"/>
+      <stop offset="100%" stop-color="#A16207"/>
+    </radialGradient>
+    <filter id="chipS">
+      <feDropShadow dx="0" dy="5" stdDeviation="5" flood-opacity="0.22" flood-color="#854D0E"/>
+    </filter>
+  </defs>
+  <circle cx="80" cy="80" r="72" fill="#FEF9C3" opacity="0.65"/>
+  <!-- Chips Stack / Pile -->
+  <g filter="url(#chipS)">
+    <!-- Back Chip -->
+    <path d="M52 58 C74 44, 114 52, 118 76 C122 96, 92 110, 70 102 C48 94, 38 70, 52 58 Z" fill="#CA8A04" opacity="0.6"/>
+    <!-- Front Chip 1 (Saddle shape) -->
+    <path d="M42 78 C44 54, 84 50, 112 66 C124 74, 126 94, 108 108 C84 122, 54 118, 44 102 C38 92, 40 84, 42 78 Z" fill="url(#chipGrad)"/>
+    <!-- Ripple marks -->
+    <path d="M52 74 Q78 82 104 74" stroke="#A16207" stroke-width="1.8" stroke-linecap="round" fill="none" opacity="0.4"/>
+    <path d="M54 88 Q80 96 106 88" stroke="#A16207" stroke-width="1.8" stroke-linecap="round" fill="none" opacity="0.4"/>
+    <path d="M56 102 Q82 110 102 102" stroke="#A16207" stroke-width="1.8" stroke-linecap="round" fill="none" opacity="0.4"/>
+  </g>
+  <!-- Salt crystals -->
+  <circle cx="70" cy="78" r="1.5" fill="#FFFFFF"/>
+  <circle cx="88" cy="84" r="1.5" fill="#FFFFFF"/>
+  <circle cx="64" cy="94" r="1.5" fill="#FFFFFF"/>
+  <circle cx="94" cy="96" r="1.5" fill="#FFFFFF"/>
+</svg>

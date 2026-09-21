@@ -42,11 +42,7 @@
         </form>
 
         <a href="{% url 'product_detail' item.product.slug %}" class="pcard-img-wrap">
-          {% if item.product.image %}
-            <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" loading="lazy">
-          {% else %}
-            <div style="font-size: 3.5rem;">{{ item.product.category.icon }}</div>
-          {% endif %}
+          <img src="{{ item.product.image_url }}" alt="{{ item.product.name }}" loading="lazy">
         </a>
 
         <div class="pcard-body">

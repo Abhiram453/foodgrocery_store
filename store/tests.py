@@ -176,21 +176,20 @@ class MultiVendorMarketplaceTests(TestCase):
         self.assertEqual(self.slot.current_bookings, 0)  # Restored
 
     def test_unserviceable_pincode_rejected_at_checkout(self):
-        """Checkout fails if vendor does not serve customer's pincode."""
+        """Checkout fails if customer enters an invalid pincode format."""
         self.client.login(username='customer1', password='password123')
         self.client.post(reverse('add_to_cart', args=[self.product1.id]), {'quantity': 1})
 
         checkout_data = {
             'address': 'Non-serviced area address',
-            'pincode': '999999',  # Unserviced pincode
+            'pincode': '000000',  # Invalid pincode format (starts with 0)
             'city': 'Unknown',
             'phone': '9876543210',
             'payment_method': 'COD',
         }
         res = self.client.post(reverse('checkout'), checkout_data)
-        # Should stay on checkout page with error message
         self.assertEqual(res.status_code, 200)
-        self.assertContains(res, 'does not deliver to pincode 999999')
+        self.assertContains(res, 'valid 6-digit Indian delivery pincode')
         self.assertEqual(Order.objects.count(), 0)
 
     def test_product_soft_archiving(self):
@@ -250,3 +249,176 @@ class MultiVendorMarketplaceTests(TestCase):
         # Check OrderStatusHistory
         history = OrderStatusHistory.objects.filter(order=order)
         self.assertTrue(history.exists())
+
+
+class DeliveryLocationAndServiceabilityTests(TestCase):
+    def setUp(self):
+        User = get_user_model()
+        self.customer = User.objects.create_user(username='cust_loc', password='password123', email='loc@test.com')
+        self.vendor_madurai = User.objects.create_user(username='vend_mdu', password='password123', email='vmdu@test.com')
+        self.vendor_chennai = User.objects.create_user(username='vend_chn', password='password123', email='vchn@test.com')
+
+        # Vendor Profiles
+        p1 = UserProfile.objects.get(user=self.vendor_madurai)
+        p1.role = 'vendor'
+        p1.save()
+        self.vp_madurai = VendorProfile.objects.create(
+            user=self.vendor_madurai, shop_name="Madurai Fresh", pincode="625001", status="approved"
+        )
+
+        p2 = UserProfile.objects.get(user=self.vendor_chennai)
+        p2.role = 'vendor'
+        p2.save()
+        self.vp_chennai = VendorProfile.objects.create(
+            user=self.vendor_chennai, shop_name="Chennai Agro", pincode="600001", status="approved"
+        )
+
+        # Active Delivery Areas
+        self.area_madurai = DeliveryArea.objects.create(
+            pincode="625001", area_name="Madurai Main", city="Madurai", state="Tamil Nadu",
+            latitude=9.9252, longitude=78.1198, delivery_fee=30, minimum_order_value=150,
+            estimated_delivery_minutes=45, is_active=True
+        )
+        self.area_pudur = DeliveryArea.objects.create(
+            pincode="625020", area_name="K.Pudur", city="Madurai", state="Tamil Nadu",
+            latitude=9.9480, longitude=78.1460, delivery_fee=35, minimum_order_value=200,
+            estimated_delivery_minutes=50, is_active=True
+        )
+
+        # Assign area to Madurai vendor only
+        self.vp_madurai.service_areas.add(self.area_madurai)
+
+        # Category and Products
+        self.category = Category.objects.create(name="Greens", slug="greens")
+        self.prod_mdu = Product.objects.create(
+            category=self.category, vendor=self.vendor_madurai, name="Madurai Spinach", slug="madurai-spinach",
+            price=40, stock=50, is_active=True
+        )
+        self.prod_chn = Product.objects.create(
+            category=self.category, vendor=self.vendor_chennai, name="Chennai Mangoes", slug="chennai-mangoes",
+            price=250, stock=20, is_active=True
+        )
+
+    def test_clean_pincode_validation(self):
+        from .services.geocoding import clean_pincode
+        self.assertEqual(clean_pincode("625001"), "625001")
+        self.assertEqual(clean_pincode(" 625020 "), "625020")
+        self.assertIsNone(clean_pincode("012345"))  # Indian pincodes start with 1-9
+        self.assertIsNone(clean_pincode("12345"))   # 5 digits
+        self.assertIsNone(clean_pincode("ABCDEF"))
+        self.assertIsNone(clean_pincode(None))
+
+    def test_serviceability_check_active_pincode(self):
+        from .services.geocoding import check_pincode_serviceability
+        result = check_pincode_serviceability("625001")
+        self.assertTrue(result['success'])
+        self.assertTrue(result['is_serviceable'])
+        self.assertEqual(result['pincode'], "625001")
+        self.assertEqual(result['area_name'], "Madurai Main")
+        self.assertEqual(result['city'], "Madurai")
+        self.assertEqual(result['delivery_fee'], 30)
+        self.assertEqual(result['minimum_order_value'], 150)
+        self.assertEqual(result['estimated_delivery_minutes'], 45)
+        self.assertEqual(result['approved_vendors_count'], 1)
+
+    def test_serviceability_check_dynamic_registration(self):
+        from .services.geocoding import check_pincode_serviceability
+        result = check_pincode_serviceability("560001", area_name="Indiranagar", city="Bengaluru")
+        self.assertTrue(result['success'])
+        self.assertTrue(result['is_serviceable'])
+        self.assertEqual(result['pincode'], "560001")
+        self.assertEqual(result['area_name'], "Indiranagar")
+
+    def test_check_pincode_api(self):
+        # Valid active pincode
+        res = self.client.get(reverse('check_pincode_api') + '?pincode=625001')
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertTrue(data['success'])
+        self.assertTrue(data['is_serviceable'])
+        self.assertEqual(data['area_name'], 'Madurai Main')
+
+        # Invalid pincode format (non-numeric / invalid length)
+        res2 = self.client.get(reverse('check_pincode_api') + '?pincode=ABC')
+        self.assertEqual(res2.status_code, 400)
+        data2 = res2.json()
+        self.assertFalse(data2['success'])
+        self.assertFalse(data2['is_serviceable'])
+
+    def test_set_location_api(self):
+        # Setting valid serviceable location
+        res = self.client.post(reverse('set_location'), {'pincode': '625001'})
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertTrue(data['success'])
+        self.assertEqual(self.client.session.get('user_pincode'), '625001')
+        self.assertEqual(self.client.session.get('delivery_area_id'), self.area_madurai.id)
+
+        # Attempting to set invalid pincode format
+        res2 = self.client.post(reverse('set_location'), {'pincode': 'invalid'})
+        self.assertEqual(res2.status_code, 400)
+        data2 = res2.json()
+        self.assertFalse(data2['success'])
+
+    def test_reverse_geocode_out_of_bounds(self):
+        from .services.geocoding import reverse_geocode
+        res = reverse_geocode(999.0, 999.0)
+        self.assertFalse(res['success'])
+        self.assertEqual(res['error_type'], 'out_of_bounds')
+
+    def test_location_filtered_products(self):
+        # Set session to Madurai 625001
+        session = self.client.session
+        session['user_pincode'] = '625001'
+        session['delivery_area_id'] = self.area_madurai.id
+        session.save()
+
+        # Product list view should include Madurai vendor and exclude Chennai vendor
+        res = self.client.get(reverse('product_list'))
+        self.assertContains(res, 'Madurai Spinach')
+        self.assertNotContains(res, 'Chennai Mangoes')
+
+    def test_cart_serviceability_and_minimum_order_validation(self):
+        self.client.login(username='cust_loc', password='password123')
+        
+        # Set delivery location to Madurai Main (min order 150)
+        session = self.client.session
+        session['user_pincode'] = '625001'
+        session['delivery_area_id'] = self.area_madurai.id
+        session.save()
+
+        # Add 1 spinach (₹40, below min order of 150)
+        self.client.post(reverse('add_to_cart', args=[self.prod_mdu.id]), {'quantity': 1})
+
+        # Checkout should fail due to minimum order value requirement and redirect to cart
+        checkout_data = {
+            'address': '7 Temple Road',
+            'pincode': '625001',
+            'city': 'Madurai',
+            'phone': '9876543210',
+            'payment_method': 'COD',
+        }
+        res = self.client.post(reverse('checkout'), checkout_data, follow=True)
+        self.assertEqual(res.status_code, 200)
+        self.assertRedirects(res, reverse('cart'))
+        self.assertContains(res, 'The minimum order value')
+        self.assertEqual(Order.objects.count(), 0)
+
+    def test_product_and_order_item_image_urls(self):
+        """Products and OrderItems must provide image URLs rather than emoji icons."""
+        # Check product image url
+        self.assertTrue(self.prod_mdu.image_url.startswith('/static/images/'))
+        self.assertTrue(self.prod_mdu.image_url.endswith('.svg') or self.prod_mdu.image_url.endswith('.jpg'))
+
+        # Check OrderItem image url
+        order = Order.objects.create(
+            user=self.customer, address="Test", phone="9876543210",
+            subtotal=40, total=70, status="confirmed"
+        )
+        item = OrderItem.objects.create(
+            order=order, product=self.prod_mdu, product_name=self.prod_mdu.name,
+            quantity=1, price=40
+        )
+        self.assertEqual(item.image_url, self.prod_mdu.image_url)
+
+

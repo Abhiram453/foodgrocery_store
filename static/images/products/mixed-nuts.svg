@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" width="100%" height="100%">
+  <defs>
+    <radialGradient id="almondGrad" cx="35%" cy="30%" r="65%">
+      <stop offset="0%" stop-color="#FDE68A"/>
+      <stop offset="40%" stop-color="#D97706"/>
+      <stop offset="100%" stop-color="#78350F"/>
+    </radialGradient>
+    <radialGradient id="cashewGrad" cx="35%" cy="30%" r="65%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="60%" stop-color="#FEF3C7"/>
+      <stop offset="100%" stop-color="#FCD34D"/>
+    </radialGradient>
+    <filter id="nutS">
+      <feDropShadow dx="0" dy="5" stdDeviation="5" flood-opacity="0.2" flood-color="#451A03"/>
+    </filter>
+  </defs>
+  <circle cx="80" cy="80" r="72" fill="#FEF3C7" opacity="0.6"/>
+  <!-- Nuts collection -->
+  <g filter="url(#nutS)">
+    <!-- Almond 1 -->
+    <path d="M52 56 C68 44, 84 56, 80 76 C76 92, 54 94, 46 80 C40 68, 44 60, 52 56 Z" fill="url(#almondGrad)"/>
+    <path d="M54 62 Q66 70 64 82" stroke="#78350F" stroke-width="1.2" fill="none" opacity="0.5"/>
+    <!-- Cashew -->
+    <path d="M96 60 C114 62, 122 82, 114 96 C106 108, 92 104, 94 92 C96 82, 106 82, 102 74 C98 68, 88 68, 96 60 Z" fill="url(#cashewGrad)"/>
+    <!-- Walnut Half -->
+    <ellipse cx="68" cy="110" rx="20" ry="16" fill="#B45309"/>
+    <path d="M56 110 Q68 98 80 110 Q68 122 56 110 Z" fill="#78350F"/>
+    <ellipse cx="68" cy="110" rx="5" ry="8" fill="#FDE68A" opacity="0.6"/>
+    <!-- Almond 2 -->
+    <path d="M98 94 C112 88, 122 102, 114 116 C108 128, 92 124, 88 114 C84 104, 90 98, 98 94 Z" fill="url(#almondGrad)"/>
+  </g>
+</svg>

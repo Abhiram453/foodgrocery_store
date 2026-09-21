@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" width="100%" height="100%">
+  <defs>
+    <linearGradient id="pTop" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#F1F5F9"/>
+    </linearGradient>
+    <linearGradient id="pFront" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#F1F5F9"/>
+      <stop offset="100%" stop-color="#E2E8F0"/>
+    </linearGradient>
+    <linearGradient id="pSide" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#CBD5E1"/>
+      <stop offset="100%" stop-color="#94A3B8"/>
+    </linearGradient>
+    <filter id="panS">
+      <feDropShadow dx="0" dy="6" stdDeviation="6" flood-opacity="0.18" flood-color="#334155"/>
+    </filter>
+  </defs>
+  <circle cx="80" cy="80" r="72" fill="#F8FAFC" opacity="0.65"/>
+  <!-- Main Paneer Block 3D isometric -->
+  <g filter="url(#panS)">
+    <!-- Top Face -->
+    <polygon points="80,42 128,66 80,90 32,66" fill="url(#pTop)"/>
+    <!-- Left Front Face -->
+    <polygon points="32,66 80,90 80,126 32,102" fill="url(#pFront)"/>
+    <!-- Right Front Face -->
+    <polygon points="80,90 128,66 128,102 80,126" fill="url(#pSide)"/>
+  </g>
+  <!-- Mint Leaf Garnish on Top -->
+  <path d="M80 58 C74 50, 64 52, 62 56 C68 60, 76 60, 80 58 Z" fill="#16A34A"/>
+  <path d="M80 58 C86 50, 96 52, 98 56 C92 60, 84 60, 80 58 Z" fill="#22C55E"/>
+  <circle cx="80" cy="58" r="2" fill="#15803D"/>
+  <!-- Cut slice lines -->
+  <line x1="56" y1="54" x2="104" y2="78" stroke="#E2E8F0" stroke-width="1.2"/>
+  <line x1="56" y1="78" x2="56" y2="114" stroke="#CBD5E1" stroke-width="1.2"/>
+</svg>

@@ -263,10 +263,40 @@ class VendorProfileAdmin(admin.ModelAdmin):
 # ── Delivery Area ─────────────────────────────────────────────
 @admin.register(DeliveryArea)
 class DeliveryAreaAdmin(admin.ModelAdmin):
-    list_display = ('pincode', 'area_name', 'city', 'state', 'is_active')
+    list_display = (
+        'pincode', 'area_name', 'city', 'state',
+        'delivery_fee_display', 'min_order_display',
+        'estimated_delivery_minutes', 'vendors_count', 'is_active'
+    )
     list_filter = ('city', 'state', 'is_active')
     search_fields = ('pincode', 'area_name', 'city')
     list_editable = ('is_active',)
+    fieldsets = (
+        ('Area Details', {
+            'fields': ('pincode', 'area_name', 'city', 'state', 'is_active')
+        }),
+        ('Coordinates (Geofencing & Reverse Geocoding)', {
+            'fields': ('latitude', 'longitude'),
+            'description': 'Latitude and Longitude in decimal degrees (e.g. 9.9252, 78.1198)'
+        }),
+        ('Delivery Rates & SLA Estimates', {
+            'fields': ('delivery_fee', 'minimum_order_value', 'estimated_delivery_minutes'),
+            'description': 'Default delivery fee, minimum basket threshold, and estimated minutes for delivery.'
+        }),
+    )
+
+    def delivery_fee_display(self, obj):
+        return format_html('<span style="font-weight:700;color:#1e7e4a">₹{}</span>', obj.delivery_fee)
+    delivery_fee_display.short_description = 'Fee'
+
+    def min_order_display(self, obj):
+        return format_html('<span>₹{}</span>', obj.minimum_order_value)
+    min_order_display.short_description = 'Min Order'
+
+    def vendors_count(self, obj):
+        count = obj.vendors.filter(status='approved').count()
+        return format_html('<strong>{}</strong>', count)
+    vendors_count.short_description = 'Active Vendors'
 
 
 # ── Customer Address ──────────────────────────────────────────

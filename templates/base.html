@@ -83,14 +83,14 @@
     </a>
 
     <!-- Location Selector Widget -->
-    {% if user.is_authenticated and user.profile.role == 'customer' %}
-    <a href="{% url 'select_location' %}" class="me-2 me-lg-3 d-inline-flex align-items-center text-decoration-none" id="navLocationWidget" style="flex-shrink: 0;">
+    {% if not user.is_authenticated or user.profile.role == 'customer' %}
+    <a href="{% url 'select_location' %}" class="me-2 me-lg-3 d-inline-flex align-items-center text-decoration-none" id="navLocationWidget" style="flex-shrink: 0;" title="Click to change delivery location">
       <div class="d-flex align-items-center bg-white border px-2.5 py-1 shadow-sm nav-location-btn" style="border-radius: 50px; border-color: #e5e2da !important; transition: all 0.2s ease-in-out; gap: 6px; flex-shrink: 0; white-space: nowrap;">
         <span style="font-size: 1rem; line-height: 1; flex-shrink: 0;">📍</span>
-        <div class="text-start d-flex flex-column" style="line-height: 1.1; max-width: 110px; flex-shrink: 0;">
+        <div class="text-start d-flex flex-column" style="line-height: 1.1; max-width: 140px; flex-shrink: 0;">
           <span style="color: #6c757d; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap;">Deliver to</span>
           <span class="fw-bold text-dark text-truncate" id="navLocationText" style="font-size: 0.8rem; letter-spacing: -0.01em; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-            {% if request.session.user_pincode %}Pincode: {{ request.session.user_pincode }}{% else %}Select Location{% endif %}
+            {{ user_location_label }}
           </span>
         </div>
         <span style="color: #6c757d; font-size: 0.7rem; margin-left: 2px; flex-shrink: 0;"><i class="bi bi-chevron-down"></i></span>

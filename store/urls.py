@@ -58,11 +58,13 @@ urlpatterns = [
     # Recipes
     path('recipes/', views.recipes_view, name='recipes'),
 
-    # AJAX
+    # AJAX & Real-Time Location Endpoints
     path('api/slots/', views.get_slots, name='get_slots'),
     path('api/search/autocomplete/', views.search_autocomplete, name='search_autocomplete'),
+    path('api/location/detect/', views.detect_location_api, name='detect_location_api'),
+    path('api/location/check-pincode/', views.check_pincode_api, name='check_pincode_api'),
     path('api/location/set/', views.set_location, name='set_location'),
-    path('api/location/reverse-geocode/', views.reverse_geocode, name='reverse_geocode'),
+    path('api/location/reverse-geocode/', views.detect_location_api, name='reverse_geocode'),
 
     # REST API endpoints (JWT protected)
     path('api/token/', api_views.api_token_obtain, name='api_token_obtain'),

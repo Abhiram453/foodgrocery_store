@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" width="100%" height="100%">
+  <defs>
+    <linearGradient id="chocBar" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#582C12"/>
+      <stop offset="50%" stop-color="#3B1B09"/>
+      <stop offset="100%" stop-color="#241005"/>
+    </linearGradient>
+    <linearGradient id="goldFoil" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FDE047"/>
+      <stop offset="50%" stop-color="#CA8A04"/>
+      <stop offset="100%" stop-color="#854D0E"/>
+    </linearGradient>
+    <filter id="chocS">
+      <feDropShadow dx="0" dy="6" stdDeviation="5" flood-opacity="0.25" flood-color="#241005"/>
+    </filter>
+  </defs>
+  <circle cx="80" cy="80" r="72" fill="#FEF3C7" opacity="0.5"/>
+  <!-- Gold Foil Peek -->
+  <polygon points="40,88 120,72 126,134 46,140" fill="url(#goldFoil)" filter="url(#chocS)"/>
+  <!-- Chocolate Bar Body -->
+  <g filter="url(#chocS)">
+    <polygon points="36,44 116,28 122,96 42,108" fill="url(#chocBar)"/>
+    <!-- Squares Grid -->
+    <!-- Row 1 -->
+    <polygon points="44,48 76,42 78,66 46,70" fill="#2E1507" stroke="#6B3410" stroke-width="1.2"/>
+    <polygon points="82,40 110,34 112,58 84,62" fill="#2E1507" stroke="#6B3410" stroke-width="1.2"/>
+    <!-- Row 2 -->
+    <polygon points="48,74 80,68 82,92 50,96" fill="#2E1507" stroke="#6B3410" stroke-width="1.2"/>
+    <polygon points="86,66 114,60 116,84 88,88" fill="#2E1507" stroke="#6B3410" stroke-width="1.2"/>
+  </g>
+  <!-- Sheen / Highlight on edge -->
+  <line x1="38" y1="44" x2="116" y2="28" stroke="#FFFFFF" stroke-width="1.5" opacity="0.4"/>
+</svg>

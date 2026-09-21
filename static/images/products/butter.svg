@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" width="100%" height="100%">
+  <defs>
+    <linearGradient id="butTop" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FEF08A"/>
+      <stop offset="100%" stop-color="#FDE047"/>
+    </linearGradient>
+    <linearGradient id="butFront" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FACC15"/>
+      <stop offset="100%" stop-color="#EAB308"/>
+    </linearGradient>
+    <linearGradient id="butSide" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#CA8A04"/>
+      <stop offset="100%" stop-color="#A16207"/>
+    </linearGradient>
+    <filter id="butS">
+      <feDropShadow dx="0" dy="6" stdDeviation="5" flood-opacity="0.2" flood-color="#854D0E"/>
+    </filter>
+  </defs>
+  <circle cx="80" cy="80" r="72" fill="#FEF9C3" opacity="0.6"/>
+  <!-- Dish Base -->
+  <ellipse cx="80" cy="116" rx="60" ry="20" fill="#E2E8F0"/>
+  <ellipse cx="80" cy="114" rx="56" ry="17" fill="#FFFFFF"/>
+  <!-- Butter Block -->
+  <g filter="url(#butS)">
+    <!-- Top Face -->
+    <polygon points="80,56 122,76 80,96 38,76" fill="url(#butTop)"/>
+    <!-- Front Face -->
+    <polygon points="38,76 80,96 80,122 38,102" fill="url(#butFront)"/>
+    <!-- Side Face -->
+    <polygon points="80,96 122,76 122,102 80,122" fill="url(#butSide)"/>
+  </g>
+  <!-- Butter curl on top -->
+  <path d="M72 70 C72 64, 82 62, 88 66 C84 72, 74 72, 72 70 Z" fill="#FEF08A" stroke="#EAB308" stroke-width="1.2"/>
+</svg>

@@ -61,12 +61,15 @@
         <div class="d-flex flex-column gap-1.5">
           {% for item in order.items.all %}
           <div class="d-flex justify-content-between align-items-center py-1 small {% if not forloop.last %}border-bottom border-light{% endif %}">
-            <span>
-              <strong>{{ item.product_name }}</strong> 
-              <span class="text-muted">&times; {{ item.quantity }}</span>
-              {% if item.vendor %}
-                <span class="text-muted" style="font-size: 0.72rem;">({{ item.vendor.vendor_profile.shop_name|default:item.vendor.username }})</span>
-              {% endif %}
+            <span class="d-flex align-items-center gap-2">
+              <img src="{{ item.image_url }}" alt="{{ item.product_name }}" class="rounded border" style="width: 30px; height: 30px; object-fit: contain; background: #f8f9fa; flex-shrink: 0;">
+              <span>
+                <strong>{{ item.product_name }}</strong> 
+                <span class="text-muted">&times; {{ item.quantity }}</span>
+                {% if item.vendor %}
+                  <span class="text-muted" style="font-size: 0.72rem;">({{ item.vendor.vendor_profile.shop_name|default:item.vendor.username }})</span>
+                {% endif %}
+              </span>
             </span>
             <span class="fw-bold text-dark">₹{{ item.subtotal }}</span>
           </div>

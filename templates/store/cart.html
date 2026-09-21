@@ -25,6 +25,26 @@
     <!-- ── LEFT COLUMN: CART ITEMS & COUPONS ── -->
     <div class="col-12 col-lg-8">
 
+      {% if has_unserviceable_items %}
+      <!-- Unserviceable Location Alert -->
+      <div class="alert alert-danger rounded-4 p-3.5 mb-4 border-danger-subtle shadow-sm">
+        <div class="d-flex align-items-start gap-3">
+          <div class="fs-4 text-danger"><i class="bi bi-geo-alt-fill"></i></div>
+          <div class="flex-grow-1">
+            <h6 class="fw-bold text-danger mb-1">Delivery Restricted for Some Items</h6>
+            <p class="small mb-2 text-dark">
+              One or more items in your basket cannot be delivered to your selected location
+              <strong>({% if selected_area %}{{ selected_area.display_name }}{% else %}{{ user_location_label }}{% endif %})</strong>.
+              Please remove the unserviceable items or switch to an alternate delivery area to proceed.
+            </p>
+            <a href="{% url 'select_location' %}?next={{ request.path }}" class="btn btn-sm btn-outline-danger rounded-pill fw-bold" style="font-size: 0.8rem;">
+              <i class="bi bi-geo-alt me-1"></i> Change Delivery Location
+            </a>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
       <!-- Dynamic Free Delivery Progress Card -->
       <div class="free-delivery-card shadow-sm">
         <div class="free-delivery-header">
@@ -55,16 +75,12 @@
 
         <div class="p-3 p-md-4 d-flex flex-column gap-3">
           {% for item in cart_items %}
-          <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 pb-3 {% if not forloop.last %}border-bottom{% endif %}" id="cartItemRow{{ item.id }}">
+          <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 pb-3 {% if not item.is_serviceable %}p-3 rounded-3 border border-danger-subtle bg-danger-subtle bg-opacity-25{% endif %} {% if not forloop.last %}border-bottom{% endif %}" id="cartItemRow{{ item.id }}">
             
             <!-- Item Thumbnail & Info -->
             <div class="d-flex align-items-center gap-3">
               <div class="rounded-3 p-2 bg-light border d-flex align-items-center justify-content-center flex-shrink-0" style="width: 64px; height: 64px;">
-                {% if item.product.image %}
-                  <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" class="w-100 h-100 rounded" style="object-fit: contain;">
-                {% else %}
-                  <span style="font-size: 2rem;">{{ item.product.category.icon }}</span>
-                {% endif %}
+                <img src="{{ item.product.image_url }}" alt="{{ item.product.name }}" class="w-100 h-100 rounded" style="object-fit: contain;">
               </div>
               <div>
                 <h5 class="fw-bold text-dark mb-0" style="font-size: 1rem;">
@@ -81,6 +97,16 @@
                 <div class="text-dark fw-semibold mt-1" style="font-size: 0.85rem;">
                   ₹{{ item.product.effective_price }} each
                 </div>
+                {% if not item.is_serviceable %}
+                <div class="mt-1">
+                  <span class="badge bg-danger text-white rounded-pill px-2 py-0.5" style="font-size: 0.72rem;">
+                    <i class="bi bi-slash-circle me-1"></i>Cannot deliver to your area
+                  </span>
+                  {% if item.unserviceable_reason %}
+                  <div class="text-danger small mt-1" style="font-size: 0.75rem;">{{ item.unserviceable_reason }}</div>
+                  {% endif %}
+                </div>
+                {% endif %}
               </div>
             </div>
 
@@ -218,9 +244,28 @@
           </div>
         </div>
 
+        {% if has_unserviceable_items %}
+        <button type="button" class="btn btn-secondary w-100 py-3 text-center justify-content-center shadow-sm opacity-75" disabled style="font-size: 0.95rem; cursor: not-allowed;">
+          <i class="bi bi-exclamation-octagon-fill me-1"></i> Cannot Checkout (Unserviceable Items)
+        </button>
+        <div class="text-center mt-2">
+          <a href="{% url 'select_location' %}?next={{ request.path }}" class="text-danger small fw-bold text-decoration-none">
+            <i class="bi bi-geo-alt me-1"></i> Change delivery location &rarr;
+          </a>
+        </div>
+        {% elif selected_area and cart.subtotal < selected_area.minimum_order_value %}
+        <div class="alert alert-warning p-2.5 rounded-3 small mb-3 text-center">
+          <i class="bi bi-info-circle-fill me-1 text-warning"></i>
+          Min. order value for {{ selected_area.area_name }} is <strong>₹{{ selected_area.minimum_order_value }}</strong>.
+        </div>
+        <button type="button" class="btn btn-secondary w-100 py-3 text-center justify-content-center shadow-sm opacity-75" disabled style="font-size: 0.95rem; cursor: not-allowed;">
+          <i class="bi bi-bag-plus me-1"></i> Add more to reach ₹{{ selected_area.minimum_order_value }}
+        </button>
+        {% else %}
         <a href="{% url 'checkout' %}" class="btn-fb-primary w-100 py-3 text-center justify-content-center shadow-sm" style="font-size: 1rem;">
           <i class="bi bi-lock-fill me-1"></i> Proceed to Checkout
         </a>
+        {% endif %}
 
         <div class="text-center mt-3 text-muted small" style="font-size: 0.78rem;">
           <i class="bi bi-shield-check text-success me-1"></i>100% Safe & Contactless Delivery

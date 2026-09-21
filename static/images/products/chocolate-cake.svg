@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" width="100%" height="100%">
+  <defs>
+    <linearGradient id="chocFrost" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#451A03"/>
+      <stop offset="100%" stop-color="#1E0B02"/>
+    </linearGradient>
+    <linearGradient id="chocSponge" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#78350F"/>
+      <stop offset="100%" stop-color="#451A03"/>
+    </linearGradient>
+    <filter id="cakeS">
+      <feDropShadow dx="0" dy="6" stdDeviation="6" flood-opacity="0.25" flood-color="#1E0B02"/>
+    </filter>
+  </defs>
+  <circle cx="80" cy="80" r="72" fill="#FCE7F3" opacity="0.6"/>
+  <!-- Cake slice 3D -->
+  <g filter="url(#cakeS)">
+    <!-- Top triangular frosting -->
+    <polygon points="80,48 132,84 32,84" fill="url(#chocFrost)"/>
+    <!-- Side sponge face -->
+    <polygon points="32,84 132,84 132,126 32,126" fill="url(#chocSponge)"/>
+    <!-- Layer Cream 1 -->
+    <rect x="32" y="96" width="100" height="4" fill="#FDF2F8"/>
+    <!-- Layer Cream 2 -->
+    <rect x="32" y="112" width="100" height="4" fill="#FDF2F8"/>
+  </g>
+  <!-- Cherry on Top -->
+  <circle cx="80" cy="42" r="10" fill="#E11D48"/>
+  <circle cx="77" cy="39" r="2.5" fill="#FFFFFF" opacity="0.6"/>
+  <path d="M80 34 C82 22, 94 18, 98 20" stroke="#15803D" stroke-width="2" fill="none" stroke-linecap="round"/>
+</svg>

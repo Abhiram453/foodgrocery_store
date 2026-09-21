@@ -99,19 +99,69 @@ class Command(BaseCommand):
         # Seed Delivery Areas
         from store.models import DeliveryArea
         areas_data = [
-            {'pincode': '625001', 'area_name': 'Madurai Main', 'city': 'Madurai', 'state': 'Tamil Nadu'},
-            {'pincode': '625020', 'area_name': 'K.Pudur', 'city': 'Madurai', 'state': 'Tamil Nadu'},
-            {'pincode': '625009', 'area_name': 'Anna Nagar', 'city': 'Madurai', 'state': 'Tamil Nadu'},
-            {'pincode': '625003', 'area_name': 'Tallakulam', 'city': 'Madurai', 'state': 'Tamil Nadu'},
+            {
+                'pincode': '625001',
+                'area_name': 'Madurai Main',
+                'city': 'Madurai',
+                'state': 'Tamil Nadu',
+                'latitude': 9.9195,
+                'longitude': 78.1194,
+                'delivery_fee': 25.00,
+                'minimum_order_value': 100.00,
+                'estimated_delivery_minutes': 35,
+            },
+            {
+                'pincode': '625020',
+                'area_name': 'K.Pudur',
+                'city': 'Madurai',
+                'state': 'Tamil Nadu',
+                'latitude': 9.9482,
+                'longitude': 78.1472,
+                'delivery_fee': 30.00,
+                'minimum_order_value': 150.00,
+                'estimated_delivery_minutes': 45,
+            },
+            {
+                'pincode': '625009',
+                'area_name': 'Anna Nagar',
+                'city': 'Madurai',
+                'state': 'Tamil Nadu',
+                'latitude': 9.9200,
+                'longitude': 78.1480,
+                'delivery_fee': 30.00,
+                'minimum_order_value': 150.00,
+                'estimated_delivery_minutes': 40,
+            },
+            {
+                'pincode': '625003',
+                'area_name': 'Tallakulam',
+                'city': 'Madurai',
+                'state': 'Tamil Nadu',
+                'latitude': 9.9320,
+                'longitude': 78.1320,
+                'delivery_fee': 35.00,
+                'minimum_order_value': 150.00,
+                'estimated_delivery_minutes': 50,
+            },
         ]
         created_areas = []
         for a in areas_data:
-            area_obj, _ = DeliveryArea.objects.get_or_create(
+            area_obj, _ = DeliveryArea.objects.update_or_create(
                 pincode=a['pincode'],
-                defaults={'area_name': a['area_name'], 'city': a['city'], 'state': a['state'], 'is_active': True}
+                defaults={
+                    'area_name': a['area_name'],
+                    'city': a['city'],
+                    'state': a['state'],
+                    'latitude': a['latitude'],
+                    'longitude': a['longitude'],
+                    'delivery_fee': a['delivery_fee'],
+                    'minimum_order_value': a['minimum_order_value'],
+                    'estimated_delivery_minutes': a['estimated_delivery_minutes'],
+                    'is_active': True,
+                }
             )
             created_areas.append(area_obj)
-        self.stdout.write(self.style.SUCCESS(f'  OK: {len(created_areas)} delivery areas created'))
+        self.stdout.write(self.style.SUCCESS(f'  OK: {len(created_areas)} delivery areas created / updated'))
 
         # Seed Vendors in Madurai area
         vendors_data = [

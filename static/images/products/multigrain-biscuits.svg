@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" width="100%" height="100%">
+  <defs>
+    <radialGradient id="biscG" cx="35%" cy="30%" r="65%">
+      <stop offset="0%" stop-color="#FDE68A"/>
+      <stop offset="50%" stop-color="#F59E0B"/>
+      <stop offset="90%" stop-color="#D97706"/>
+      <stop offset="100%" stop-color="#92400E"/>
+    </radialGradient>
+    <filter id="biS">
+      <feDropShadow dx="0" dy="5" stdDeviation="5" flood-opacity="0.2" flood-color="#78350F"/>
+    </filter>
+  </defs>
+  <circle cx="80" cy="80" r="72" fill="#FEF3C7" opacity="0.6"/>
+  <!-- Biscuit 1 Back -->
+  <circle cx="94" cy="74" r="38" fill="#B45309" opacity="0.5"/>
+  <!-- Biscuit 2 Front -->
+  <g filter="url(#biS)">
+    <circle cx="74" cy="84" r="40" fill="url(#biscG)"/>
+    <!-- Scalloped rim or inner border -->
+    <circle cx="74" cy="84" r="35" stroke="#B45309" stroke-width="1.2" stroke-dasharray="3,3" fill="none"/>
+    <!-- Docking holes -->
+    <circle cx="64" cy="74" r="2" fill="#78350F"/>
+    <circle cx="74" cy="74" r="2" fill="#78350F"/>
+    <circle cx="84" cy="74" r="2" fill="#78350F"/>
+    <circle cx="58" cy="84" r="2" fill="#78350F"/>
+    <circle cx="74" cy="84" r="2" fill="#78350F"/>
+    <circle cx="90" cy="84" r="2" fill="#78350F"/>
+    <circle cx="64" cy="94" r="2" fill="#78350F"/>
+    <circle cx="74" cy="94" r="2" fill="#78350F"/>
+    <circle cx="84" cy="94" r="2" fill="#78350F"/>
+  </g>
+  <!-- Flakes -->
+  <ellipse cx="68" cy="66" rx="3" ry="1.5" fill="#FEF9C3"/>
+  <ellipse cx="82" cy="88" rx="3" ry="1.5" transform="rotate(30 82 88)" fill="#FEF9C3"/>
+</svg>

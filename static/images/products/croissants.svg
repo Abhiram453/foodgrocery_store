@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" width="100%" height="100%">
+  <defs>
+    <radialGradient id="croissG" cx="40%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#FDE047"/>
+      <stop offset="40%" stop-color="#F59E0B"/>
+      <stop offset="80%" stop-color="#D97706"/>
+      <stop offset="100%" stop-color="#78350F"/>
+    </radialGradient>
+    <filter id="crS">
+      <feDropShadow dx="0" dy="6" stdDeviation="5" flood-opacity="0.22" flood-color="#78350F"/>
+    </filter>
+  </defs>
+  <circle cx="80" cy="80" r="72" fill="#FEF9C3" opacity="0.6"/>
+  <!-- Crescent shape layers -->
+  <g filter="url(#crS)">
+    <!-- Main Crescent Body -->
+    <path d="M26 102 C30 68, 54 48, 80 48 C106 48, 130 68, 134 102 C134 114, 122 118, 114 108 C104 90, 88 80, 80 80 C72 80, 56 90, 46 108 C38 118, 26 114, 26 102 Z" fill="url(#croissG)"/>
+    <!-- Fold 1 Center -->
+    <path d="M60 52 C72 48, 88 48, 100 52 C94 76, 86 82, 80 82 C74 82, 66 76, 60 52 Z" fill="#FBBF24" opacity="0.6"/>
+    <!-- Fold lines -->
+    <path d="M48 64 Q60 76 66 94" stroke="#78350F" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.45"/>
+    <path d="M112 64 Q100 76 94 94" stroke="#78350F" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.45"/>
+    <path d="M68 52 Q80 62 80 80" stroke="#78350F" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.45"/>
+    <path d="M92 52 Q80 62 80 80" stroke="#78350F" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.45"/>
+  </g>
+  <!-- Glaze shine -->
+  <path d="M68 56 Q80 52 92 56" stroke="#FEF08A" stroke-width="3" stroke-linecap="round" fill="none"/>
+</svg>

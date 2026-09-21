@@ -125,7 +125,10 @@
           {% for item in order.items.all %}
           <tr>
             <td>
-              <span class="fw-bold">{{ item.product_name }}</span>
+              <div class="d-flex align-items-center gap-2">
+                <img src="{{ item.image_url }}" alt="{{ item.product_name }}" style="width: 24px; height: 24px; object-fit: contain;">
+                <span class="fw-bold">{{ item.product_name }}</span>
+              </div>
             </td>
             <td class="text-center">{{ item.quantity }}</td>
             <td class="text-end">₹{{ item.price }}</td>

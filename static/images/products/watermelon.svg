@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" width="100%" height="100%">
+  <defs>
+    <linearGradient id="wmFlesh" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FF1744"/>
+      <stop offset="100%" stop-color="#D50000"/>
+    </linearGradient>
+    <filter id="wmS">
+      <feDropShadow dx="0" dy="6" stdDeviation="5" flood-opacity="0.2" flood-color="#003810"/>
+    </filter>
+  </defs>
+  <circle cx="80" cy="80" r="72" fill="#DCFCE7" opacity="0.6"/>
+  <!-- Outer Rind Green -->
+  <path d="M22 76 C22 120, 52 144, 80 144 C108 144, 138 120, 138 76 Z" fill="#1B5E20" filter="url(#wmS)"/>
+  <!-- Light green layer -->
+  <path d="M26 78 C26 118, 54 140, 80 140 C106 140, 134 118, 134 78 Z" fill="#A5D6A7"/>
+  <!-- White rind ring -->
+  <path d="M29 80 C29 116, 55 137, 80 137 C105 137, 131 116, 131 80 Z" fill="#F1F8E9"/>
+  <!-- Red Juicy Flesh -->
+  <path d="M33 80 C33 113, 56 133, 80 133 C104 133, 127 113, 127 80 Z" fill="url(#wmFlesh)"/>
+  <!-- Seeds -->
+  <ellipse cx="55" cy="95" rx="2.5" ry="4" transform="rotate(-20 55 95)" fill="#212121"/>
+  <ellipse cx="70" cy="112" rx="2.5" ry="4" transform="rotate(5 70 112)" fill="#212121"/>
+  <ellipse cx="90" cy="112" rx="2.5" ry="4" transform="rotate(-5 90 112)" fill="#212121"/>
+  <ellipse cx="105" cy="95" rx="2.5" ry="4" transform="rotate(20 105 95)" fill="#212121"/>
+  <ellipse cx="80" cy="96" rx="2.5" ry="4" fill="#212121"/>
+  <!-- Slice Top Edge Highlight -->
+  <path d="M26 78 L134 78" stroke="#FFFFFF" stroke-width="2.5" opacity="0.4"/>
+</svg>

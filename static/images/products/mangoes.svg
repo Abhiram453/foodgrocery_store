@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" width="100%" height="100%">
+  <defs>
+    <radialGradient id="mangoGrad" cx="40%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#FFD54F"/>
+      <stop offset="35%" stop-color="#FFA000"/>
+      <stop offset="70%" stop-color="#FF5722"/>
+      <stop offset="100%" stop-color="#D84315"/>
+    </radialGradient>
+    <filter id="mShadow">
+      <feDropShadow dx="0" dy="6" stdDeviation="6" flood-opacity="0.2" flood-color="#8B3000"/>
+    </filter>
+  </defs>
+  <circle cx="80" cy="80" r="72" fill="#FEF3C7" opacity="0.65"/>
+  <!-- Leaf -->
+  <path d="M82 36 C102 24, 126 30, 130 42 C114 48, 92 46, 82 36 Z" fill="#2E7D32"/>
+  <path d="M84 37 Q106 38 124 41" stroke="#81C784" stroke-width="1.2" fill="none"/>
+  <!-- Stem -->
+  <rect x="76" y="32" width="6" height="14" rx="3" fill="#4E342E"/>
+  <!-- Mango body -->
+  <path d="M78 44 C52 46, 32 68, 34 100 C36 128, 62 144, 90 140 C118 136, 134 112, 130 84 C126 58, 102 42, 78 44 Z" fill="url(#mangoGrad)" filter="url(#mShadow)"/>
+  <!-- Blush and highlight -->
+  <ellipse cx="64" cy="72" rx="14" ry="24" transform="rotate(-30 64 72)" fill="#FFFFFF" opacity="0.32"/>
+  <circle cx="56" cy="64" r="5" fill="#FFFFFF" opacity="0.5"/>
+</svg>

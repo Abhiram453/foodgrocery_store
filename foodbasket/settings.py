@@ -58,6 +58,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'store.context_processors.cart_count',
+                'store.context_processors.delivery_location',
             ],
         },
     },
@@ -269,4 +270,9 @@ else:
 # Razorpay Payment Gateway Settings
 RAZORPAY_KEY_ID = os.environ.get('RAZORPAY_KEY_ID', '')
 RAZORPAY_KEY_SECRET = os.environ.get('RAZORPAY_KEY_SECRET', '')
+
+# Real-Time Geocoding Provider Settings
+# Supported providers: 'nominatim', 'opencage', 'google', 'mapbox', 'here'
+GEOCODING_PROVIDER = os.environ.get('GEOCODING_PROVIDER', 'nominatim').lower().strip()
+GEOCODING_API_KEY = os.environ.get('GEOCODING_API_KEY', '').strip()
 

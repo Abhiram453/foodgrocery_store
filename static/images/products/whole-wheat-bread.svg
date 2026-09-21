@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" width="100%" height="100%">
+  <defs>
+    <linearGradient id="crust" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#B45309"/>
+      <stop offset="100%" stop-color="#78350F"/>
+    </linearGradient>
+    <linearGradient id="crumb" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FEF3C7"/>
+      <stop offset="100%" stop-color="#FDE68A"/>
+    </linearGradient>
+    <filter id="brS">
+      <feDropShadow dx="0" dy="6" stdDeviation="5" flood-opacity="0.2" flood-color="#451A03"/>
+    </filter>
+  </defs>
+  <circle cx="80" cy="80" r="72" fill="#FEF3C7" opacity="0.6"/>
+  <!-- Loaf Back -->
+  <path d="M50 56 C70 42, 116 44, 126 62 L126 114 C120 120, 102 122, 94 122 Z" fill="#92400E"/>
+  <!-- Front Slice -->
+  <g filter="url(#brS)">
+    <!-- Crust outline -->
+    <path d="M38 68 C34 52, 48 44, 62 46 C70 38, 90 38, 98 46 C112 44, 126 52, 122 68 C124 94, 120 118, 114 124 C100 128, 60 128, 46 124 C40 118, 36 94, 38 68 Z" fill="url(#crust)"/>
+    <!-- Crumb face -->
+    <path d="M43 70 C40 57, 50 50, 63 51 C70 44, 88 44, 95 51 C108 50, 118 57, 116 70 C118 92, 115 114, 109 119 C98 123, 62 123, 51 119 C45 114, 42 92, 43 70 Z" fill="url(#crumb)"/>
+  </g>
+  <!-- Texture Seeds -->
+  <circle cx="68" cy="72" r="1.5" fill="#B45309"/>
+  <circle cx="84" cy="66" r="1.8" fill="#B45309"/>
+  <circle cx="98" cy="78" r="1.5" fill="#B45309"/>
+  <circle cx="74" cy="94" r="1.5" fill="#B45309"/>
+  <circle cx="90" cy="100" r="1.5" fill="#B45309"/>
+</svg>

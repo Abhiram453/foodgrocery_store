@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" width="100%" height="100%">
+  <defs>
+    <radialGradient id="floretG1" cx="30%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#4ADE80"/>
+      <stop offset="50%" stop-color="#16A34A"/>
+      <stop offset="100%" stop-color="#14532D"/>
+    </radialGradient>
+    <radialGradient id="floretG2" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#86EFAC"/>
+      <stop offset="60%" stop-color="#22C55E"/>
+      <stop offset="100%" stop-color="#15803D"/>
+    </radialGradient>
+    <linearGradient id="stalkG" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#86EFAC"/>
+      <stop offset="50%" stop-color="#4ADE80"/>
+      <stop offset="100%" stop-color="#22C55E"/>
+    </linearGradient>
+    <filter id="brocS">
+      <feDropShadow dx="0" dy="6" stdDeviation="5" flood-opacity="0.2" flood-color="#052E16"/>
+    </filter>
+  </defs>
+  <circle cx="80" cy="80" r="72" fill="#DCFCE7" opacity="0.6"/>
+  <!-- Stalk -->
+  <path d="M70 94 L68 136 C68 142, 92 142, 92 136 L90 94 Z" fill="url(#stalkG)"/>
+  <!-- Florets cluster -->
+  <g filter="url(#brocS)">
+    <circle cx="48" cy="74" r="22" fill="url(#floretG1)"/>
+    <circle cx="112" cy="74" r="22" fill="url(#floretG1)"/>
+    <circle cx="56" cy="52" r="24" fill="url(#floretG2)"/>
+    <circle cx="104" cy="52" r="24" fill="url(#floretG2)"/>
+    <circle cx="80" cy="44" r="26" fill="url(#floretG2)"/>
+    <circle cx="80" cy="74" r="26" fill="url(#floretG1)"/>
+  </g>
+  <!-- Texture dots -->
+  <circle cx="76" cy="40" r="3" fill="#BBF7D0" opacity="0.7"/>
+  <circle cx="86" cy="44" r="2.5" fill="#BBF7D0" opacity="0.7"/>
+  <circle cx="56" cy="50" r="2.5" fill="#BBF7D0" opacity="0.6"/>
+  <circle cx="102" cy="50" r="2.5" fill="#BBF7D0" opacity="0.6"/>
+</svg>

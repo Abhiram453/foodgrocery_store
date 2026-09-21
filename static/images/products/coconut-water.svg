@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" width="100%" height="100%">
+  <defs>
+    <radialGradient id="cocoGrad" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#86EFAC"/>
+      <stop offset="40%" stop-color="#22C55E"/>
+      <stop offset="85%" stop-color="#15803D"/>
+      <stop offset="100%" stop-color="#14532D"/>
+    </radialGradient>
+    <filter id="cocS">
+      <feDropShadow dx="0" dy="6" stdDeviation="5" flood-opacity="0.2" flood-color="#052E16"/>
+    </filter>
+  </defs>
+  <circle cx="80" cy="80" r="72" fill="#DCFCE7" opacity="0.6"/>
+  <!-- Straw -->
+  <line x1="88" y1="20" x2="76" y2="76" stroke="#EF4444" stroke-width="5" stroke-linecap="round"/>
+  <line x1="88" y1="20" x2="104" y2="16" stroke="#EF4444" stroke-width="5" stroke-linecap="round"/>
+  <!-- Coconut Body -->
+  <g filter="url(#cocS)">
+    <path d="M38 68 C34 104, 46 138, 80 138 C114 138, 126 104, 122 68 C118 56, 104 50, 80 50 C56 50, 42 56, 38 68 Z" fill="url(#cocoGrad)"/>
+    <!-- Cut Top Hole -->
+    <ellipse cx="80" cy="62" rx="26" ry="12" fill="#FFFFFF"/>
+    <ellipse cx="80" cy="63" rx="22" ry="9" fill="#E0F2FE"/>
+  </g>
+  <!-- Little flower decoration -->
+  <circle cx="106" cy="64" r="5" fill="#F43F5E"/>
+  <circle cx="106" cy="64" r="2" fill="#FEF08A"/>
+</svg>
